@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #fff8ed;
+  --color-brand-100: #ffefd4;
+  --color-brand-200: #ffdba8;
+  --color-brand-300: #ffc070;
+  --color-brand-400: #ff9a36;
+  --color-brand-500: #fd7d10;
+  --color-brand-600: #ee6206;
+  --color-brand-700: #c54908;
+  --color-brand-800: #9c3a0f;
+  --color-brand-900: #7e3210;
+}
+
+/* POS/Kitchen tablet targets: min touch 48px, min font 16px */
+html {
+  font-size: 16px;
+}
+
+button {
+  min-height: 3rem;
+  min-width: 3rem;
+}

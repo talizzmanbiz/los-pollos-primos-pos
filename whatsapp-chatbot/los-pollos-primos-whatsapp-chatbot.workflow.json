@@ -1,0 +1,329 @@
+{
+  "name": "Los Pollos Primos WhatsApp Chatbot",
+  "meta": {
+    "note": "Backup export of workflow MmlbbbBghiKWttqP deployed at https://n8n.automateaiservices.com (2026-07-12). The live instance is the source of truth. Requires two n8n Data Tables: pollos_primos_conversations (columns: phone, state_json, customer_name, updated_at) and pollos_primos_config (columns: key, value). Update the dataTableId values below if importing into a fresh instance."
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/El_Salvador",
+    "saveDataErrorExecution": "all"
+  },
+  "nodes": [
+    {
+      "id": "wh_verify",
+      "name": "Webhook Verify (GET)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 620],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "pollos-primos-whatsapp",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "notes": "Meta webhook verification handshake (hub.challenge)",
+      "webhookId": "bd674b03-5096-4044-8c32-7be580d388b3"
+    },
+    {
+      "id": "get_verify_config",
+      "name": "Get Verify Config",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [200, 620],
+      "alwaysOutputData": true,
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": { "__rl": true, "mode": "id", "value": "Mq8RA5GKDrkPMtCY", "cachedResultName": "pollos_primos_config" },
+        "matchType": "allConditions",
+        "filters": { "conditions": [{ "keyName": "key", "condition": "eq", "keyValue": "WHATSAPP_VERIFY_TOKEN" }] },
+        "options": {}
+      }
+    },
+    {
+      "id": "verify_token",
+      "name": "Verify Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 620],
+      "parameters": {
+        "jsCode": "const q = $('Webhook Verify (GET)').first().json.query || {};\nlet token = ($json && $json.key === 'WHATSAPP_VERIFY_TOKEN') ? $json.value : '';\ntry { if ($env.WHATSAPP_VERIFY_TOKEN) token = $env.WHATSAPP_VERIFY_TOKEN; } catch (e) {}\nconst ok = q['hub.mode'] === 'subscribe' && !!token && q['hub.verify_token'] === token;\nreturn [{ json: { challenge: ok ? q['hub.challenge'] : 'forbidden', ok } }];"
+      }
+    },
+    {
+      "id": "respond_challenge",
+      "name": "Respond Challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 620],
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.challenge }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wh_incoming",
+      "name": "WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 200],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pollos-primos-whatsapp",
+        "options": {}
+      },
+      "notes": "Receives incoming WhatsApp messages from Meta. Responds 200 immediately; replies are sent via Graph API.",
+      "webhookId": "166207aa-8ca0-45e7-9dfc-54031b02f402"
+    },
+    {
+      "id": "extract_msg",
+      "name": "Extract Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 200],
+      "parameters": {
+        "jsCode": "// Pull the customer message out of Meta's webhook envelope.\n// Status callbacks (delivered/read) have no messages[] -> drop them.\nconst body = $json.body || {};\nconst value = body.entry?.[0]?.changes?.[0]?.value;\nconst msg = value?.messages?.[0];\nif (!msg) return [];\nconst phone = msg.from;\nconst name = value.contacts?.[0]?.profile?.name || '';\nlet text = '';\nif (msg.type === 'text') text = msg.text?.body || '';\nelse if (msg.type === 'interactive') text = msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title || '';\nelse if (msg.type === 'button') text = msg.button?.text || '';\nreturn [{ json: { phone, name, text, msgType: msg.type, msgId: msg.id } }];"
+      }
+    },
+    {
+      "id": "get_config",
+      "name": "Get Config",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [400, 60],
+      "alwaysOutputData": true,
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": { "__rl": true, "mode": "id", "value": "Mq8RA5GKDrkPMtCY", "cachedResultName": "pollos_primos_config" },
+        "matchType": "allConditions",
+        "filters": { "conditions": [] },
+        "options": {}
+      }
+    },
+    {
+      "id": "merge_config",
+      "name": "Merge Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [580, 60],
+      "parameters": {
+        "jsCode": "// Collapse config table rows into one cfg object.\n// Env vars override table values when the instance allows $env access.\nconst cfg = {};\nfor (const item of $input.all()) {\n  const j = item.json || {};\n  if (j.key) cfg[j.key] = j.value;\n}\nconst KEYS = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'WHATSAPP_WEBHOOK_SECRET', 'WHATSAPP_PHONE_ID', 'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_VERIFY_TOKEN', 'STAFF_WHATSAPP_NUMBER', 'PAYMENT_GATEWAY_PLACEHOLDER', 'WHATSAPP_API_VERSION'];\nfor (const k of KEYS) {\n  try { const v = $env[k]; if (v) cfg[k] = v; } catch (e) { break; }\n}\nif (!cfg.WHATSAPP_API_VERSION) cfg.WHATSAPP_API_VERSION = 'v18.0';\nreturn [{ json: { cfg } }];"
+      }
+    },
+    {
+      "id": "get_state",
+      "name": "Get State",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [440, 200],
+      "alwaysOutputData": true,
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": { "__rl": true, "mode": "id", "value": "UmqYrQQPqSKxZ2bJ", "cachedResultName": "pollos_primos_conversations" },
+        "matchType": "allConditions",
+        "filters": { "conditions": [{ "keyName": "phone", "condition": "eq", "keyValue": "={{ $('Extract Message').first().json.phone }}" }] },
+        "options": {}
+      }
+    },
+    {
+      "id": "brain",
+      "name": "Brain",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 200],
+      "notes": "State machine for the 7-step flow. PRICES map must stay in sync with the Supabase products table — the server total from create-order is authoritative.",
+      "parameters": {
+        "jsCode": "// ── Los Pollos Primos — cerebro del chatbot ─────────────────────\n// PRICES must mirror the Supabase products table (display only; the\n// create-order response total is authoritative).\nconst PRICES = {\n  combo_entero:   { name: 'El Primo Grande',        price: 12.95 },\n  combo_medio:    { name: 'El Primo',                price: 6.95 },\n  combo_cuarto:   { name: 'El Primito',              price: 3.95 },\n  pollo_entero:   { name: 'Pollo entero (solo)',     price: 11.00 },\n  pollo_medio:    { name: 'Medio pollo (solo)',      price: 6.00 },\n  pollo_cuarto:   { name: 'Cuarto de pollo (solo)',  price: 3.50 },\n  chimichurri:    { name: 'Chimichurri extra',       price: 1.00 },\n  tortillas_2:    { name: 'Tortillas (2)',           price: 0.50 },\n  tortillas_4:    { name: 'Tortillas (4)',           price: 1.00 },\n  tortillas_8:    { name: 'Tortillas (8)',           price: 2.00 },\n  cebolla_entera: { name: 'Cebolla entera',          price: 1.50 },\n  cebolla_media:  { name: 'Media cebolla',           price: 0.75 },\n};\nconst ZONE_FEES = { 1: 1.00, 2: 1.50 };\n\nconst MENU_TEXT = `¡Ey! 👋 Bienvenido a Los Pollos Primos — Ahumado Tropical 🍗\\n\\n¿Qué querés hoy?\\n1️⃣ El Primo Grande ($12.95) — pollo entero + chimichurri + 8 tortillas + cebolla\\n2️⃣ El Primo ($6.95) — medio pollo + chimichurri + 4 tortillas + media cebolla\\n3️⃣ El Primito ($3.95) — cuarto de pollo + chimichurri + 2 tortillas + media cebolla\\n4️⃣ Solo pollo (sin nada) — $11/$6/$3.50\\n5️⃣ Extras — chimichurri, tortillas, cebolla\\n\\n¿Cuál es?`;\n\nconst msg = $('Extract Message').first().json;\nconst row = $json || {};\nlet state;\ntry { state = row.state_json ? JSON.parse(row.state_json) : null; } catch (e) { state = null; }\nif (!state) state = { step: 'NEW', cart: [], fulfillment: {}, retries: 0 };\nstate.cart = state.cart || [];\nstate.fulfillment = state.fulfillment || {};\n\n// Meta retries webhooks — drop duplicates\nif (msg.msgId && state.last_msg_id === msg.msgId) return [];\nstate.last_msg_id = msg.msgId;\nif (msg.name) state.customer_name = msg.name;\n\nconst raw = (msg.text || '').trim();\nconst t = raw.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\n\nconst replies = [];\nlet action = 'send';\nlet staffAlert = null;\nlet orderPayload = null;\n\nconst has = (...words) => words.some(w => t.includes(w));\nconst cartLines = () => state.cart.map(i => `• ${i.quantity}x ${PRICES[i.product_id].name} — $${(PRICES[i.product_id].price * i.quantity).toFixed(2)}`).join('\\n');\nconst cartTotal = () => state.cart.reduce((s, i) => s + PRICES[i.product_id].price * i.quantity, 0);\nconst addToCart = (pid, qty) => {\n  const ex = state.cart.find(i => i.product_id === pid);\n  if (ex) ex.quantity += qty; else state.cart.push({ product_id: pid, quantity: qty });\n};\n\nfunction summary() {\n  let text = `Resumen:\\n${cartLines()}\\n────────────────\\n`;\n  const sub = cartTotal();\n  if (state.fulfillment.type === 'delivery') {\n    const fee = ZONE_FEES[state.fulfillment.delivery_zone] || 0;\n    text += `TOTAL: $${sub.toFixed(2)} (delivery Zona ${state.fulfillment.delivery_zone}: +$${fee.toFixed(2)} = $${(sub + fee).toFixed(2)})`;\n  } else {\n    const loc = state.fulfillment.pickup_location === 'mercado' ? 'Mercado Chalchuapa' : 'Central';\n    text += `TOTAL: $${sub.toFixed(2)} (recoger en ${loc})`;\n  }\n  return text + `\\n\\n¿Está bien? (sí/no)`;\n}\n\nfunction fail(hint) {\n  state.retries = (state.retries || 0) + 1;\n  let r;\n  if (raw.includes('?')) {\n    r = `Ey, buena pregunta 🤔 Esa no me la sé. ¿Querés hablar con alguien del equipo? (escribí 'operador')\\n\\nO si seguimos con el pedido: ${hint}`;\n  } else {\n    r = hint;\n    if (state.retries >= 2) r += `\\n\\nSi preferís hablar con alguien del equipo, escribí 'operador' 👍`;\n  }\n  replies.push(r);\n}\n\nfunction done(step) { state.step = step; state.retries = 0; }\n\nfunction resetOrder() {\n  state = { step: 'MENU', cart: [], fulfillment: {}, retries: 0, customer_name: state.customer_name, last_msg_id: state.last_msg_id, order_number: state.order_number };\n}\n\nfunction parseProduct(txt) {\n  let qty = 1;\n  const qm = txt.match(/^(\\d+)\\s+/);\n  if (qm) qty = Math.max(1, Math.min(20, parseInt(qm[1])));\n  const s = qm ? txt.slice(qm[0].length) : txt;\n  const pick = (pid) => ({ pid, qty });\n  if (/^[1-5]$/.test(txt)) {\n    return { '1': pick('combo_entero'), '2': pick('combo_medio'), '3': pick('combo_cuarto'), '4': 'solo', '5': 'extras' }[txt];\n  }\n  if (s.includes('primito')) return pick('combo_cuarto');\n  if (s.includes('primo grande') || s.includes('combo entero')) return pick('combo_entero');\n  if (s.includes('solo pollo') || s.includes('sin nada')) {\n    if (s.includes('entero')) return pick('pollo_entero');\n    if (s.includes('medio')) return pick('pollo_medio');\n    if (s.includes('cuarto')) return pick('pollo_cuarto');\n    return 'solo';\n  }\n  if (s.includes('grande')) return pick('combo_entero');\n  if (s.includes('cuarto')) return pick('combo_cuarto');\n  if (s.includes('primo') || s.includes('combo medio') || s.includes('medio pollo') || s === 'medio') return pick('combo_medio');\n  if (s.includes('pollo entero') || s.includes('entero')) return pick('combo_entero');\n  if (s.includes('extra')) return 'extras';\n  return null;\n}\n\n// ── chequeos globales (cualquier paso) ──────────────────────────\nconst wantsHuman = has('operador', 'asesor', 'support', 'humano', 'hablar con alguien', 'hablar con una persona', 'hablar con el equipo', 'hablar con el dueno', 'quiero hablar con', 'reclamo')\n  || (has('no entiendo') && (state.retries || 0) >= 2)\n  || (has('problema') && state.step !== 'NEW');\n\nif (state.step === 'HANDOFF') {\n  // Staff is handling this chat manually — forward and stay quiet.\n  if (has('menu', 'volver al bot', 'pedir de nuevo')) {\n    resetOrder();\n    replies.push(MENU_TEXT);\n  } else {\n    staffAlert = `💬 ${state.customer_name || msg.phone} (${msg.phone}) sigue en handoff:\\n\"${raw}\"`;\n  }\n} else if (wantsHuman) {\n  replies.push('Un momento che, te paso con el equipo 👍');\n  staffAlert = `🚨 HANDOFF — ${state.customer_name || 'Cliente'} (${msg.phone})\\nPaso: ${state.step}\\nCarrito:\\n${cartLines() || '(vacío)'}\\nOrden: ${state.order_number || 'ninguna'}\\nÚltimo mensaje: \"${raw}\"`;\n  done('HANDOFF');\n} else if (has('cancelar', 'cancela', 'ya no quiero', 'olvidalo')) {\n  if (state.order_number && state.step === 'DONE') {\n    replies.push(`Dale, cancelamos tu orden ${state.order_number}. Sin problema, che. 👍`);\n    staffAlert = `⚠️ CANCELACIÓN — orden ${state.order_number} de ${state.customer_name || msg.phone} (${msg.phone}). Cancelar manualmente en el sistema.`;\n    resetOrder();\n    state.order_number = null;\n  } else {\n    resetOrder();\n    replies.push('Sin problema, che — borrón y cuenta nueva 🐔\\n\\n' + MENU_TEXT);\n  }\n} else if (has('chimichurri') && has('que lleva', 'ingredientes', 'de que es')) {\n  replies.push('Chimichurri Los Pollos Primos: ajo fresco, perejil, chile dulce, cebolla morada, aceite de oliva y vinagre de manzana. ¡Sabor único! 🌴');\n  if (!['NEW', 'DONE'].includes(state.step)) replies.push('¿Seguimos con tu pedido? 😄');\n} else if (state.order_number && has('estado', 'status', 'donde esta', 'cuanto falta', 'ya viene', 'ya esta') ) {\n  action = 'status_check';\n} else {\n  switch (state.step) {\n    case 'NEW':\n    case 'DONE':\n      replies.push(MENU_TEXT);\n      done('MENU');\n      break;\n\n    case 'MENU': {\n      const p = parseProduct(t);\n      if (p === 'solo') { replies.push('Dale, solo pollo 🍗 ¿Entero ($11), medio ($6) o cuarto ($3.50)?'); done('SOLO_SIZE'); break; }\n      if (p === 'extras') { replies.push('Va — ¿qué extra querés? Chimichurri ($1.00), tortillas (2 x $0.50 / 4 x $1.00 / 8 x $2.00) o cebolla (media $0.75 / entera $1.50)'); done('EXTRAS'); break; }\n      if (p && p.pid) {\n        addToCart(p.pid, p.qty);\n        replies.push(`Dale, ${p.qty}x ${PRICES[p.pid].name} 💪\\n¿Querés algo más? (podés escribir 'no' o elegir extras: chimichurri, tortillas, cebolla)`);\n        done('EXTRAS');\n        break;\n      }\n      fail(`Che, no entendí eso 😅 Dale, escribí el número (1, 2, 3, 4 o 5) o el nombre del combo (El Primo, El Primito, etc.)`);\n      break;\n    }\n\n    case 'SOLO_SIZE': {\n      let pid = null;\n      if (has('entero') || t === '1') pid = 'pollo_entero';\n      else if (has('medio') || t === '2') pid = 'pollo_medio';\n      else if (has('cuarto') || t === '3') pid = 'pollo_cuarto';\n      if (pid) {\n        addToCart(pid, 1);\n        replies.push(`Dale, ${PRICES[pid].name} 💪\\n¿Querés algo más? (extras: chimichurri, tortillas, cebolla — o escribí 'no')`);\n        done('EXTRAS');\n      } else fail('¿Entero, medio o cuarto, che?');\n      break;\n    }\n\n    case 'EXTRAS': {\n      const saysNo = /^(no\\b|nada\\b|nel\\b|ya\\b|listo\\b|solo eso|asi esta bien|nada mas)/.test(t);\n      if (saysNo) {\n        if (!state.cart.length) { replies.push('Todavía no tenés nada en el pedido 😅\\n\\n' + MENU_TEXT); done('MENU'); break; }\n        replies.push(`Anotado:\\n${cartLines()}\\n\\n¿Cómo querés — recoger o delivery? 🛵 (delivery solo desde Central: Zona 1 $1.00 / Zona 2 $1.50)`);\n        done('FULFILLMENT');\n        break;\n      }\n      const added = [];\n      const qm = t.match(/^(\\d+)\\s+/);\n      const q = qm ? Math.max(1, Math.min(20, parseInt(qm[1]))) : 1;\n      if (has('chimichurri', 'chimi')) { addToCart('chimichurri', q); added.push(PRICES.chimichurri.name); }\n      if (has('tortilla')) {\n        const pack = t.includes('8') ? 'tortillas_8' : (t.includes('2') ? 'tortillas_2' : 'tortillas_4');\n        addToCart(pack, 1);\n        added.push(PRICES[pack].name);\n      }\n      if (has('cebolla')) { const pid = has('entera') ? 'cebolla_entera' : 'cebolla_media'; addToCart(pid, q); added.push(PRICES[pid].name); }\n      if (!added.length) {\n        const p = parseProduct(t);\n        if (p && p.pid) { addToCart(p.pid, p.qty); added.push(`${p.qty}x ${PRICES[p.pid].name}`); }\n      }\n      if (added.length) replies.push(`Va: ${added.join(', ')} ✅ ¿Algo más? (o escribí 'no' para seguir)`);\n      else fail(`Che, no entendí eso 😅 Podés pedir chimichurri, tortillas (2/4/8) o cebolla — o escribí 'no' para seguir.`);\n      break;\n    }\n\n    case 'FULFILLMENT': {\n      if (has('delivery', 'domicilio', 'envio', 'envia', 'entrega', 'traer', 'llevar')) {\n        state.fulfillment = { type: 'delivery' };\n        replies.push('¿Cuál es tu dirección exacta? (Zona 1: $1.00 / Zona 2: $1.50 — delivery solo desde Central)');\n        done('ADDRESS');\n      } else if (has('recoger', 'recojo', 'paso por', 'pickup', 'retiro', 'central', 'mercado')) {\n        state.fulfillment = { type: 'pickup' };\n        if (has('central')) { state.fulfillment.pickup_location = 'central'; replies.push(summary()); done('CONFIRM'); }\n        else if (has('mercado')) { state.fulfillment.pickup_location = 'mercado'; replies.push(summary()); done('CONFIRM'); }\n        else { replies.push('¿Recoger en Central o Mercado Chalchuapa?'); done('PICKUP_LOC'); }\n      } else fail('¿Recoger o delivery, che? 🛵');\n      break;\n    }\n\n    case 'ADDRESS': {\n      if (raw.length < 8) { fail('Pasame la dirección completa porfa, con referencias 🙏'); break; }\n      state.fulfillment.delivery_address = raw;\n      const zm = t.match(/zona\\s*([12])/);\n      if (zm) { state.fulfillment.delivery_zone = parseInt(zm[1]); replies.push(summary()); done('CONFIRM'); }\n      else { replies.push('¿Zona 1 ($1.00) o Zona 2 ($1.50)?'); done('ZONE'); }\n      break;\n    }\n\n    case 'ZONE': {\n      const zm = t.match(/([12])/);\n      if (zm) { state.fulfillment.delivery_zone = parseInt(zm[1]); replies.push(summary()); done('CONFIRM'); }\n      else fail('¿Zona 1 o Zona 2, che?');\n      break;\n    }\n\n    case 'PICKUP_LOC': {\n      if (has('central')) state.fulfillment.pickup_location = 'central';\n      else if (has('mercado', 'chalchuapa')) state.fulfillment.pickup_location = 'mercado';\n      if (state.fulfillment.pickup_location) { replies.push(summary()); done('CONFIRM'); }\n      else fail('¿Central o Mercado Chalchuapa?');\n      break;\n    }\n\n    case 'CONFIRM': {\n      const yes = /^(si\\b|dale\\b|va\\b|ok\\b|okay\\b|listo\\b|simon\\b|claro\\b|correcto\\b|perfecto\\b|esta bien|de una|asi es)/.test(t) || raw.includes('✅') || raw.includes('👍');\n      const no = /^(no\\b|nel\\b|cambia|mejor no)/.test(t);\n      if (yes) {\n        replies.push(`¿Cómo querés pagar?\\n1️⃣ Efectivo al recibir/recoger\\n2️⃣ Pagar ahora con link`);\n        done('PAYMENT');\n      } else if (no) {\n        resetOrder();\n        replies.push('Dale, empecemos de nuevo 👍\\n\\n' + MENU_TEXT);\n      } else fail('¿Está bien el pedido? Respondé sí o no 🙏');\n      break;\n    }\n\n    case 'PAYMENT': {\n      let pm = null;\n      if (t === '1' || has('efectivo', 'cash', 'al recibir', 'al recoger', 'contra entrega')) pm = 'cash_on_delivery';\n      else if (t === '2' || has('link', 'tarjeta', 'pagar ahora', 'en linea', 'online')) pm = 'link_payment';\n      if (!pm) { fail('¿Efectivo (1) o link de pago (2)?'); break; }\n      state.payment_method = pm;\n      orderPayload = {\n        source: 'whatsapp',\n        location_id: state.fulfillment.type === 'delivery' ? 'central' : state.fulfillment.pickup_location,\n        customer_name: state.customer_name || 'Cliente WhatsApp',\n        customer_phone: msg.phone,\n        items: state.cart,\n        delivery: state.fulfillment.type === 'delivery'\n          ? { type: 'delivery', delivery_address: state.fulfillment.delivery_address, delivery_zone: state.fulfillment.delivery_zone }\n          : { type: 'pickup', pickup_location: state.fulfillment.pickup_location },\n        payment_method: pm,\n      };\n      action = 'create_order';\n      done('CREATING');\n      break;\n    }\n\n    default:\n      replies.push(MENU_TEXT);\n      done('MENU');\n  }\n}\n\nreturn [{ json: {\n  phone: msg.phone,\n  customer_name: state.customer_name || msg.name || '',\n  action,\n  replies,\n  staffAlert,\n  orderPayload,\n  order_number: state.order_number || '',\n  newStateJson: JSON.stringify(state),\n} }];"
+      }
+    },
+    {
+      "id": "route_action",
+      "name": "Route Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [880, 200],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 2 },
+                "conditions": [{ "id": "c1", "leftValue": "={{ $json.action }}", "rightValue": "create_order", "operator": { "type": "string", "operation": "equals" } }],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "create_order"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 2 },
+                "conditions": [{ "id": "c2", "leftValue": "={{ $json.action }}", "rightValue": "status_check", "operator": { "type": "string", "operation": "equals" } }],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "status_check"
+            }
+          ]
+        },
+        "options": { "fallbackOutput": "extra" }
+      }
+    },
+    {
+      "id": "create_order",
+      "name": "Create Order (Supabase)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 40],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Merge Config').first().json.cfg.SUPABASE_URL }}/functions/v1/create-order",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Merge Config').first().json.cfg.SUPABASE_ANON_KEY }}" },
+            { "name": "x-webhook-secret", "value": "={{ $('Merge Config').first().json.cfg.WHATSAPP_WEBHOOK_SECRET }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.orderPayload) }}",
+        "options": { "timeout": 15000 }
+      }
+    },
+    {
+      "id": "order_result",
+      "name": "Order Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 40],
+      "parameters": {
+        "jsCode": "const brain = $('Brain').first().json;\nconst res = $json || {};\nconst state = JSON.parse(brain.newStateJson);\nconst replies = [];\nlet staffAlert = null;\n\nif (res.order_number) {\n  state.order_number = res.order_number;\n  state.total = res.total;\n  state.step = 'DONE';\n  const total = Number(res.total).toFixed(2);\n  if (state.payment_method === 'link_payment') {\n    const tmpl = $('Merge Config').first().json.cfg.PAYMENT_GATEWAY_PLACEHOLDER || 'https://pay.example.com/{order_id}';\n    const link = tmpl.replace('{order_id}', res.order_number);\n    replies.push(`¡Listo! Tu orden es ${res.order_number} — total $${total} 🧾\\nPagá aquí: ${link}\\nUna vez confirmado, entregamos 🚀`);\n  } else {\n    const eta = state.fulfillment && state.fulfillment.type === 'delivery' ? 'Llega en ~30 min' : 'Lista en ~25 min';\n    replies.push(`¡Perfecto! Tu orden es ${res.order_number} — total $${total}. ${eta} ✅`);\n  }\n  replies.push(`¡Gracias por tu orden, che! 🐔 Si necesitás algo más, preguntá. Para hablar con alguien del equipo, escribí 'operador' o 'hablar con humano'.`);\n  const entrega = state.fulfillment.type === 'delivery'\n    ? `delivery Zona ${state.fulfillment.delivery_zone} — ${state.fulfillment.delivery_address}`\n    : `recoger en ${state.fulfillment.pickup_location}`;\n  staffAlert = `🧾 NUEVA ORDEN ${res.order_number} — $${total}\\n${state.customer_name || ''} (${brain.phone})\\n${state.cart.map(i => `• ${i.quantity}x ${i.product_id}`).join('\\n')}\\nEntrega: ${entrega}\\nPago: ${state.payment_method}`;\n} else {\n  // API failed — keep them at the payment step so they can retry\n  state.step = 'PAYMENT';\n  const apiErr = res.error || (res.body && res.body.error) || res.message || 'error desconocido';\n  replies.push(`Uy, hubo un problema creando tu orden 😅 Intentá de nuevo en un momento (respondé 1 para efectivo o 2 para link), o escribí 'operador' para hablar con el equipo.`);\n  staffAlert = `❌ ERROR creando orden de ${state.customer_name || ''} (${brain.phone}): ${JSON.stringify(apiErr).slice(0, 300)}`;\n}\n\nreturn [{ json: {\n  phone: brain.phone,\n  customer_name: brain.customer_name,\n  replies,\n  staffAlert,\n  order_number: state.order_number || '',\n  newStateJson: JSON.stringify(state),\n} }];"
+      }
+    },
+    {
+      "id": "get_status",
+      "name": "Get Order Status (Supabase)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 200],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Merge Config').first().json.cfg.SUPABASE_URL }}/functions/v1/order-status",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $json.phone }}" },
+            { "name": "order_number", "value": "={{ $json.order_number }}" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Merge Config').first().json.cfg.SUPABASE_ANON_KEY }}" }
+          ]
+        },
+        "options": { "timeout": 15000 }
+      }
+    },
+    {
+      "id": "status_result",
+      "name": "Status Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 200],
+      "parameters": {
+        "jsCode": "const brain = $('Brain').first().json;\nconst res = $json || {};\nconst MAP = {\n  confirmed: 'confirmada ✅',\n  preparing: 'en preparación 🔥',\n  ready: 'lista para recoger 🛍️',\n  out_for_delivery: 'en camino 🛵',\n  delivered: 'entregada ✅',\n  completed: 'completada ✅',\n  cancelled: 'cancelada ❌',\n};\nconst replies = [];\nif (res.order_number && res.status) {\n  let txt = `Tu orden ${res.order_number} está ${MAP[res.status] || res.status}.`;\n  if (res.eta_minutes) txt += ` Falta ~${res.eta_minutes} min ⏱️`;\n  replies.push(txt);\n} else {\n  replies.push(`No pude consultar tu orden ahorita 😅 Intentá en un ratito, o escribí 'operador' para hablar con el equipo.`);\n}\nreturn [{ json: {\n  phone: brain.phone,\n  customer_name: brain.customer_name,\n  replies,\n  staffAlert: null,\n  order_number: brain.order_number,\n  newStateJson: brain.newStateJson,\n} }];"
+      }
+    },
+    {
+      "id": "finalize",
+      "name": "Finalize",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1540, 200],
+      "parameters": {}
+    },
+    {
+      "id": "save_state",
+      "name": "Save State",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [1760, 340],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": { "__rl": true, "mode": "id", "value": "UmqYrQQPqSKxZ2bJ", "cachedResultName": "pollos_primos_conversations" },
+        "matchType": "allConditions",
+        "filters": { "conditions": [{ "keyName": "phone", "condition": "eq", "keyValue": "={{ $json.phone }}" }] },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "phone": "={{ $json.phone }}",
+            "state_json": "={{ $json.newStateJson }}",
+            "customer_name": "={{ $json.customer_name }}",
+            "updated_at": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": []
+        }
+      }
+    },
+    {
+      "id": "prep_sends",
+      "name": "Prep Sends",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 100],
+      "parameters": {
+        "jsCode": "// One output item per WhatsApp message to send (customer replies + staff alert).\nconst out = [];\nconst j = $json;\nfor (const r of (j.replies || [])) out.push({ json: { to: j.phone, text: r } });\nif (j.staffAlert) {\n  const staff = $('Merge Config').first().json.cfg.STAFF_WHATSAPP_NUMBER;\n  if (staff) out.push({ json: { to: staff, text: j.staffAlert } });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "send_whatsapp",
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1980, 100],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/{{ $('Merge Config').first().json.cfg.WHATSAPP_API_VERSION }}/{{ $('Merge Config').first().json.cfg.WHATSAPP_PHONE_ID }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Merge Config').first().json.cfg.WHATSAPP_ACCESS_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: $json.to, type: 'text', text: { preview_url: false, body: $json.text } }) }}",
+        "options": { "timeout": 15000 }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Verify (GET)": { "main": [[{ "node": "Get Verify Config", "type": "main", "index": 0 }]] },
+    "Get Verify Config": { "main": [[{ "node": "Verify Token", "type": "main", "index": 0 }]] },
+    "Verify Token": { "main": [[{ "node": "Respond Challenge", "type": "main", "index": 0 }]] },
+    "WhatsApp Webhook": { "main": [[{ "node": "Extract Message", "type": "main", "index": 0 }]] },
+    "Extract Message": { "main": [[{ "node": "Get Config", "type": "main", "index": 0 }]] },
+    "Get Config": { "main": [[{ "node": "Merge Config", "type": "main", "index": 0 }]] },
+    "Merge Config": { "main": [[{ "node": "Get State", "type": "main", "index": 0 }]] },
+    "Get State": { "main": [[{ "node": "Brain", "type": "main", "index": 0 }]] },
+    "Brain": { "main": [[{ "node": "Route Action", "type": "main", "index": 0 }]] },
+    "Route Action": { "main": [[{ "node": "Create Order (Supabase)", "type": "main", "index": 0 }], [{ "node": "Get Order Status (Supabase)", "type": "main", "index": 0 }], [{ "node": "Finalize", "type": "main", "index": 0 }]] },
+    "Create Order (Supabase)": { "main": [[{ "node": "Order Result", "type": "main", "index": 0 }]] },
+    "Get Order Status (Supabase)": { "main": [[{ "node": "Status Result", "type": "main", "index": 0 }]] },
+    "Order Result": { "main": [[{ "node": "Finalize", "type": "main", "index": 0 }]] },
+    "Status Result": { "main": [[{ "node": "Finalize", "type": "main", "index": 0 }]] },
+    "Finalize": { "main": [[{ "node": "Save State", "type": "main", "index": 0 }, { "node": "Prep Sends", "type": "main", "index": 0 }]] },
+    "Prep Sends": { "main": [[{ "node": "Send WhatsApp", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {}
+}
