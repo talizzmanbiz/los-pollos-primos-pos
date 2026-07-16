@@ -1,6 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { UserRole } from '../types/database';
 
