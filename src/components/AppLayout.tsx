@@ -25,10 +25,18 @@ const NAV: NavItem[] = [
 
 export default function AppLayout() {
   const { profile, location, signOut } = useAuth();
-  const [showProfile, setShowProfile] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [passwordMsg, setPasswordMsg] = useState<string | null>(null);
   if (!profile) return null;
+
+  async function handleChangePassword() {
+    const newPwd = window.prompt('Nueva contraseña:');
+    if (!newPwd) return;
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPwd });
+      alert(error ? `Error: ${error.message}` : 'Contraseña actualizada ✓');
+    } catch (err) {
+      alert(`Error: ${err}`);
+    }
+  }
 
   const isSuper = profile.role === 'superadmin';
   const visible = NAV.filter((item) => {
@@ -64,8 +72,9 @@ export default function AppLayout() {
         </nav>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setShowProfile(true)}
+            onClick={handleChangePassword}
             className="rounded-lg px-3 py-2 text-sm text-white hover:bg-brand-600 cursor-pointer"
+            title="Click para cambiar contraseña"
           >
             {profile.full_name}
           </button>
@@ -80,66 +89,6 @@ export default function AppLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
-
-      {showProfile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="mb-4 text-xl font-bold text-gray-900">Perfil: {profile.full_name}</h3>
-            <p className="mb-4 text-sm text-gray-600">{profile.email}</p>
-
-            <div className="mb-6 rounded-lg bg-gray-50 p-4">
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Nueva contraseña
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Ingresá tu nueva contraseña"
-                className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2"
-              />
-              <button
-                onClick={async () => {
-                  if (!newPassword.trim()) {
-                    setPasswordMsg('Ingresá una contraseña');
-                    return;
-                  }
-                  setPasswordMsg('Actualizando...');
-                  try {
-                    const { error } = await supabase.auth.updateUser({ password: newPassword });
-                    if (error) {
-                      setPasswordMsg(`Error: ${error.message}`);
-                    } else {
-                      setPasswordMsg('Contraseña actualizada ✓');
-                      setNewPassword('');
-                      setTimeout(() => setShowProfile(false), 1500);
-                    }
-                  } catch (err) {
-                    setPasswordMsg(`Error: ${err}`);
-                  }
-                }}
-                className="w-full rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700"
-              >
-                Cambiar contraseña
-              </button>
-              {passwordMsg && (
-                <p className="mt-2 text-sm text-gray-600">{passwordMsg}</p>
-              )}
-            </div>
-
-            <button
-              onClick={() => {
-                setShowProfile(false);
-                setPasswordMsg(null);
-                setNewPassword('');
-              }}
-              className="w-full rounded-lg border border-gray-300 py-2 text-gray-600 hover:bg-gray-50"
-            >
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
