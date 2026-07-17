@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
@@ -86,7 +86,7 @@ export default function PosPage() {
     setShowCustomer(false);
   }
 
-  async function confirmPayment(cashReceived: number) {
+  const confirmPayment = useCallback(async (cashReceived: number) => {
     if (!profile || !location) return;
     const result = await createOrder({
       locationId: location.id,
@@ -125,7 +125,7 @@ export default function PosPage() {
       receipt,
     });
     clearSale();
-  }
+  }, [profile, location, cart, customer, subtotal]);
 
   if (loading) return <p className="p-6 text-lg">Cargando catálogo…</p>;
   if (error) return <p className="p-6 text-lg text-red-600">{error}</p>;
