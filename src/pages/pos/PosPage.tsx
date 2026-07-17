@@ -88,7 +88,6 @@ export default function PosPage() {
 
   async function confirmPayment(cashReceived: number) {
     if (!profile || !location || cart.length === 0) return;
-    setPaying(false);
     const result = await createOrder({
       locationId: location.id,
       isProductionLocation: location.is_production,
@@ -97,6 +96,7 @@ export default function PosPage() {
       customer,
       subtotal,
     });
+    setPaying(false);
     if ('error' in result) {
       alert(`No se pudo crear el pedido: ${result.error}`);
       return;

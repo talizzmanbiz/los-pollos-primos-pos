@@ -70,7 +70,9 @@
       "Bash(git commit *)",
       "Bash(git push *)",
       "PowerShell(Get-Process node | Where-Object {$_.Handles -gt 0} | Stop-Process -Force 2>$null; Write-Host \"Processes stopped\")",
-      "Bash(git commit -m 'Fix: remove useCallback from confirmPayment - use simple async function instead *)"
+      "Bash(git commit -m 'Fix: remove useCallback from confirmPayment - use simple async function instead *)",
+      "Bash(npx supabase *)",
+      "Bash(git commit -m 'Fix: move setPaying\\(false\\) AFTER createOrder completes *)"
     ]
   }
 }
