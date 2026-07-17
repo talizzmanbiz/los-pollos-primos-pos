@@ -81,12 +81,14 @@ export async function createPaymentLink(req: PaymentLinkRequest): Promise<string
         nombreProducto: `Pedido ${req.orderNumber} — Los Pollos Primos`,
         // At least one method must be enabled. Card is the one requested;
         // flip these on once the corresponding methods are active on the
-        // Wompi account.
+        // Wompi account. NOTE: Wompi's API spells the card flag
+        // "PermitirTarjetaCreditoDebido" (not "…Debito") — the exact key
+        // matters; a mismatch makes Wompi treat all methods as disabled.
         formaPago: {
-          permitirTarjetaCreditoDebito: true,
+          permitirTarjetaCreditoDebido: true,
           permitirPagoConPuntoAgricola: false,
           permitirPagoEnCuotasAgricola: false,
-          permitePagoQuickPay: false,
+          permitirPagoEnBitcoin: false,
         },
         infoProducto: {
           descripcionProducto: `Pedido ${req.orderNumber} de Los Pollos Primos`,
