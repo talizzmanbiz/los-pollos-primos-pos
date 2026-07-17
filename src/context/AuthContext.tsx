@@ -33,7 +33,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     });
-    return () => sub.subscription.unsubscribe();
+    // If the refresh token dies (revoked, expired, used twice), supabase-js
+    // can fail silently and fall back to anon — the UI looks logged in but
+    // every write gets rejected. Re-validate whenever the tab regains focus
+    // so the user lands on /login instead of hitting cryptic RLS errors.
+    const revalidate = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) setSession(null);
+    };
+    window.addEventListener('focus', revalidate);
+    return () => {
+      sub.subscription.unsubscribe();
+      window.removeEventListener('focus', revalidate);
+    };
   }, []);
 
   useEffect(() => {

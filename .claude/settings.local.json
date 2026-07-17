@@ -74,7 +74,8 @@
       "Bash(npx supabase *)",
       "Bash(git commit -m 'Fix: move setPaying\\(false\\) AFTER createOrder completes *)",
       "Bash(git commit -m 'Fix: superadmin could not ring POS sales — two stacked bugs *)",
-      "Bash(git commit -m 'Add superadmin location switcher + open full access to admin role *)"
+      "Bash(git commit -m 'Add superadmin location switcher + open full access to admin role *)",
+      "Bash(git commit -m 'Detect dead auth sessions instead of failing writes as anonymous *)"
     ]
   }
 }

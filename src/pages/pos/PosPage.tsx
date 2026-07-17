@@ -90,6 +90,14 @@ export default function PosPage() {
 
   async function confirmPayment(cashReceived: number) {
     if (!profile || !location || cart.length === 0) return;
+    // guard against a silently-dead session (expired/revoked refresh token):
+    // getSession() re-refreshes if needed and returns null when that fails
+    const { data: sess } = await supabase.auth.getSession();
+    if (!sess.session) {
+      alert('Tu sesión expiró — volvé a iniciar sesión.');
+      window.location.href = '/login';
+      return;
+    }
     const result = await createOrder({
       locationId: location.id,
       isProductionLocation: location.is_production,
