@@ -66,7 +66,11 @@
       "Bash(git init *)",
       "Bash(git remote *)",
       "Bash(git config *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "PowerShell(Get-Process node | Where-Object {$_.Handles -gt 0} | Stop-Process -Force 2>$null; Write-Host \"Processes stopped\")",
+      "Bash(git commit -m 'Fix: remove useCallback from confirmPayment - use simple async function instead *)"
     ]
   }
 }
