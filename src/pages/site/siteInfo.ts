@@ -26,8 +26,10 @@ export const site = {
   // ── Contact — REAL DATA REQUIRED for Meta compliance ─────────────────
   // Public WhatsApp Business number in international format, digits only
   // (e.g. '50371234567'). Leave '' to hide the WhatsApp button.
-  whatsappNumber: '50372830282',
-  whatsappDisplay: '+503 7283 0282',
+  // Public WhatsApp = the chatbot line where customers place orders (not the
+  // internal staff number 7283 0282).
+  whatsappNumber: '50370476975',
+  whatsappDisplay: '+503 7047 6975',
   email: 'admin@los-pollosprimos.com',
   // Street / reference address of Sucursal Central for the "dirección física".
   addressLine:
