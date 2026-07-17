@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
+import { useWorkingLocation } from '../../hooks/useWorkingLocation';
 import { useCatalog, type CatalogProduct } from '../../hooks/useCatalog';
 import { createOrder, type CartLine, type CustomerInfo } from './createOrder';
 import { startOfflineSync, pendingCount } from '../../lib/offlineQueue';
@@ -17,7 +18,8 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default function PosPage() {
-  const { profile, location } = useAuth();
+  const { profile } = useAuth();
+  const { location, loading: locationLoading } = useWorkingLocation();
   const { products, loading, error } = useCatalog();
   const [cart, setCart] = useState<CartLine[]>([]);
   const [customer, setCustomer] = useState<CustomerInfo>({ name: '', phone: '', email: '' });
@@ -127,8 +129,9 @@ export default function PosPage() {
     clearSale();
   }
 
-  if (loading) return <p className="p-6 text-lg">Cargando catálogo…</p>;
+  if (loading || locationLoading) return <p className="p-6 text-lg">Cargando catálogo…</p>;
   if (error) return <p className="p-6 text-lg text-red-600">{error}</p>;
+  if (!location) return <p className="p-6 text-lg text-red-600">Sin sucursal asignada — contactá al administrador.</p>;
 
   const groups = ['combo', 'chicken', 'extra', 'beverage']
     .map((t) => ({ type: t, items: products.filter((p) => p.product_type === t) }))

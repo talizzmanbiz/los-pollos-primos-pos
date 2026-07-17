@@ -2,13 +2,15 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money, fmtDateTime, fmtTime } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
+import { useWorkingLocation } from '../../hooks/useWorkingLocation';
 import type { Tables } from '../../types/database';
 
 type Session = Tables<'cash_sessions'>;
 type Movement = Tables<'cash_movements'>;
 
 export default function CashPage() {
-  const { profile, location } = useAuth();
+  const { profile } = useAuth();
+  const { location } = useWorkingLocation();
   const [session, setSession] = useState<Session | null>(null);
   const [movements, setMovements] = useState<Movement[]>([]);
   const [history, setHistory] = useState<Session[]>([]);

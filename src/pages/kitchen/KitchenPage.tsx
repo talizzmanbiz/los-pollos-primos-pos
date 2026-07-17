@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useWorkingLocation } from '../../hooks/useWorkingLocation';
 import { useOrdersQueue, setOrderStatus, type QueueOrder } from '../../hooks/useOrdersQueue';
 import { useCatalog } from '../../hooks/useCatalog';
 import { minutesSince } from '../../lib/format';
@@ -90,7 +91,8 @@ function Ticket({
 }
 
 export default function KitchenPage() {
-  const { location, profile } = useAuth();
+  const { profile } = useAuth();
+  const { location, loading: locationLoading } = useWorkingLocation();
   const locationId = location?.id;
   const { orders, loading } = useOrdersQueue(locationId, ['received', 'in_progress']);
   const { products } = useCatalog();
@@ -103,6 +105,7 @@ export default function KitchenPage() {
   }, []);
 
   if (!profile) return null;
+  if (locationLoading) return <p className="p-6 text-lg text-gray-400">Cargando…</p>;
   if (!locationId) {
     return (
       <p className="p-6 text-lg text-gray-600">

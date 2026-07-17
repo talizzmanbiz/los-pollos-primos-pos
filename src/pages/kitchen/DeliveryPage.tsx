@@ -1,4 +1,4 @@
-import { useAuth } from '../../context/AuthContext';
+import { useWorkingLocation } from '../../hooks/useWorkingLocation';
 import { useOrdersQueue, setOrderStatus, type QueueOrder } from '../../hooks/useOrdersQueue';
 import { minutesSince, money } from '../../lib/format';
 
@@ -61,9 +61,10 @@ function ReadyCard({ order }: { order: QueueOrder }) {
 }
 
 export default function DeliveryPage() {
-  const { location } = useAuth();
+  const { location, loading: locationLoading } = useWorkingLocation();
   const { orders, loading } = useOrdersQueue(location?.id, ['ready', 'out_for_delivery']);
 
+  if (locationLoading) return <p className="p-6 text-lg text-gray-400">Cargando…</p>;
   if (!location) {
     return <p className="p-6 text-lg text-gray-600">Iniciá sesión con una cuenta de sucursal.</p>;
   }
