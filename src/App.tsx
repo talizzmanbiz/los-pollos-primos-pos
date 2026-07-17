@@ -15,11 +15,27 @@ import AdminPage from './pages/admin/AdminPage';
 import StorePage, { StoreLayout } from './pages/store/StorePage';
 import CheckoutPage from './pages/store/CheckoutPage';
 import OrderStatusPage from './pages/store/OrderStatusPage';
+import SiteLayout from './pages/site/SiteLayout';
+import Landing from './pages/site/Landing';
+import AboutPage from './pages/site/AboutPage';
+import ContactPage from './pages/site/ContactPage';
+import PrivacyPage from './pages/site/PrivacyPage';
+import TermsPage from './pages/site/TermsPage';
 
 export default function App() {
   return (
     <Routes>
-      {/* public storefront — los-pollosprimos.com */}
+      {/* public marketing site — los-pollosprimos.com (apex).
+          On the pos.* host, SiteLayout redirects to the POS dashboard. */}
+      <Route element={<SiteLayout />}>
+        <Route path="/" element={<Landing />} />
+        <Route path="/nosotros" element={<AboutPage />} />
+        <Route path="/contacto" element={<ContactPage />} />
+        <Route path="/privacidad" element={<PrivacyPage />} />
+        <Route path="/terminos" element={<TermsPage />} />
+      </Route>
+
+      {/* public storefront — los-pollosprimos.com/tienda */}
       <Route path="/tienda" element={<StoreLayout />}>
         <Route index element={<StorePage />} />
         <Route path="checkout" element={<CheckoutPage />} />
@@ -31,7 +47,7 @@ export default function App() {
       {/* internal POS — requires auth + active profile */}
       <Route element={<RequireAuth />}>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/inicio" element={<Home />} />
           <Route
             path="/pos"
             element={

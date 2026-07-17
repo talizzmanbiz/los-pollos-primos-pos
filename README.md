@@ -24,10 +24,16 @@ VITE_SUPABASE_ANON_KEY=sb_publishable_…
 
 ## Rutas
 
+Un solo build de Vite sirve dos dominios; se distinguen por `hostname` en runtime
+(`isPosHost()` en `src/pages/site/siteInfo.ts`):
+**apex `los-pollosprimos.com` → sitio del cliente**, **`pos.los-pollosprimos.com` → POS**.
+
 | Ruta | Quién | Qué |
 |---|---|---|
+| `/`, `/nosotros`, `/contacto`, `/privacidad`, `/terminos` | Público (los-pollosprimos.com) | Sitio del cliente: inicio, nosotros, contacto, legales |
 | `/tienda`, `/tienda/checkout`, `/tienda/estado` | Público (los-pollosprimos.com) | Catálogo, checkout de invitado, estado del pedido |
 | `/login` | Personal | Inicio de sesión |
+| `/inicio` | Personal | Panel del POS (antes en `/`; en el host `pos.` la raíz redirige aquí) |
 | `/pos` | admin, cajero | Venta en mostrador (efectivo, captura opcional de cliente, impresión) |
 | `/kitchen` | admin, cocina (solo Central) | Pantalla de cocina en tiempo real (todas las fuentes) |
 | `/delivery` | admin, cajero, repartidor | Pedidos listos / en camino |

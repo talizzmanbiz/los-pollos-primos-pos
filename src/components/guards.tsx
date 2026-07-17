@@ -33,7 +33,7 @@ export function RoleGuard({ roles, children }: { roles: UserRole[]; children: Re
   const { profile } = useAuth();
   if (!profile) return null;
   if (profile.role !== 'superadmin' && !roles.includes(profile.role)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/inicio" replace />;
   }
   return <>{children}</>;
 }
@@ -46,7 +46,7 @@ export function ProductionLocationGuard({ children }: { children: ReactNode }) {
   const { profile, location } = useAuth();
   if (!profile) return null;
   if (profile.role !== 'superadmin' && !location?.is_production) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/inicio" replace />;
   }
   return <>{children}</>;
 }
