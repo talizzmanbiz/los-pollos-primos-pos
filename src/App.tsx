@@ -103,7 +103,7 @@ export default function App() {
           <Route
             path="/admin"
             element={
-              <RoleGuard roles={[]}>
+              <RoleGuard roles={['admin']}>
                 <AdminPage />
               </RoleGuard>
             }

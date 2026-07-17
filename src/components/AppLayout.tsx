@@ -1,5 +1,9 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import {
+  WorkingLocationProvider,
+  useWorkingLocationContext,
+} from '../context/WorkingLocationContext';
 import { supabase } from '../lib/supabase';
 import type { UserRole } from '../types/database';
 
@@ -19,8 +23,31 @@ const NAV: NavItem[] = [
   { to: '/inventory', label: 'Inventario', roles: ['admin', 'cajero'] },
   { to: '/transfers', label: 'Transferencias', roles: ['admin'] },
   { to: '/reports', label: 'Reportes', roles: ['admin'] },
-  { to: '/admin', label: 'Administración', roles: [] }, // superadmin only
+  { to: '/admin', label: 'Administración', roles: ['admin'] },
 ];
+
+function LocationSwitcher() {
+  const { location, locations, canSwitch, setLocationId } = useWorkingLocationContext();
+  if (!canSwitch) {
+    return (
+      <span className="text-sm opacity-80">{location ? location.name : 'Cargando…'}</span>
+    );
+  }
+  return (
+    <select
+      value={location?.id ?? ''}
+      onChange={(e) => setLocationId(e.target.value)}
+      className="rounded-lg border border-brand-500 bg-brand-600 px-2 py-1 text-sm text-white"
+      title="Cambiar de sucursal"
+    >
+      {locations.map((l) => (
+        <option key={l.id} value={l.id}>
+          {l.name}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export default function AppLayout() {
   const { profile, location, signOut } = useAuth();
@@ -46,48 +73,48 @@ export default function AppLayout() {
   });
 
   return (
-    <div className="flex min-h-screen flex-col bg-brand-50">
-      <header className="flex items-center justify-between gap-2 bg-brand-700 px-4 py-2 text-white">
-        <div className="flex items-baseline gap-3">
-          <span className="text-lg font-bold">Los Pollos Primos</span>
-          <span className="text-sm opacity-80">
-            {location ? location.name : 'Todas las sucursales'}
-          </span>
-        </div>
-        <nav className="flex flex-wrap items-center gap-1 overflow-x-auto">
-          {visible.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `rounded-lg px-3 py-2 text-base font-medium ${
-                  isActive ? 'bg-white text-brand-700' : 'hover:bg-brand-600'
-                }`
-              }
+    <WorkingLocationProvider>
+      <div className="flex min-h-screen flex-col bg-brand-50">
+        <header className="flex items-center justify-between gap-2 bg-brand-700 px-4 py-2 text-white">
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-bold">Los Pollos Primos</span>
+            <LocationSwitcher />
+          </div>
+          <nav className="flex flex-wrap items-center gap-1 overflow-x-auto">
+            {visible.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `rounded-lg px-3 py-2 text-base font-medium ${
+                    isActive ? 'bg-white text-brand-700' : 'hover:bg-brand-600'
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleChangePassword}
+              className="rounded-lg px-3 py-2 text-sm text-white hover:bg-brand-600 cursor-pointer"
+              title="Click para cambiar contraseña"
             >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleChangePassword}
-            className="rounded-lg px-3 py-2 text-sm text-white hover:bg-brand-600 cursor-pointer"
-            title="Click para cambiar contraseña"
-          >
-            {profile.full_name}
-          </button>
-          <button
-            onClick={signOut}
-            className="rounded-lg bg-brand-800 px-3 py-2 text-sm hover:bg-brand-900"
-          >
-            Salir
-          </button>
-        </div>
-      </header>
-      <main className="flex-1">
-        <Outlet />
-      </main>
-    </div>
+              {profile.full_name}
+            </button>
+            <button
+              onClick={signOut}
+              className="rounded-lg bg-brand-800 px-3 py-2 text-sm hover:bg-brand-900"
+            >
+              Salir
+            </button>
+          </div>
+        </header>
+        <main className="flex-1">
+          <Outlet />
+        </main>
+      </div>
+    </WorkingLocationProvider>
   );
 }

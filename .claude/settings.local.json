@@ -73,7 +73,8 @@
       "Bash(git commit -m 'Fix: remove useCallback from confirmPayment - use simple async function instead *)",
       "Bash(npx supabase *)",
       "Bash(git commit -m 'Fix: move setPaying\\(false\\) AFTER createOrder completes *)",
-      "Bash(git commit -m 'Fix: superadmin could not ring POS sales — two stacked bugs *)"
+      "Bash(git commit -m 'Fix: superadmin could not ring POS sales — two stacked bugs *)",
+      "Bash(git commit -m 'Add superadmin location switcher + open full access to admin role *)"
     ]
   }
 }
