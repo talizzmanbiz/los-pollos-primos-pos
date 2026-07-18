@@ -26,6 +26,10 @@ export function useOrdersQueue(locationId: string | undefined, statuses: OrderSt
       .select('*, order_items(*, product:products(*))')
       .eq('location_id', locationId)
       .in('status', statuses)
+      // Hide online orders that require payment but aren't paid yet, so the
+      // kitchen never starts a pedido web hasta que Wompi lo confirma. Cash /
+      // POS orders (payment_method cash or null) always show.
+      .or('payment_method.is.null,payment_method.neq.payment_link,payment_status.eq.paid')
       .order('created_at');
     setOrders((data as QueueOrder[] | null) ?? []);
     setLoading(false);
