@@ -60,13 +60,18 @@ Deno.serve(async (req: Request) => {
   if (!['cash', 'payment_link'].includes(body.payment_method)) {
     return bad('payment_method inválido');
   }
+  // Online orders must be paid online (avoids no-show pickups).
+  if (body.source === 'online' && body.payment_method !== 'payment_link') {
+    return bad('El pago en línea es obligatorio para pedidos web');
+  }
 
   const admin = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
-  const locationCode = (body.location_code ?? 'C').toUpperCase();
+  // Online orders are always Sucursal Central (Mercado is never an online option).
+  const locationCode = body.source === 'online' ? 'C' : (body.location_code ?? 'C').toUpperCase();
   const { data: location } = await admin
     .from('locations')
     .select('*')
@@ -169,7 +174,12 @@ Deno.serve(async (req: Request) => {
       customerPhone: body.customer_phone,
     });
     if (!paymentUrl) {
-      // gateway not configured yet — order stays valid as cash on pickup/delivery
+      if (body.source === 'online') {
+        // Online payment is mandatory — cancel rather than leave an unpaid order.
+        await admin.from('orders').update({ status: 'cancelled' }).eq('id', order.id);
+        return bad('No pudimos generar el enlace de pago. Intentá de nuevo.', 502);
+      }
+      // WhatsApp: fall back to cash so the sale isn't blocked.
       await admin.from('orders').update({ payment_method: 'cash' }).eq('id', order.id);
     }
   }

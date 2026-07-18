@@ -23,13 +23,11 @@ export default function CheckoutPage() {
   const [zones, setZones] = useState<Zone[]>([]);
 
   const [mode, setMode] = useState<'pickup' | 'delivery'>('pickup');
-  const [locationCode, setLocationCode] = useState('C');
   const [zoneId, setZoneId] = useState('');
   const [address, setAddress] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [payment, setPayment] = useState<'cash' | 'payment_link'>('cash');
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,22 +51,27 @@ export default function CheckoutPage() {
   if (confirmation) {
     return (
       <div className="mx-auto max-w-md rounded-2xl bg-white p-8 text-center shadow">
-        <p className="text-5xl">🎉</p>
-        <h2 className="mt-3 text-2xl font-bold text-gray-900">¡Pedido recibido!</h2>
+        <p className="text-5xl">🧾</p>
+        <h2 className="mt-3 text-2xl font-bold text-gray-900">¡Casi listo!</h2>
         <p className="mt-2 text-3xl font-bold text-brand-600">{confirmation.order_number}</p>
         <p className="mt-2 text-gray-600">
           Total {money(confirmation.total)} · listo en ~{confirmation.estimated_minutes} min
         </p>
         {confirmation.payment_url ? (
-          <a
-            href={confirmation.payment_url}
-            className="mt-6 block rounded-xl bg-green-600 py-3 text-lg font-bold text-white"
-          >
-            Pagar en línea
-          </a>
+          <>
+            <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-amber-800">
+              Tu pedido se confirma al completar el pago.
+            </p>
+            <a
+              href={confirmation.payment_url}
+              className="mt-4 block rounded-xl bg-green-600 py-3 text-lg font-bold text-white"
+            >
+              Pagar ahora · {money(confirmation.total)}
+            </a>
+          </>
         ) : (
-          <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-amber-800">
-            Pagás en efectivo al {mode === 'delivery' ? 'recibir' : 'recoger'} tu pedido.
+          <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-red-700">
+            No pudimos generar el enlace de pago. Escribinos por WhatsApp o intentá de nuevo.
           </p>
         )}
         <p className="mt-4 text-sm text-gray-500">
@@ -106,14 +109,14 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           source: 'online',
-          location_code: mode === 'delivery' ? 'C' : locationCode,
+          location_code: 'C', // online orders are always Sucursal Central
           order_type: mode,
           customer_name: name,
           customer_phone: phone,
           customer_email: email || undefined,
           delivery_address: mode === 'delivery' ? address : undefined,
           delivery_zone_id: mode === 'delivery' ? zoneId : undefined,
-          payment_method: payment,
+          payment_method: 'payment_link', // online payment is mandatory
           notes: notes || undefined,
           items: cart.map((l) => ({ sku: l.sku, quantity: l.quantity })),
         }),
@@ -196,18 +199,9 @@ export default function CheckoutPage() {
           </div>
 
           {mode === 'pickup' ? (
-            <div>
-              <label className="mb-1 block text-sm text-gray-600">Sucursal</label>
-              <select
-                value={locationCode}
-                onChange={(e) => setLocationCode(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-3"
-              >
-                {locations.map((l) => (
-                  <option key={l.id} value={l.code}>{l.name}</option>
-                ))}
-              </select>
-            </div>
+            <p className="rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800">
+              Recogé en {central?.name ?? 'Sucursal Central'}.
+            </p>
           ) : (
             <>
               <p className="rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800">
@@ -262,29 +256,9 @@ export default function CheckoutPage() {
               className="w-full rounded-lg border border-gray-300 px-3 py-3" />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm text-gray-600">Pago</label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setPayment('cash')}
-                className={`flex-1 rounded-xl py-3 font-semibold ${payment === 'cash' ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600'}`}
-              >
-                💵 Efectivo
-              </button>
-              <button
-                type="button"
-                onClick={() => setPayment('payment_link')}
-                className={`flex-1 rounded-xl py-3 font-semibold ${payment === 'payment_link' ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600'}`}
-              >
-                💳 Enlace de pago
-              </button>
-            </div>
-            {payment === 'payment_link' && (
-              <p className="mt-2 text-xs text-gray-500">
-                Si el pago en línea no está disponible, tu pedido queda como pago en efectivo.
-              </p>
-            )}
+          <div className="rounded-lg bg-brand-50 px-3 py-3 text-sm text-brand-800">
+            💳 <span className="font-semibold">Pago en línea con tarjeta.</span> Al confirmar te llevamos
+            a la pasarela segura de Wompi para completar tu pedido.
           </div>
 
           {error && <p className="text-red-600">{error}</p>}
