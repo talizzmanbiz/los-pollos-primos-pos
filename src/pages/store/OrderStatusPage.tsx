@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FUNCTIONS_URL } from '../../lib/supabase';
 import { money, fmtDateTime } from '../../lib/format';
+import ReviewForm from './ReviewForm';
 
 interface StatusResponse {
   order_number: string;
@@ -202,6 +203,8 @@ export default function OrderStatusPage() {
             ))}
             <p className="mt-2 text-lg font-bold text-gray-900">Total {money(result.total)}</p>
           </div>
+
+          {result.status === 'completed' && <ReviewForm orderNumber={result.order_number} />}
 
           <div className="mt-4 flex gap-2">
             <Link

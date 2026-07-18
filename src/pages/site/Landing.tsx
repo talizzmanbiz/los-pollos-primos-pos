@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { site, whatsappLink } from './siteInfo';
 import { useSeo } from './useSeo';
+import Testimonials from './Testimonials';
 
 const STEPS = [
   { n: '1', title: 'Elegí tu pollo', desc: 'Entero, medio o cuarto, combos y guarniciones. Todo desde el menú en línea.' },
@@ -73,6 +74,9 @@ export default function Landing() {
           ))}
         </div>
       </section>
+
+      {/* Testimonios (aparece solo si hay reseñas aprobadas) */}
+      <Testimonials />
 
       {/* Horarios + delivery */}
       <section className="bg-white">

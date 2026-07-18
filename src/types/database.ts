@@ -773,6 +773,44 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          approved: boolean
+          comment: string | null
+          created_at: string
+          customer_name: string | null
+          id: string
+          order_id: string | null
+          rating: number
+        }
+        Insert: {
+          approved?: boolean
+          comment?: string | null
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          order_id?: string | null
+          rating: number
+        }
+        Update: {
+          approved?: boolean
+          comment?: string | null
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          order_id?: string | null
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transfer_items: {
         Row: {
           id: string
@@ -940,3 +978,4 @@ export type Location = Tables<"locations">
 export type Product = Tables<"products">
 export type Order = Tables<"orders">
 export type OrderItem = Tables<"order_items">
+export type Review = Tables<"reviews">

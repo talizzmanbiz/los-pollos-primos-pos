@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { supabase, FUNCTIONS_URL } from '../../lib/supabase';
 import { money } from '../../lib/format';
-import type { Tables, UserRole } from '../../types/database';
+import type { Tables, UserRole, Review } from '../../types/database';
 
 type Profile = Tables<'profiles'> & { location: { name: string } | null };
 type Product = Tables<'products'>;
@@ -19,7 +19,8 @@ export default function AdminPage() {
   const [staff, setStaff] = useState<Profile[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [tab, setTab] = useState<'staff' | 'products'>('staff');
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [tab, setTab] = useState<'staff' | 'products' | 'reviews'>('staff');
 
   // new staff form
   const [showForm, setShowForm] = useState(false);
@@ -36,14 +37,16 @@ export default function AdminPage() {
   const [editCost, setEditCost] = useState('');
 
   const refetch = useCallback(async () => {
-    const [staffRes, prodRes, locRes] = await Promise.all([
+    const [staffRes, prodRes, locRes, revRes] = await Promise.all([
       supabase.from('profiles').select('*, location:locations(name)').order('created_at'),
       supabase.from('products').select('*').order('sort_order'),
       supabase.from('locations').select('*').eq('active', true),
+      supabase.from('reviews').select('*').order('created_at', { ascending: false }),
     ]);
     setStaff((staffRes.data as Profile[] | null) ?? []);
     setProducts(prodRes.data ?? []);
     setLocations(locRes.data ?? []);
+    setReviews(revRes.data ?? []);
   }, []);
 
   useEffect(() => {
@@ -99,6 +102,19 @@ export default function AdminPage() {
     refetch();
   }
 
+  async function toggleApprove(r: Review) {
+    await supabase.from('reviews').update({ approved: !r.approved }).eq('id', r.id);
+    refetch();
+  }
+
+  async function deleteReview(r: Review) {
+    if (!confirm('¿Eliminar esta reseña? No se puede deshacer.')) return;
+    await supabase.from('reviews').delete().eq('id', r.id);
+    refetch();
+  }
+
+  const pendingReviews = reviews.filter((r) => !r.approved).length;
+
   return (
     <div className="mx-auto max-w-5xl p-6">
       <h1 className="mb-4 text-2xl font-bold text-brand-900">Administración</h1>
@@ -110,6 +126,15 @@ export default function AdminPage() {
         <button onClick={() => setTab('products')}
           className={`rounded-lg px-4 py-2 font-medium ${tab === 'products' ? 'bg-brand-600 text-white' : 'bg-white text-gray-700 shadow'}`}>
           Catálogo
+        </button>
+        <button onClick={() => setTab('reviews')}
+          className={`rounded-lg px-4 py-2 font-medium ${tab === 'reviews' ? 'bg-brand-600 text-white' : 'bg-white text-gray-700 shadow'}`}>
+          Reseñas
+          {pendingReviews > 0 && (
+            <span className="ml-2 rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold text-amber-900">
+              {pendingReviews}
+            </span>
+          )}
         </button>
       </div>
 
@@ -257,6 +282,54 @@ export default function AdminPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {tab === 'reviews' && (
+        <div className="space-y-3">
+          {reviews.length === 0 && (
+            <p className="rounded-2xl bg-white p-6 text-center text-gray-500 shadow">
+              Aún no hay reseñas.
+            </p>
+          )}
+          {reviews.map((r) => (
+            <div key={r.id} className="rounded-2xl bg-white p-4 shadow">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-amber-400">
+                    {'★'.repeat(r.rating)}
+                    <span className="text-gray-300">{'★'.repeat(5 - r.rating)}</span>
+                  </p>
+                  {r.comment && <p className="mt-1 text-gray-700">“{r.comment}”</p>}
+                  <p className="mt-1 text-sm text-gray-500">
+                    {r.customer_name?.trim() || 'Cliente'} ·{' '}
+                    {new Date(r.created_at).toLocaleDateString('es-SV')}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${
+                    r.approved ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                  }`}
+                >
+                  {r.approved ? 'Publicada' : 'Pendiente'}
+                </span>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => toggleApprove(r)}
+                  className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  {r.approved ? 'Ocultar' : 'Publicar'}
+                </button>
+                <button
+                  onClick={() => deleteReview(r)}
+                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-red-600"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
