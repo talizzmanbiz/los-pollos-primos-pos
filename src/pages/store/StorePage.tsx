@@ -24,7 +24,8 @@ export function StoreLayout() {
           </Link>
           <nav className="flex gap-4 text-sm">
             <Link to="/tienda" className="hover:underline">Menú</Link>
-            <Link to="/tienda/estado" className="hover:underline">Mi pedido</Link>
+            <Link to="/tienda/mis-pedidos" className="hover:underline">Mis pedidos</Link>
+            <Link to="/tienda/estado" className="hover:underline">Estado</Link>
           </nav>
         </div>
         <p className="mx-auto max-w-4xl text-sm opacity-80">Ahumado Tropical · Chalchuapa, Santa Ana</p>

@@ -15,6 +15,7 @@ import AdminPage from './pages/admin/AdminPage';
 import StorePage, { StoreLayout } from './pages/store/StorePage';
 import CheckoutPage from './pages/store/CheckoutPage';
 import OrderStatusPage from './pages/store/OrderStatusPage';
+import MyOrdersPage from './pages/store/MyOrdersPage';
 import SiteLayout from './pages/site/SiteLayout';
 import Landing from './pages/site/Landing';
 import AboutPage from './pages/site/AboutPage';
@@ -40,6 +41,7 @@ export default function App() {
         <Route index element={<StorePage />} />
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="estado" element={<OrderStatusPage />} />
+        <Route path="mis-pedidos" element={<MyOrdersPage />} />
       </Route>
 
       <Route path="/login" element={<Login />} />

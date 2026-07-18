@@ -4,6 +4,7 @@ import { supabase, FUNCTIONS_URL } from '../../lib/supabase';
 import { money } from '../../lib/format';
 import type { Tables } from '../../types/database';
 import { loadCart, clearCart, cartSubtotal, changeLineQty, saveCart, type StoreCartLine } from './storeCart';
+import { addToHistory } from './orderHistory';
 
 type Location = Tables<'locations'>;
 type Zone = Tables<'delivery_zones'>;
@@ -123,6 +124,15 @@ export default function CheckoutPage() {
         setBusy(false);
         return;
       }
+      addToHistory({
+        order_number: data.order_number,
+        placed_at: new Date().toISOString(),
+        total: data.total,
+        phone,
+        name,
+        mode,
+        lines: cart,
+      });
       clearCart();
       setConfirmation(data as OrderConfirmation);
     } catch {

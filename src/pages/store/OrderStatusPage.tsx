@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, useCallback, type FormEvent } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { FUNCTIONS_URL } from '../../lib/supabase';
 import { money, fmtDateTime } from '../../lib/format';
 
@@ -15,52 +16,88 @@ interface StatusResponse {
 }
 
 const FLOW = ['received', 'in_progress', 'ready', 'out_for_delivery', 'completed'];
+const TERMINAL = ['completed', 'cancelled'];
+const LABELS: Record<string, string> = {
+  received: 'Recibido',
+  in_progress: 'En preparación',
+  ready: 'Listo', // refined per order_type below
+  out_for_delivery: 'En camino',
+  completed: 'Entregado',
+};
 
 export default function OrderStatusPage() {
-  const [phone, setPhone] = useState('');
-  const [orderNumber, setOrderNumber] = useState('');
+  const [params] = useSearchParams();
+  const [phone, setPhone] = useState(params.get('tel') ?? '');
+  const [orderNumber, setOrderNumber] = useState((params.get('n') ?? '').toUpperCase());
   const [result, setResult] = useState<StatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  async function lookup(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
-    setResult(null);
-    try {
-      const res = await fetch(`${FUNCTIONS_URL}/order-status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, order_number: orderNumber }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? 'No se encontró el pedido');
-      } else {
-        setResult(data as StatusResponse);
+  const fetchStatus = useCallback(
+    async (phoneVal: string, numberVal: string, isRefresh = false) => {
+      if (!phoneVal || !numberVal) return;
+      if (isRefresh) setRefreshing(true);
+      else {
+        setBusy(true);
+        setError(null);
+        setResult(null);
       }
-    } catch {
-      setError('Error de conexión');
-    }
-    setBusy(false);
+      try {
+        const res = await fetch(`${FUNCTIONS_URL}/order-status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: phoneVal, order_number: numberVal }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          if (!isRefresh) setError(data.error ?? 'No se encontró el pedido');
+        } else {
+          setResult(data as StatusResponse);
+        }
+      } catch {
+        if (!isRefresh) setError('Error de conexión');
+      }
+      if (isRefresh) setRefreshing(false);
+      else setBusy(false);
+    },
+    [],
+  );
+
+  // Deep link from "Mis pedidos": /tienda/estado?n=PP-C-0001&tel=7777-8888
+  useEffect(() => {
+    const n = params.get('n');
+    const tel = params.get('tel');
+    if (n && tel) fetchStatus(tel, n.toUpperCase());
+  }, [params, fetchStatus]);
+
+  // Auto-refresh every 10s while a non-terminal order is on screen.
+  useEffect(() => {
+    if (!result || TERMINAL.includes(result.status)) return;
+    const id = setInterval(() => fetchStatus(phone, orderNumber, true), 10000);
+    return () => clearInterval(id);
+  }, [result, phone, orderNumber, fetchStatus]);
+
+  function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    fetchStatus(phone, orderNumber);
   }
 
-  const activeSteps = result
-    ? result.status === 'cancelled'
-      ? []
-      : FLOW.slice(0, FLOW.indexOf(result.status) + 1)
+  const steps = result
+    ? FLOW.filter((s) => s !== 'out_for_delivery' || result.order_type === 'delivery')
     : [];
+  const currentIdx = result ? FLOW.indexOf(result.status) : -1;
 
   return (
     <div className="mx-auto max-w-md">
       <h1 className="mb-4 text-2xl font-bold text-brand-900">Estado de tu pedido</h1>
-      <form onSubmit={lookup} className="space-y-3 rounded-2xl bg-white p-6 shadow">
+
+      <form onSubmit={onSubmit} className="space-y-3 rounded-2xl bg-white p-6 shadow">
         <div>
           <label className="mb-1 block text-sm text-gray-600">Número de pedido</label>
           <input
             value={orderNumber}
-            onChange={(e) => setOrderNumber(e.target.value)}
+            onChange={(e) => setOrderNumber(e.target.value.toUpperCase())}
             required
             placeholder="PP-C-0001"
             className="w-full rounded-lg border border-gray-300 px-4 py-3 uppercase"
@@ -99,45 +136,86 @@ export default function OrderStatusPage() {
               Pedido cancelado
             </p>
           ) : (
-            <ol className="mt-4 space-y-2">
-              {FLOW.filter(
-                (s) => s !== 'out_for_delivery' || result.order_type === 'delivery',
-              ).map((step) => {
-                const done = activeSteps.includes(step);
-                const event = result.timeline.find((t) => t.status === step);
-                const labels: Record<string, string> = {
-                  received: 'Recibido',
-                  in_progress: 'En preparación',
-                  ready: result.order_type === 'delivery' ? 'Listo para salir' : 'Listo para recoger',
-                  out_for_delivery: 'En camino',
-                  completed: 'Entregado',
-                };
-                return (
-                  <li key={step} className="flex items-center gap-3">
-                    <span
-                      className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                        done ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-400'
-                      }`}
-                    >
-                      {done ? '✓' : '·'}
-                    </span>
-                    <span className={done ? 'font-semibold text-gray-900' : 'text-gray-400'}>
-                      {labels[step]}
-                    </span>
-                    {event && <span className="ml-auto text-xs text-gray-400">{fmtDateTime(event.at)}</span>}
-                  </li>
-                );
-              })}
-            </ol>
+            <>
+              {!TERMINAL.includes(result.status) && result.estimated_minutes != null && (
+                <p className="mt-2 text-sm text-gray-500">
+                  Tiempo estimado: ~{result.estimated_minutes} min
+                  {refreshing && <span className="ml-2 text-brand-500">· actualizando…</span>}
+                </p>
+              )}
+
+              <ol className="mt-5">
+                {steps.map((step, i) => {
+                  const stepIdx = FLOW.indexOf(step);
+                  const done = stepIdx < currentIdx;
+                  const current = stepIdx === currentIdx;
+                  const event = result.timeline.find((t) => t.status === step);
+                  const label =
+                    step === 'ready'
+                      ? result.order_type === 'delivery'
+                        ? 'Listo para salir'
+                        : 'Listo para recoger'
+                      : LABELS[step];
+                  const isLast = i === steps.length - 1;
+                  return (
+                    <li key={step} className="flex gap-3">
+                      {/* marker + connector */}
+                      <div className="flex flex-col items-center">
+                        <span
+                          className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                            done
+                              ? 'bg-green-600 text-white'
+                              : current
+                                ? 'bg-brand-600 text-white ring-4 ring-brand-200'
+                                : 'bg-gray-100 text-gray-400'
+                          }`}
+                        >
+                          {done ? '✓' : current ? '●' : '·'}
+                        </span>
+                        {!isLast && (
+                          <span
+                            className={`w-0.5 flex-1 ${stepIdx < currentIdx ? 'bg-green-600' : 'bg-gray-200'}`}
+                            style={{ minHeight: '1.75rem' }}
+                          />
+                        )}
+                      </div>
+                      {/* label */}
+                      <div className="pb-4">
+                        <p className={done || current ? 'font-semibold text-gray-900' : 'text-gray-400'}>
+                          {label}
+                        </p>
+                        {event && <p className="text-xs text-gray-400">{fmtDateTime(event.at)}</p>}
+                        {current && <p className="text-xs font-medium text-brand-600">En curso</p>}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            </>
           )}
 
-          <div className="mt-4 border-t border-gray-100 pt-3">
-            {result.items.map((i, idx) => (
+          <div className="mt-2 border-t border-gray-100 pt-3">
+            {result.items.map((item, idx) => (
               <p key={idx} className="text-gray-600">
-                {i.quantity} × {i.name}
+                {item.quantity} × {item.name}
               </p>
             ))}
             <p className="mt-2 text-lg font-bold text-gray-900">Total {money(result.total)}</p>
+          </div>
+
+          <div className="mt-4 flex gap-2">
+            <Link
+              to="/tienda"
+              className="flex-1 rounded-xl border border-brand-300 py-3 text-center font-semibold text-brand-700"
+            >
+              Volver al menú
+            </Link>
+            <Link
+              to="/tienda/mis-pedidos"
+              className="flex-1 rounded-xl border border-brand-300 py-3 text-center font-semibold text-brand-700"
+            >
+              Mis pedidos
+            </Link>
           </div>
         </div>
       )}
