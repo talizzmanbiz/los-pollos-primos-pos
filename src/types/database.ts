@@ -736,8 +736,10 @@ export type Database = {
           location_id: string
           notes: string | null
           purchase_date: string
+          quantity_lb: number | null
           quantity_received: number
           quantity_remaining: number
+          quantity_units: number | null
           supplier_name: string
           total_cost: number
           unit: Database["public"]["Enums"]["purchase_unit"]
@@ -750,8 +752,10 @@ export type Database = {
           location_id: string
           notes?: string | null
           purchase_date?: string
-          quantity_received: number
+          quantity_lb?: number | null
+          quantity_received?: number
           quantity_remaining?: number
+          quantity_units?: number | null
           supplier_name: string
           total_cost?: number
           unit?: Database["public"]["Enums"]["purchase_unit"]
@@ -764,8 +768,10 @@ export type Database = {
           location_id?: string
           notes?: string | null
           purchase_date?: string
+          quantity_lb?: number | null
           quantity_received?: number
           quantity_remaining?: number
+          quantity_units?: number | null
           supplier_name?: string
           total_cost?: number
           unit?: Database["public"]["Enums"]["purchase_unit"]
