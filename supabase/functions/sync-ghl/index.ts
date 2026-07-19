@@ -43,23 +43,32 @@ Deno.serve(async (req: Request) => {
 
   const { data: order } = await admin
     .from('orders')
-    .select('id, status, customer_name, customer_phone, customer_email')
+    .select('id, status, payment_status, customer_name, customer_phone, customer_email')
     .eq('id', body.order_id)
     .maybeSingle();
 
   if (!order) return Response.json({ error: 'Pedido no encontrado' }, { status: 404 });
-  if (order.status !== 'completed') return Response.json({ skipped: 'pedido no completado' });
+  if (order.status === 'cancelled') return Response.json({ skipped: 'pedido cancelado' });
+  // Sync as soon as the customer has committed: an online order that is PAID
+  // counts even before the kitchen marks it completed, otherwise a paying
+  // customer never reaches the CRM until staff close the order.
+  if (order.status !== 'completed' && order.payment_status !== 'paid') {
+    return Response.json({ skipped: 'pedido ni pagado ni completado' });
+  }
   // POS walk-ins without contact info: best-effort capture, never blocks the sale
   if (!order.customer_phone) return Response.json({ skipped: 'sin teléfono' });
 
   const digits = order.customer_phone.replace(/\D/g, '');
   const phoneE164 = digits.startsWith('503') ? `+${digits}` : `+503${digits}`;
 
-  // order history across every source for this phone (last 8 digits match)
+  // Order history across every source for this phone (last 8 digits match).
+  // Revenue counts an order once it is paid OR completed, never when cancelled —
+  // so the CRM stats are right whether the sync runs at payment or at handover.
   const { data: history } = await admin
     .from('orders')
     .select('total, created_at, customer_phone, order_items(quantity, product:products(name))')
-    .eq('status', 'completed')
+    .neq('status', 'cancelled')
+    .or('status.eq.completed,payment_status.eq.paid')
     .not('customer_phone', 'is', null);
 
   const tail = digits.slice(-8);
