@@ -59,6 +59,30 @@ button {
   min-width: 3rem;
 }
 
+/* ---- Interaction + a11y polish (ui-ux-pro-max: focus-states, cursor-pointer, tap-delay) ---- */
+button:not(:disabled),
+[role="button"],
+a[href],
+label[for],
+select {
+  cursor: pointer;
+}
+
+a,
+button,
+[role="button"],
+label {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Consistent, on-brand keyboard focus ring across every page. Low specificity
+   (:where) so components with their own focus ring (inputs) keep theirs. */
+:where(a[href], button, [role="button"], input, select, textarea):focus-visible {
+  outline: 3px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
 /* ---- Scroll-reveal + motion (disabled when the user prefers less) ---- */
 @media (prefers-reduced-motion: no-preference) {
   .reveal {
