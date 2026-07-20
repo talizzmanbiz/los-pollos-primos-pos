@@ -101,7 +101,7 @@ export default function OrderStatusPage() {
             onChange={(e) => setOrderNumber(e.target.value.toUpperCase())}
             required
             placeholder="PP-C-0001"
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 uppercase"
+            className="w-full rounded-xl border border-brand-200 px-4 py-3 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 uppercase"
           />
         </div>
         <div>
@@ -112,7 +112,7 @@ export default function OrderStatusPage() {
             required
             type="tel"
             placeholder="7777-8888"
-            className="w-full rounded-lg border border-gray-300 px-4 py-3"
+            className="w-full rounded-xl border border-brand-200 px-4 py-3 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15"
           />
         </div>
         <button
@@ -126,7 +126,7 @@ export default function OrderStatusPage() {
       </form>
 
       {result && (
-        <div className="mt-6 rounded-2xl bg-white p-6 shadow">
+        <div className="mt-6 rounded-3xl bg-white p-6 shadow-[0_10px_40px_rgba(126,50,16,0.07)] ring-1 ring-brand-100">
           <div className="flex items-baseline justify-between">
             <h2 className="text-xl font-bold text-gray-900">{result.order_number}</h2>
             <span className="text-sm text-gray-400">{fmtDateTime(result.created_at)}</span>

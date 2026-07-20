@@ -1,5 +1,6 @@
 import { site } from './siteInfo';
 import { useSeo } from './useSeo';
+import LegalPage from './LegalPage';
 
 const UPDATED = '17 de julio de 2026';
 
@@ -7,11 +8,7 @@ export default function PrivacyPage() {
   useSeo('Política de Privacidad', `Cómo ${site.name} recolecta y usa tus datos al hacer un pedido.`);
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-14 text-gray-700">
-      <h1 className="text-3xl font-extrabold text-brand-900">Política de Privacidad</h1>
-      <p className="mt-2 text-sm text-gray-500">Última actualización: {UPDATED}</p>
-
-      <div className="mt-8 space-y-6 leading-relaxed">
+    <LegalPage title="Política de Privacidad" updated={UPDATED}>
         <p>
           En {site.name} ({site.domain}) respetamos tu privacidad. Esta política explica qué datos
           recolectamos cuando hacés un pedido y cómo los usamos.
@@ -71,7 +68,6 @@ export default function PrivacyPage() {
             {site.whatsappDisplay ? ` · WhatsApp ${site.whatsappDisplay}` : ''}
           </p>
         </section>
-      </div>
-    </article>
+    </LegalPage>
   );
 }

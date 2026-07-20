@@ -42,7 +42,7 @@ export default function MyOrdersPage() {
 
       <div className="space-y-4">
         {orders.map((o) => (
-          <div key={o.order_number} className="rounded-2xl bg-white p-5 shadow">
+          <div key={o.order_number} className="rounded-3xl bg-white p-5 shadow-[0_10px_40px_rgba(126,50,16,0.07)] ring-1 ring-brand-100">
             <div className="flex items-baseline justify-between">
               <h2 className="text-lg font-bold text-brand-700">{o.order_number}</h2>
               <span className="text-sm text-gray-400">{fmtDateTime(o.placed_at)}</span>

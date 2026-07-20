@@ -1,5 +1,6 @@
 import { site } from './siteInfo';
 import { useSeo } from './useSeo';
+import LegalPage from './LegalPage';
 
 const UPDATED = '17 de julio de 2026';
 
@@ -7,11 +8,7 @@ export default function TermsPage() {
   useSeo('Términos de Servicio', `Términos y condiciones de pedidos en ${site.name}.`);
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-14 text-gray-700">
-      <h1 className="text-3xl font-extrabold text-brand-900">Términos de Servicio</h1>
-      <p className="mt-2 text-sm text-gray-500">Última actualización: {UPDATED}</p>
-
-      <div className="mt-8 space-y-6 leading-relaxed">
+    <LegalPage title="Términos de Servicio" updated={UPDATED}>
         <p>
           Al hacer un pedido en {site.name} ({site.domain}) aceptás los siguientes términos.
         </p>
@@ -71,7 +68,6 @@ export default function TermsPage() {
             {site.whatsappDisplay ? ` · WhatsApp ${site.whatsappDisplay}` : ''}
           </p>
         </section>
-      </div>
-    </article>
+    </LegalPage>
   );
 }
