@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { money, fmtDateTime } from '../../lib/format';
 import { saveCart } from './storeCart';
 import { loadHistory, type PastOrder } from './orderHistory';
+import { ReceiptText, Repeat, ShoppingBag, Bike } from 'lucide-react';
 
 export default function MyOrdersPage() {
   const navigate = useNavigate();
@@ -16,8 +17,8 @@ export default function MyOrdersPage() {
   if (orders.length === 0) {
     return (
       <div className="mx-auto max-w-md px-4 py-20 text-center">
-        <p className="text-6xl">🧾</p>
-        <h1 className="mt-3 font-display text-2xl font-extrabold text-brand-900">Aún no tenés pedidos</h1>
+        <ReceiptText className="mx-auto h-14 w-14 text-brand-300" strokeWidth={1.5} />
+        <h1 className="mt-4 font-display text-2xl font-extrabold text-brand-900">Aún no tenés pedidos</h1>
         <p className="mt-2 text-gray-600">
           Los pedidos que hagas en este dispositivo aparecerán acá para repetirlos con un toque.
         </p>
@@ -47,7 +48,10 @@ export default function MyOrdersPage() {
               <h2 className="text-lg font-bold text-brand-700">{o.order_number}</h2>
               <span className="text-sm text-gray-400">{fmtDateTime(o.placed_at)}</span>
             </div>
-            <p className="text-sm text-gray-500">{o.mode === 'delivery' ? '🛵 Delivery' : '🛍️ Recoger'}</p>
+            <p className="flex items-center gap-1.5 text-sm text-charcoal-700/60">
+              {o.mode === 'delivery' ? <Bike className="h-4 w-4" /> : <ShoppingBag className="h-4 w-4" />}
+              {o.mode === 'delivery' ? 'Delivery' : 'Recoger'}
+            </p>
 
             <div className="mt-3 border-t border-gray-100 pt-3">
               {o.lines.map((l) => (
@@ -61,9 +65,9 @@ export default function MyOrdersPage() {
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => repeat(o)}
-                className="flex-1 rounded-xl bg-brand-600 py-3 font-semibold text-white active:bg-brand-700"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 py-3 font-semibold text-white active:bg-brand-700"
               >
-                🔁 Repetir pedido
+                <Repeat className="h-4 w-4" /> Repetir pedido
               </button>
               <Link
                 to={`/tienda/estado?n=${encodeURIComponent(o.order_number)}&tel=${encodeURIComponent(o.phone)}`}

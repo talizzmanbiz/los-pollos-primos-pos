@@ -2,12 +2,17 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import type { Review } from '../../types/database';
 import Reveal from './Reveal';
+import { Star } from 'lucide-react';
 
 function Stars({ n }: { n: number }) {
   return (
-    <span className="text-gold-400" aria-label={`${n} de 5`}>
-      {'★'.repeat(n)}
-      <span className="text-brand-200">{'★'.repeat(5 - n)}</span>
+    <span className="flex gap-0.5" aria-label={`${n} de 5`}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className={`h-4 w-4 ${i <= n ? 'fill-gold-400 text-gold-400' : 'fill-brand-100 text-brand-200'}`}
+        />
+      ))}
     </span>
   );
 }
@@ -39,8 +44,9 @@ export default function Testimonials() {
           <h2 className="mt-3 font-display text-3xl font-extrabold text-brand-900 sm:text-4xl">
             Lo que dicen nuestros clientes
           </h2>
-          <p className="mt-3 text-lg">
-            <span className="font-display font-bold text-gold-500">★ {avg.toFixed(1)}</span>{' '}
+          <p className="mt-3 flex items-center justify-center gap-1.5 text-lg">
+            <Star className="h-5 w-5 fill-gold-400 text-gold-400" />
+            <span className="font-display font-bold text-gold-500">{avg.toFixed(1)}</span>
             <span className="text-charcoal-700/70">
               · {reviews.length} reseña{reviews.length > 1 ? 's' : ''}
             </span>

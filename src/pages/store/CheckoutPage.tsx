@@ -5,6 +5,7 @@ import { money } from '../../lib/format';
 import type { Tables } from '../../types/database';
 import { loadCart, clearCart, cartSubtotal, changeLineQty, saveCart, type StoreCartLine } from './storeCart';
 import { addToHistory } from './orderHistory';
+import { ReceiptText, ShoppingCart, ShoppingBag, Bike, CreditCard } from 'lucide-react';
 
 type Location = Tables<'locations'>;
 type Zone = Tables<'delivery_zones'>;
@@ -56,7 +57,7 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-brand-50 px-4 py-16">
         <div className="mx-auto max-w-md rounded-3xl bg-white p-8 text-center shadow-[0_20px_60px_rgba(126,50,16,0.12)] ring-1 ring-brand-100">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-4xl">🧾</div>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-brand-700"><ReceiptText className="h-8 w-8" strokeWidth={2} /></div>
           <h2 className="mt-4 font-display text-2xl font-extrabold text-charcoal-900">¡Casi listo!</h2>
           <p className="mt-2 font-display text-4xl font-extrabold text-brand-600">{confirmation.order_number}</p>
           <p className="mt-2 text-charcoal-700/80">
@@ -98,7 +99,7 @@ export default function CheckoutPage() {
   if (cart.length === 0) {
     return (
       <div className="min-h-screen bg-brand-50 px-4 py-24 text-center">
-        <p className="text-6xl">🛒</p>
+        <ShoppingCart className="mx-auto h-16 w-16 text-brand-300" strokeWidth={1.5} />
         <p className="mt-4 text-lg text-charcoal-700/70">Tu carrito está vacío.</p>
         <Link to="/tienda" className="mt-6 inline-block rounded-full bg-brand-600 px-8 py-3.5 font-bold text-white shadow-lg transition hover:bg-brand-700">
           Ver el menú
@@ -200,11 +201,12 @@ export default function CheckoutPage() {
                     key={m}
                     type="button"
                     onClick={() => setMode(m)}
-                    className={`rounded-xl py-3 font-semibold transition ${
+                    className={`flex items-center justify-center gap-2 rounded-xl py-3 font-semibold transition ${
                       mode === m ? 'bg-brand-600 text-white shadow' : 'text-charcoal-700'
                     }`}
                   >
-                    {m === 'pickup' ? '🛍️ Recoger' : '🛵 Delivery'}
+                    {m === 'pickup' ? <ShoppingBag className="h-5 w-5" /> : <Bike className="h-5 w-5" />}
+                    {m === 'pickup' ? 'Recoger' : 'Delivery'}
                   </button>
                 ))}
               </div>
@@ -252,9 +254,12 @@ export default function CheckoutPage() {
                   <input value={notes} onChange={(e) => setNotes(e.target.value)} className={inputCls} />
                 </div>
 
-                <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800">
-                  💳 <span className="font-semibold">Pago en línea con tarjeta.</span> Al confirmar te
-                  llevamos a la pasarela segura de Wompi para completar tu pedido.
+                <div className="flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800">
+                  <CreditCard className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>
+                    <span className="font-semibold">Pago en línea con tarjeta.</span> Al confirmar te
+                    llevamos a la pasarela segura de Wompi para completar tu pedido.
+                  </span>
                 </div>
 
                 {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-red-600">{error}</p>}

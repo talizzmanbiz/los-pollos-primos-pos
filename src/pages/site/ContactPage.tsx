@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { site, whatsappLink } from './siteInfo';
 import { useSeo } from './useSeo';
 import Reveal from './Reveal';
+import { MapPin, Clock, MessageCircle, type LucideIcon } from 'lucide-react';
 
 export default function ContactPage() {
   useSeo('Contacto', `Contactá a ${site.name} en ${site.city}. WhatsApp, correo y horarios de atención.`);
@@ -40,7 +41,7 @@ export default function ContactPage() {
         <div className="mx-auto grid max-w-5xl gap-8 px-6 md:grid-cols-2">
           {/* info */}
           <Reveal className="space-y-6">
-            <InfoCard title="Dirección" icon="📍">
+            <InfoCard title="Dirección" icon={MapPin}>
               <p className="text-charcoal-800">{site.city}</p>
               {site.addressLine && <p className="mt-1 text-charcoal-700/80">{site.addressLine}</p>}
               {site.mapsUrl && (
@@ -50,7 +51,7 @@ export default function ContactPage() {
               )}
             </InfoCard>
 
-            <InfoCard title="Horarios" icon="🕒">
+            <InfoCard title="Horarios" icon={Clock}>
               <ul className="space-y-1.5 text-charcoal-800">
                 {site.hours.map((h) => (
                   <li key={h.days} className="flex justify-between gap-4">
@@ -62,7 +63,7 @@ export default function ContactPage() {
             </InfoCard>
 
             {(site.whatsappNumber || site.email) && (
-              <InfoCard title="Escribinos" icon="💬">
+              <InfoCard title="Escribinos" icon={MessageCircle}>
                 <ul className="space-y-1.5">
                   {site.whatsappNumber && (
                     <li>
@@ -116,11 +117,13 @@ export default function ContactPage() {
   );
 }
 
-function InfoCard({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
+function InfoCard({ title, icon: Icon, children }: { title: string; icon: LucideIcon; children: React.ReactNode }) {
   return (
     <div className="rounded-3xl bg-white p-6 shadow-[0_10px_40px_rgba(126,50,16,0.06)] ring-1 ring-brand-100">
       <div className="flex items-center gap-2.5">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-xl">{icon}</span>
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-700">
+          <Icon className="h-5 w-5" strokeWidth={2} />
+        </span>
         <h2 className="font-display text-sm font-bold uppercase tracking-widest text-brand-600">{title}</h2>
       </div>
       <div className="mt-4">{children}</div>

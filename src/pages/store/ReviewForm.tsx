@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { Star } from 'lucide-react';
 
 /** Star rating + comment, shown after an order is completed. Submitted reviews
  * are unapproved (RLS) until an admin publishes them. */
@@ -66,9 +67,11 @@ export default function ReviewForm({ orderNumber }: { orderNumber: string }) {
             onMouseEnter={() => setHover(n)}
             onMouseLeave={() => setHover(0)}
             onClick={() => setRating(n)}
-            className="text-3xl leading-none"
+            className="leading-none"
           >
-            <span className={(hover || rating) >= n ? 'text-amber-400' : 'text-gray-300'}>★</span>
+            <Star
+              className={`h-8 w-8 ${(hover || rating) >= n ? 'fill-gold-400 text-gold-400' : 'fill-none text-brand-200'}`}
+            />
           </button>
         ))}
       </div>

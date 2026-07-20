@@ -6,6 +6,7 @@ import { site, whatsappLink } from './siteInfo';
 import { useSeo } from './useSeo';
 import Reveal from './Reveal';
 import Testimonials from './Testimonials';
+import { Citrus, Flame, Timer, Leaf, Clock, Bike, type LucideIcon } from 'lucide-react';
 
 interface Combo {
   sku: string;
@@ -19,10 +20,10 @@ const STEPS = [
   { n: '03', title: 'Pagá y disfrutá', desc: 'Pagás en línea y seguís tu pedido en tiempo real hasta que llega.' },
 ];
 
-const DIFERENCIA = [
-  { icon: '🍍', title: 'Marinado en piña', desc: 'Jugo de piña natural que ablanda y da un dulzor tropical inconfundible.' },
-  { icon: '🌶️', title: 'Paprika ahumada', desc: 'El toque ahumado que define el sabor Ahumado Tropical.' },
-  { icon: '🔥', title: 'Rostizado lento', desc: 'Jugoso por dentro, dorado y crujiente por fuera. Sin apuros.' },
+const DIFERENCIA: { icon: LucideIcon; title: string; desc: string }[] = [
+  { icon: Citrus, title: 'Marinado en piña', desc: 'Jugo de piña natural que ablanda y da un dulzor tropical inconfundible.' },
+  { icon: Flame, title: 'Paprika ahumada', desc: 'El toque ahumado que define el sabor Ahumado Tropical.' },
+  { icon: Timer, title: 'Rostizado lento', desc: 'Jugoso por dentro, dorado y crujiente por fuera. Sin apuros.' },
 ];
 
 export default function Landing() {
@@ -92,9 +93,9 @@ export default function Landing() {
               )}
             </div>
             <div className="mt-9 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-brand-50/85 md:justify-end">
-              <span className="flex items-center gap-1.5"><span className="text-gold-400">★</span> Marinado en piña 100% natural</span>
-              <span className="flex items-center gap-1.5">⏱ Listo en {site.prepTime}</span>
-              <span className="flex items-center gap-1.5">🛵 Pickup y delivery</span>
+              <span className="flex items-center gap-1.5"><Leaf className="h-4 w-4 text-gold-400" /> Marinado en piña 100% natural</span>
+              <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-brand-300" /> Listo en {site.prepTime}</span>
+              <span className="flex items-center gap-1.5"><Bike className="h-4 w-4 text-brand-300" /> Pickup y delivery</span>
             </div>
           </div>
         </div>
@@ -120,17 +121,20 @@ export default function Landing() {
               {site.differentiator}
             </p>
             <div className="mt-8 space-y-5">
-              {DIFERENCIA.map((d) => (
-                <div key={d.title} className="flex gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-2xl">
-                    {d.icon}
+              {DIFERENCIA.map((d) => {
+                const Icon = d.icon;
+                return (
+                  <div key={d.title} className="flex gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-700">
+                      <Icon className="h-6 w-6" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-lg font-bold text-brand-900">{d.title}</h3>
+                      <p className="text-charcoal-700/80">{d.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-display text-lg font-bold text-brand-900">{d.title}</h3>
-                    <p className="text-charcoal-700/80">{d.desc}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Reveal>
 

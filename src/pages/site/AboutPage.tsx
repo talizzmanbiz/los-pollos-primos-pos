@@ -2,12 +2,13 @@ import { Link } from 'react-router-dom';
 import { site } from './siteInfo';
 import { useSeo } from './useSeo';
 import Reveal from './Reveal';
+import { Citrus, Flame, Timer, Clock, type LucideIcon } from 'lucide-react';
 
-const PILARES = [
-  { icon: '🍍', title: 'Marinado en piña', desc: 'Jugo de piña natural que ablanda y da un dulzor tropical.' },
-  { icon: '🌶️', title: 'Paprika ahumada', desc: 'El toque ahumado que define el sabor Ahumado Tropical.' },
-  { icon: '🔥', title: 'Rostizado lento', desc: 'Jugoso por dentro, dorado por fuera. Nada de apuros.' },
-  { icon: '⏱️', title: 'Hecho al momento', desc: `Preparado fresco para tu pedido, listo en ${site.prepTime}.` },
+const PILARES: { icon: LucideIcon; title: string; desc: string }[] = [
+  { icon: Citrus, title: 'Marinado en piña', desc: 'Jugo de piña natural que ablanda y da un dulzor tropical.' },
+  { icon: Flame, title: 'Paprika ahumada', desc: 'El toque ahumado que define el sabor Ahumado Tropical.' },
+  { icon: Timer, title: 'Rostizado lento', desc: 'Jugoso por dentro, dorado por fuera. Nada de apuros.' },
+  { icon: Clock, title: 'Hecho al momento', desc: `Preparado fresco para tu pedido, listo en ${site.prepTime}.` },
 ];
 
 export default function AboutPage() {
@@ -64,17 +65,20 @@ export default function AboutPage() {
             </h2>
           </Reveal>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {PILARES.map((p, i) => (
-              <Reveal key={p.title} delay={(i % 4) * 100} as="div">
-                <div className="h-full rounded-3xl bg-brand-50 p-7 text-center ring-1 ring-brand-100">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-100 text-3xl">
-                    {p.icon}
+            {PILARES.map((p, i) => {
+              const Icon = p.icon;
+              return (
+                <Reveal key={p.title} delay={(i % 4) * 100} as="div">
+                  <div className="h-full rounded-3xl bg-brand-50 p-7 text-center ring-1 ring-brand-100">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-100 text-brand-700">
+                      <Icon className="h-7 w-7" strokeWidth={2} />
+                    </div>
+                    <h3 className="mt-4 font-display text-lg font-bold text-brand-900">{p.title}</h3>
+                    <p className="mt-1 text-charcoal-700/80">{p.desc}</p>
                   </div>
-                  <h3 className="mt-4 font-display text-lg font-bold text-brand-900">{p.title}</h3>
-                  <p className="mt-1 text-charcoal-700/80">{p.desc}</p>
-                </div>
-              </Reveal>
-            ))}
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
