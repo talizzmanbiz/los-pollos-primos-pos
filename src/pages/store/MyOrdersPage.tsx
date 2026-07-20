@@ -15,9 +15,9 @@ export default function MyOrdersPage() {
 
   if (orders.length === 0) {
     return (
-      <div className="mx-auto max-w-md py-12 text-center">
-        <p className="text-5xl">🧾</p>
-        <h1 className="mt-3 text-2xl font-bold text-brand-900">Aún no tenés pedidos</h1>
+      <div className="mx-auto max-w-md px-4 py-20 text-center">
+        <p className="text-6xl">🧾</p>
+        <h1 className="mt-3 font-display text-2xl font-extrabold text-brand-900">Aún no tenés pedidos</h1>
         <p className="mt-2 text-gray-600">
           Los pedidos que hagas en este dispositivo aparecerán acá para repetirlos con un toque.
         </p>
@@ -36,9 +36,9 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="mb-1 text-2xl font-bold text-brand-900">Mis pedidos</h1>
-      <p className="mb-5 text-sm text-gray-500">Pedidos hechos en este dispositivo.</p>
+    <div className="mx-auto max-w-2xl px-4 py-10">
+      <h1 className="mb-1 font-display text-3xl font-extrabold text-brand-900">Mis pedidos</h1>
+      <p className="mb-5 text-sm text-charcoal-700/60">Pedidos hechos en este dispositivo.</p>
 
       <div className="space-y-4">
         {orders.map((o) => (

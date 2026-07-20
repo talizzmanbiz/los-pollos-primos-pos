@@ -90,10 +90,10 @@ export default function OrderStatusPage() {
   const currentIdx = result ? FLOW.indexOf(result.status) : -1;
 
   return (
-    <div className="mx-auto max-w-md">
-      <h1 className="mb-4 text-2xl font-bold text-brand-900">Estado de tu pedido</h1>
+    <div className="mx-auto max-w-md px-4 py-10">
+      <h1 className="mb-4 font-display text-3xl font-extrabold text-brand-900">Estado de tu pedido</h1>
 
-      <form onSubmit={onSubmit} className="space-y-3 rounded-2xl bg-white p-6 shadow">
+      <form onSubmit={onSubmit} className="space-y-3 rounded-3xl bg-white p-6 shadow-[0_10px_40px_rgba(126,50,16,0.07)] ring-1 ring-brand-100">
         <div>
           <label className="mb-1 block text-sm text-gray-600">Número de pedido</label>
           <input

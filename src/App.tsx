@@ -12,7 +12,7 @@ import InventoryPage from './pages/inventory/InventoryPage';
 import TransfersPage from './pages/transfers/TransfersPage';
 import ReportsPage from './pages/reports/ReportsPage';
 import AdminPage from './pages/admin/AdminPage';
-import StorePage, { StoreLayout } from './pages/store/StorePage';
+import StorePage from './pages/store/StorePage';
 import CheckoutPage from './pages/store/CheckoutPage';
 import OrderStatusPage from './pages/store/OrderStatusPage';
 import MyOrdersPage from './pages/store/MyOrdersPage';
@@ -34,14 +34,14 @@ export default function App() {
         <Route path="/contacto" element={<ContactPage />} />
         <Route path="/privacidad" element={<PrivacyPage />} />
         <Route path="/terminos" element={<TermsPage />} />
-      </Route>
 
-      {/* public storefront — los-pollosprimos.com/tienda */}
-      <Route path="/tienda" element={<StoreLayout />}>
-        <Route index element={<StorePage />} />
-        <Route path="checkout" element={<CheckoutPage />} />
-        <Route path="estado" element={<OrderStatusPage />} />
-        <Route path="mis-pedidos" element={<MyOrdersPage />} />
+        {/* public storefront — los-pollosprimos.com/tienda */}
+        <Route path="/tienda">
+          <Route index element={<StorePage />} />
+          <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="estado" element={<OrderStatusPage />} />
+          <Route path="mis-pedidos" element={<MyOrdersPage />} />
+        </Route>
       </Route>
 
       <Route path="/login" element={<Login />} />

@@ -1,4 +1,5 @@
-import { Link, NavLink, Navigate, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { site, whatsappLink, isPosHost } from './siteInfo';
 
 const NAV = [
@@ -8,130 +9,224 @@ const NAV = [
   { to: '/contacto', label: 'Contacto' },
 ];
 
-/**
- * Public marketing layout — served on the apex domain (los-pollosprimos.com).
- * On the internal POS host (`pos.…`) it redirects to the POS dashboard, so the
- * consumer pages are apex-only and staff never land on marketing content.
- */
 export default function SiteLayout() {
+  const { pathname } = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const isHome = pathname === '/';
+  const solid = scrolled || !isHome;
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => setMenuOpen(false), [pathname]);
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
+
   if (isPosHost()) return <Navigate to="/inicio" replace />;
 
   const wa = whatsappLink('Hola, quiero hacer un pedido 🍗');
 
   return (
-    <div className="flex min-h-screen flex-col bg-brand-50 text-gray-900">
-      <header className="sticky top-0 z-20 bg-white/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <img src="/logo-primos.png" alt={site.name} className="h-10 w-10 rounded-full object-cover" />
-            <span className="text-lg font-bold text-brand-800">{site.name}</span>
+    <div className="flex min-h-screen flex-col bg-brand-50">
+      <header
+        className={`fixed inset-x-0 top-0 z-40 transition-all duration-300 ${
+          solid
+            ? 'bg-white/90 shadow-[0_4px_20px_rgba(0,0,0,0.06)] backdrop-blur-md'
+            : 'bg-gradient-to-b from-black/55 via-black/25 to-transparent'
+        }`}
+      >
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+          <Link to="/" className="flex items-center gap-2.5">
+            <img
+              src="/logo-primos.png"
+              alt={site.name}
+              className={`h-11 w-11 rounded-full object-cover ring-2 transition ${
+                solid ? 'ring-brand-200' : 'ring-white/40'
+              }`}
+            />
+            <span
+              className={`font-display text-lg font-extrabold leading-none tracking-tight transition-colors ${
+                solid ? 'text-brand-900' : 'text-white drop-shadow'
+              }`}
+            >
+              {site.name}
+            </span>
           </Link>
-          <nav className="hidden items-center gap-6 text-sm font-medium sm:flex">
+
+          <nav className="hidden items-center gap-8 md:flex">
             {NAV.map((n) => (
               <NavLink
                 key={n.to}
                 to={n.to}
                 end={n.end}
                 className={({ isActive }) =>
-                  isActive ? 'text-brand-700' : 'text-gray-600 hover:text-brand-700'
+                  `text-sm font-semibold transition-colors ${
+                    solid
+                      ? isActive
+                        ? 'text-brand-700'
+                        : 'text-charcoal-700 hover:text-brand-600'
+                      : isActive
+                        ? 'text-white'
+                        : 'text-white/80 hover:text-white'
+                  }`
                 }
               >
                 {n.label}
               </NavLink>
             ))}
+            <Link
+              to="/tienda"
+              className="rounded-full bg-brand-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700"
+            >
+              Ordenar ahora
+            </Link>
           </nav>
-          <Link
-            to="/tienda"
-            className="rounded-full bg-brand-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
+
+          {/* mobile toggle */}
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Menú"
+            className={`flex h-11 w-11 items-center justify-center rounded-full md:hidden ${
+              solid ? 'text-brand-900' : 'text-white'
+            }`}
           >
-            Ordenar
-          </Link>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              {menuOpen ? (
+                <>
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                  <line x1="6" y1="18" x2="18" y2="6" />
+                </>
+              ) : (
+                <>
+                  <line x1="3" y1="7" x2="21" y2="7" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="17" x2="21" y2="17" />
+                </>
+              )}
+            </svg>
+          </button>
         </div>
-        {/* mobile nav */}
-        <nav className="flex items-center justify-around border-t border-brand-100 px-2 py-2 text-sm font-medium sm:hidden">
+      </header>
+
+      {/* mobile overlay menu */}
+      <div
+        className={`fixed inset-0 z-30 bg-charcoal-900/98 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+          menuOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+      >
+        <nav className="flex h-full flex-col items-center justify-center gap-7">
           {NAV.map((n) => (
             <NavLink
               key={n.to}
               to={n.to}
               end={n.end}
               className={({ isActive }) =>
-                isActive ? 'text-brand-700' : 'text-gray-600'
+                `font-display text-3xl font-bold ${isActive ? 'text-brand-400' : 'text-white'}`
               }
             >
               {n.label}
             </NavLink>
           ))}
+          <Link
+            to="/tienda"
+            className="mt-4 rounded-full bg-brand-600 px-10 py-4 text-lg font-bold text-white shadow-lg"
+          >
+            Ordenar ahora
+          </Link>
+          {wa && (
+            <a href={wa} target="_blank" rel="noopener noreferrer" className="text-brand-200">
+              o pedí por WhatsApp
+            </a>
+          )}
         </nav>
-      </header>
+      </div>
 
-      <main className="flex-1">
+      <main className={`flex-1 ${isHome ? '' : 'pt-16'}`}>
         <Outlet />
       </main>
 
-      <footer className="mt-12 bg-brand-900 text-brand-50">
-        <div className="mx-auto grid max-w-5xl gap-8 px-4 py-10 sm:grid-cols-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <img src="/logo-primos.png" alt="" className="h-9 w-9 rounded-full object-cover" />
-              <span className="text-lg font-bold">{site.name}</span>
+      <Footer />
+    </div>
+  );
+}
+
+function Footer() {
+  const wa = whatsappLink('Hola, quiero hacer un pedido 🍗');
+  return (
+    <footer className="relative overflow-hidden bg-charcoal-900 text-brand-50">
+      <div className="bg-radial-warm">
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center gap-2.5">
+              <img src="/logo-primos.png" alt="" className="h-11 w-11 rounded-full object-cover ring-2 ring-white/20" />
+              <span className="font-display text-lg font-extrabold">{site.name}</span>
             </div>
-            <p className="mt-3 text-sm text-brand-200">{site.brand}</p>
-            <p className="mt-1 text-sm text-brand-200">{site.city}</p>
-            {site.addressLine && <p className="mt-1 text-sm text-brand-200">{site.addressLine}</p>}
+            <p className="mt-4 text-sm leading-relaxed text-brand-100/80">
+              {site.brand}. {site.differentiator.split('.')[0]}.
+            </p>
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-brand-300">Horarios</h3>
-            <ul className="mt-3 space-y-1 text-sm text-brand-100">
+            <h3 className="font-display text-sm font-bold uppercase tracking-widest text-brand-300">Menú</h3>
+            <ul className="mt-4 space-y-2.5 text-sm text-brand-100/80">
+              <li><Link to="/tienda" className="transition hover:text-white">Ver el menú</Link></li>
+              <li><Link to="/tienda/mis-pedidos" className="transition hover:text-white">Mis pedidos</Link></li>
+              <li><Link to="/tienda/estado" className="transition hover:text-white">Estado del pedido</Link></li>
+              <li><Link to="/nosotros" className="transition hover:text-white">Nosotros</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="font-display text-sm font-bold uppercase tracking-widest text-brand-300">Horarios</h3>
+            <ul className="mt-4 space-y-2 text-sm text-brand-100/80">
               {site.hours.map((h) => (
-                <li key={h.days} className="flex justify-between gap-4">
+                <li key={h.days} className="flex justify-between gap-3">
                   <span>{h.days}</span>
-                  <span className="text-brand-200">{h.time}</span>
+                  <span className="text-brand-200/70">{h.time}</span>
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-xs text-brand-300">{site.delivery.note}</p>
+            <p className="mt-3 text-xs text-brand-300/70">{site.delivery.note}</p>
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-brand-300">Contacto</h3>
-            <ul className="mt-3 space-y-2 text-sm text-brand-100">
-              {wa && (
+            <h3 className="font-display text-sm font-bold uppercase tracking-widest text-brand-300">Contacto</h3>
+            <ul className="mt-4 space-y-2.5 text-sm text-brand-100/80">
+              <li>{site.city}</li>
+              {site.whatsappNumber && (
                 <li>
-                  <a href={wa} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                    WhatsApp{site.whatsappDisplay ? ` · ${site.whatsappDisplay}` : ''}
+                  <a href={wa} target="_blank" rel="noopener noreferrer" className="transition hover:text-white">
+                    WhatsApp {site.whatsappDisplay}
                   </a>
                 </li>
               )}
               {site.email && (
-                <li>
-                  <a href={`mailto:${site.email}`} className="hover:underline">{site.email}</a>
-                </li>
-              )}
-              {site.instagram && (
-                <li>
-                  <a href={site.instagram} target="_blank" rel="noopener noreferrer" className="hover:underline">Instagram</a>
-                </li>
-              )}
-              {site.facebook && (
-                <li>
-                  <a href={site.facebook} target="_blank" rel="noopener noreferrer" className="hover:underline">Facebook</a>
-                </li>
+                <li><a href={`mailto:${site.email}`} className="transition hover:text-white">{site.email}</a></li>
               )}
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-brand-800">
-          <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-brand-300 sm:flex-row">
+        <div className="border-t border-white/10">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-5 text-xs text-brand-300/60 sm:flex-row">
             <span>© {new Date().getFullYear()} {site.name}. Todos los derechos reservados.</span>
-            <span className="flex gap-4">
-              <Link to="/privacidad" className="hover:underline">Política de Privacidad</Link>
-              <Link to="/terminos" className="hover:underline">Términos de Servicio</Link>
+            <span className="flex gap-5">
+              <Link to="/privacidad" className="transition hover:text-white">Privacidad</Link>
+              <Link to="/terminos" className="transition hover:text-white">Términos</Link>
             </span>
           </div>
         </div>
-      </footer>
-    </div>
+      </div>
+    </footer>
   );
 }
