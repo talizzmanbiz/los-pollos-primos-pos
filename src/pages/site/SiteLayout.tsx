@@ -155,6 +155,23 @@ export default function SiteLayout() {
         <Outlet />
       </main>
 
+      {/* Floating WhatsApp — hidden on /tienda* where the sticky cart bar is
+          the primary CTA and would overlap it. */}
+      {wa && !pathname.startsWith('/tienda') && (
+        <a
+          href={wa}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Pedir por WhatsApp"
+          className="fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_24px_rgba(37,211,102,0.45)] transition hover:-translate-y-0.5 hover:bg-[#1ebe5b]"
+          style={{ bottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+        >
+          <svg viewBox="0 0 32 32" className="h-7 w-7 fill-current" aria-hidden="true">
+            <path d="M16.004 3.2c-7.06 0-12.8 5.74-12.8 12.8 0 2.257.59 4.462 1.712 6.406L3.2 28.8l6.573-1.724a12.74 12.74 0 0 0 6.23 1.587h.006c7.058 0 12.797-5.74 12.797-12.8 0-3.42-1.331-6.633-3.75-9.05a12.72 12.72 0 0 0-9.052-3.613zm0 23.306h-.005a10.58 10.58 0 0 1-5.392-1.476l-.387-.23-3.9 1.023 1.041-3.802-.252-.39a10.55 10.55 0 0 1-1.63-5.63c0-5.867 4.775-10.641 10.65-10.641 2.843 0 5.514 1.108 7.523 3.119a10.58 10.58 0 0 1 3.114 7.53c-.003 5.867-4.778 10.497-10.762 10.497zm5.838-7.953c-.32-.16-1.893-.934-2.186-1.04-.293-.107-.507-.16-.72.16-.214.32-.827 1.04-1.014 1.253-.187.214-.373.24-.693.08-.32-.16-1.352-.498-2.575-1.588-.952-.849-1.594-1.897-1.781-2.217-.187-.32-.02-.493.14-.652.144-.144.32-.374.48-.56.16-.187.214-.32.32-.534.107-.213.054-.4-.026-.56-.08-.16-.72-1.736-.987-2.377-.26-.624-.524-.54-.72-.55l-.613-.01c-.214 0-.56.08-.854.4-.293.32-1.12 1.094-1.12 2.67s1.147 3.098 1.307 3.312c.16.213 2.257 3.447 5.47 4.834.764.33 1.36.527 1.825.674.767.244 1.465.21 2.017.127.615-.092 1.893-.774 2.16-1.521.267-.747.267-1.387.187-1.521-.08-.133-.293-.213-.613-.373z" />
+          </svg>
+        </a>
+      )}
+
       <Footer />
     </div>
   );
@@ -212,6 +229,20 @@ function Footer() {
               )}
               {site.email && (
                 <li><a href={`mailto:${site.email}`} className="transition hover:text-white">{site.email}</a></li>
+              )}
+              {site.facebook && (
+                <li>
+                  <a href={site.facebook} target="_blank" rel="noopener noreferrer" className="transition hover:text-white">
+                    Facebook
+                  </a>
+                </li>
+              )}
+              {site.instagram && (
+                <li>
+                  <a href={site.instagram} target="_blank" rel="noopener noreferrer" className="transition hover:text-white">
+                    Instagram
+                  </a>
+                </li>
               )}
             </ul>
           </div>

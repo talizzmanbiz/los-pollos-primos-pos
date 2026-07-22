@@ -38,7 +38,23 @@ export const site = {
 
   // Social (optional — leave '' to hide).
   instagram: '', // TODO opcional, ej. 'https://instagram.com/lospollosprimos'
-  facebook: '', // TODO opcional
+  // Página de Facebook del negocio (misma que usan los enlaces de pago Wompi).
+  facebook: 'https://www.facebook.com/profile.php?id=61581223217773',
+
+  // Ambas sucursales (datos de la BD: Central produce y entrega, Mercado solo vende).
+  locations: [
+    {
+      name: 'Sucursal Central',
+      detail:
+        '7a Av. Norte y 6a Calle Oriente #28, Barrio Las Ánimas — Plaza Las Palmeras, Local 5',
+      note: 'Pickup y delivery',
+    },
+    {
+      name: 'Mercado Chalchuapa',
+      detail: 'Mercado de Chalchuapa',
+      note: 'Solo venta para llevar',
+    },
+  ],
 
   // ── Operations (known) ───────────────────────────────────────────────
   hours: [

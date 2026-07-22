@@ -41,11 +41,19 @@ export default function ContactPage() {
         <div className="mx-auto grid max-w-5xl gap-8 px-6 md:grid-cols-2">
           {/* info */}
           <Reveal className="space-y-6">
-            <InfoCard title="Dirección" icon={MapPin}>
+            <InfoCard title="Sucursales" icon={MapPin}>
               <p className="text-charcoal-800">{site.city}</p>
-              {site.addressLine && <p className="mt-1 text-charcoal-700/80">{site.addressLine}</p>}
+              <ul className="mt-3 space-y-3">
+                {site.locations.map((l) => (
+                  <li key={l.name} className="rounded-xl bg-brand-50 px-4 py-3 ring-1 ring-brand-100">
+                    <p className="font-display font-bold text-brand-900">{l.name}</p>
+                    <p className="mt-0.5 text-sm text-charcoal-700/80">{l.detail}</p>
+                    <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-brand-600">{l.note}</p>
+                  </li>
+                ))}
+              </ul>
               {site.mapsUrl && (
-                <a href={site.mapsUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block font-semibold text-brand-700 hover:underline">
+                <a href={site.mapsUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block font-semibold text-brand-700 hover:underline">
                   Ver en Google Maps →
                 </a>
               )}
