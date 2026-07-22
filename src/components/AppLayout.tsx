@@ -1,6 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import {
-  Drumstick,
   ShoppingCart,
   ChefHat,
   Bike,
@@ -49,19 +48,19 @@ function LocationSwitcher() {
   const { location, locations, canSwitch, setLocationId } = useWorkingLocationContext();
   if (!canSwitch) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1.5 text-sm font-medium text-charcoal-500 shadow-sm ring-1 ring-primary-200/40 backdrop-blur">
-        <MapPin className="h-4 w-4 text-primary-500" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-800 ring-1 ring-brand-200">
+        <MapPin className="h-4 w-4 text-brand-500" aria-hidden="true" />
         {location ? location.name : 'Cargando…'}
       </span>
     );
   }
   return (
     <div className="relative inline-flex items-center">
-      <MapPin className="pointer-events-none absolute left-3 h-4 w-4 text-primary-500" aria-hidden="true" />
+      <MapPin className="pointer-events-none absolute left-3 h-4 w-4 text-brand-500" aria-hidden="true" />
       <select
         value={location?.id ?? ''}
         onChange={(e) => setLocationId(e.target.value)}
-        className="cursor-pointer rounded-full border-0 bg-white/70 py-2 pl-9 pr-8 text-sm font-semibold text-charcoal-600 shadow-sm ring-1 ring-primary-200/50 backdrop-blur transition-all hover:bg-white hover:ring-primary-300/60 focus:outline-none"
+        className="cursor-pointer rounded-full border-0 bg-brand-50 py-2 pl-9 pr-8 text-sm font-semibold text-brand-800 ring-1 ring-brand-200 transition-all hover:bg-brand-100 hover:ring-brand-300 focus:outline-none"
         title="Cambiar de sucursal"
         aria-label="Seleccionar sucursal"
       >
@@ -100,20 +99,22 @@ export default function AppLayout() {
 
   return (
     <WorkingLocationProvider>
-      <div className="flex min-h-dvh flex-col bg-gradient-to-br from-cream-100 to-cream-200">
-        <header className="sticky top-0 z-40 border-b border-primary-200/25 bg-cream-50/70 shadow-[0_8px_32px_rgba(44,44,44,0.08)] backdrop-blur-xl">
+      <div className="flex min-h-dvh flex-col bg-brand-50/40 font-sans">
+        <header className="sticky top-0 z-40 border-b border-brand-100 bg-white/90 shadow-[0_4px_20px_rgba(0,0,0,0.06)] backdrop-blur-md">
           {/* Row 1 — brand + sucursal · perfil + salir */}
-          <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <span className="flex items-center gap-2.5 whitespace-nowrap">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-md shadow-primary-600/25">
-                  <Drumstick className="h-5 w-5 text-white" aria-hidden="true" />
-                </span>
-                <span className="hidden bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-lg font-extrabold tracking-tight text-transparent sm:inline sm:text-xl">
-                  Pollos Primos
+                <img
+                  src="/logo-primos.png"
+                  alt="Los Pollos Primos"
+                  className="h-10 w-10 rounded-full object-cover ring-2 ring-brand-200"
+                />
+                <span className="hidden font-display text-lg font-extrabold leading-none tracking-tight text-charcoal-800 sm:inline">
+                  Los Pollos Primos
                 </span>
               </span>
-              <div className="hidden h-7 w-px bg-primary-200/50 sm:block" />
+              <div className="hidden h-7 w-px bg-brand-200/70 sm:block" />
               <div className="hidden sm:block">
                 <LocationSwitcher />
               </div>
@@ -122,18 +123,18 @@ export default function AppLayout() {
             <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={handleChangePassword}
-                className="hidden items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-charcoal-500 transition-colors hover:bg-white/70 hover:text-primary-700 sm:inline-flex"
+                className="hidden items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-charcoal-500 transition-colors hover:bg-brand-50 hover:text-brand-700 sm:inline-flex"
                 title="Click para cambiar contraseña"
                 aria-label={`Perfil: ${profile.full_name}. Click para cambiar contraseña`}
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-100/70 text-primary-600">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-brand-600">
                   <UserRound className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <span className="max-w-[10rem] truncate">{profile.full_name}</span>
               </button>
               <button
                 onClick={signOut}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-primary-500 to-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-primary-600/25 transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-lg hover:shadow-primary-600/30 active:scale-95"
+                className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-600/25 transition-all hover:-translate-y-0.5 hover:bg-brand-700 active:translate-y-0"
                 title="Cerrar sesión"
                 aria-label="Salir de la sesión"
               >
@@ -153,10 +154,10 @@ export default function AppLayout() {
                 key={to}
                 to={to}
                 className={({ isActive }) =>
-                  `group inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+                  `inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 ${
                     isActive
-                      ? 'bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-md shadow-primary-600/30'
-                      : 'bg-white/50 text-charcoal-500 ring-1 ring-transparent hover:-translate-y-0.5 hover:bg-white/90 hover:text-primary-700 hover:shadow-sm hover:ring-primary-200/50'
+                      ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25'
+                      : 'text-charcoal-500 hover:-translate-y-0.5 hover:bg-brand-50 hover:text-brand-700'
                   }`
                 }
                 title={label}
@@ -168,7 +169,7 @@ export default function AppLayout() {
           </nav>
 
           {/* Mobile sucursal selector */}
-          <div className="border-t border-primary-200/20 px-4 py-2.5 sm:hidden">
+          <div className="border-t border-brand-100 px-4 py-2.5 sm:hidden">
             <LocationSwitcher />
           </div>
         </header>

@@ -13,7 +13,7 @@ const STATUS_LABELS: Record<AccountingPeriodStatus, string> = {
 const STATUS_STYLES: Record<AccountingPeriodStatus, string> = {
   abierto: 'bg-cream-200 text-charcoal-500',
   revisado: 'bg-accent-100 text-accent-700',
-  cerrado: 'bg-primary-600 text-white',
+  cerrado: 'bg-brand-600 text-white',
 };
 
 const ZERO: IvaMonthly = {
@@ -106,12 +106,12 @@ export default function AccountingDashboard() {
           )}
           {isAdmin && (status !== 'cerrado' ? (
             <button onClick={() => setStatus('cerrado')} disabled={busy}
-              className="rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white active:bg-primary-700 disabled:opacity-50">
+              className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white active:bg-brand-700 disabled:opacity-50">
               Cerrar mes
             </button>
           ) : (
             <button onClick={() => setStatus('abierto')} disabled={busy}
-              className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-primary-700 shadow active:bg-cream-100 disabled:opacity-50">
+              className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-brand-700 shadow active:bg-cream-100 disabled:opacity-50">
               Reabrir mes
             </button>
           ))}
@@ -119,7 +119,7 @@ export default function AccountingDashboard() {
       </div>
 
       {status === 'cerrado' && (
-        <p className="rounded-lg bg-primary-50 px-4 py-2 text-sm text-primary-800">
+        <p className="rounded-lg bg-brand-50 px-4 py-2 text-sm text-brand-800">
           🔒 Período cerrado — no se pueden registrar ni editar ingresos/gastos de este mes.
         </p>
       )}
@@ -127,7 +127,7 @@ export default function AccountingDashboard() {
       {/* Headline: IVA neto a declarar (F-07) */}
       <div
         className={`rounded-2xl p-6 shadow ${
-          neto > 0 ? 'bg-primary-600 text-white' : 'bg-olive-600 text-white'
+          neto > 0 ? 'bg-brand-600 text-white' : 'bg-olive-600 text-white'
         }`}
       >
         <p className="text-sm opacity-90">
@@ -181,7 +181,7 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
   return (
     <div className="flex justify-between py-1">
       <span className={strong ? 'font-semibold text-charcoal-600' : 'text-charcoal-400'}>{label}</span>
-      <span className={strong ? 'text-lg font-bold text-primary-700' : 'font-medium text-charcoal-600'}>
+      <span className={strong ? 'text-lg font-bold text-brand-700' : 'font-medium text-charcoal-600'}>
         {value}
       </span>
     </div>

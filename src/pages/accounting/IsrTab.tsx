@@ -121,23 +121,23 @@ export default function IsrTab() {
         <div className="flex overflow-hidden rounded-lg border border-charcoal-200 text-sm">
           {(['natural', 'juridica'] as const).map((p) => (
             <button key={p} onClick={() => setPersona(p)}
-              className={`px-3 py-2 font-medium ${persona === p ? 'bg-primary-600 text-white' : 'bg-white text-charcoal-500'}`}>
+              className={`px-3 py-2 font-medium ${persona === p ? 'bg-brand-600 text-white' : 'bg-white text-charcoal-500'}`}>
               Persona {p}
             </button>
           ))}
         </div>
         <div className="ml-auto flex gap-2">
-          <button onClick={printPdf} className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-primary-700 shadow active:bg-cream-100">
+          <button onClick={printPdf} className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow active:bg-cream-100">
             Imprimir / PDF
           </button>
-          <button onClick={exportCsv} className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white active:bg-primary-700">
+          <button onClick={exportCsv} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white active:bg-brand-700">
             Descargar CSV
           </button>
         </div>
         {loading && <span className="text-sm text-charcoal-300">Cargando…</span>}
       </div>
 
-      <div className="rounded-2xl bg-primary-600 p-6 text-white shadow">
+      <div className="rounded-2xl bg-brand-600 p-6 text-white shadow">
         <p className="text-sm opacity-90">ISR estimado {year} (persona {persona})</p>
         <p className="text-4xl font-bold">{money(calc.isr)}</p>
         <p className="mt-1 text-xs opacity-80">
@@ -152,7 +152,7 @@ export default function IsrTab() {
           return (
             <div key={i} className={`flex justify-between py-1 ${isResult ? 'border-t border-charcoal-100 mt-1 pt-1' : ''}`}>
               <span className={isResult ? 'font-semibold text-charcoal-600' : 'text-charcoal-400'}>{label}</span>
-              <span className={isResult ? 'font-bold text-primary-700' : 'font-medium text-charcoal-600'}>{money(value)}</span>
+              <span className={isResult ? 'font-bold text-brand-700' : 'font-medium text-charcoal-600'}>{money(value)}</span>
             </div>
           );
         })}

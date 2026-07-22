@@ -118,13 +118,13 @@ export default function IncomeTab() {
             <button
               onClick={sync}
               disabled={syncing}
-              className="rounded-lg bg-primary-600 px-4 py-2 font-semibold text-white active:bg-primary-700 disabled:opacity-60"
+              className="rounded-lg bg-brand-600 px-4 py-2 font-semibold text-white active:bg-brand-700 disabled:opacity-60"
             >
               {syncing ? 'Sincronizando…' : '↻ Sincronizar desde POS'}
             </button>
             <button
               onClick={() => setShowForm((v) => !v)}
-              className="rounded-lg bg-white px-4 py-2 font-semibold text-primary-700 shadow active:bg-cream-100"
+              className="rounded-lg bg-white px-4 py-2 font-semibold text-brand-700 shadow active:bg-cream-100"
             >
               {showForm ? 'Cancelar' : '+ Registrar ingreso'}
             </button>
@@ -177,7 +177,7 @@ export default function IncomeTab() {
               <span className="font-bold">{money(iva)}</span>
             </p>
             <button type="submit" disabled={saving || nTotal <= 0}
-              className="ml-auto rounded-lg bg-primary-600 px-6 py-3 font-bold text-white active:bg-primary-700 disabled:opacity-60">
+              className="ml-auto rounded-lg bg-brand-600 px-6 py-3 font-bold text-white active:bg-brand-700 disabled:opacity-60">
               {saving ? 'Guardando…' : 'Guardar'}
             </button>
           </div>
@@ -208,7 +208,7 @@ export default function IncomeTab() {
                 <td className="px-4 py-3 capitalize">{r.payment_method}</td>
                 <td className="px-4 py-3">
                   {r.synced_from_pos ? (
-                    <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800">POS</span>
+                    <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-800">POS</span>
                   ) : (
                     <span className="rounded-full bg-cream-200 px-2 py-0.5 text-xs text-charcoal-400">Manual</span>
                   )}

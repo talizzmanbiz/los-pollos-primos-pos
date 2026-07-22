@@ -119,7 +119,7 @@ export default function ExpenseTab() {
         {isAdmin && (
           <button
             onClick={() => setShowForm((v) => !v)}
-            className="rounded-lg bg-primary-600 px-4 py-2 font-semibold text-white active:bg-primary-700"
+            className="rounded-lg bg-brand-600 px-4 py-2 font-semibold text-white active:bg-brand-700"
           >
             {showForm ? 'Cancelar' : '+ Registrar gasto'}
           </button>
@@ -187,7 +187,7 @@ export default function ExpenseTab() {
           </label>
 
           {ccfWarning && (
-            <p className="col-span-2 rounded-lg bg-primary-50 px-3 py-2 text-sm text-primary-800 md:col-span-3">
+            <p className="col-span-2 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800 md:col-span-3">
               ⚠️ El crédito fiscal requiere un <strong>CCF o DTE</strong> como soporte. Con “{DOC_TYPE_LABELS[docType]}”
               no es recuperable ante Hacienda.
             </p>
@@ -202,7 +202,7 @@ export default function ExpenseTab() {
               )}
             </p>
             <button type="submit" disabled={saving || base <= 0}
-              className="ml-auto rounded-lg bg-primary-600 px-6 py-3 font-bold text-white active:bg-primary-700 disabled:opacity-60">
+              className="ml-auto rounded-lg bg-brand-600 px-6 py-3 font-bold text-white active:bg-brand-700 disabled:opacity-60">
               {saving ? 'Guardando…' : 'Guardar'}
             </button>
           </div>

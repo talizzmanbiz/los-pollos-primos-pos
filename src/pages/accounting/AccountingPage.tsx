@@ -26,14 +26,14 @@ export default function AccountingPage() {
     <div className="mx-auto max-w-6xl p-6">
       <div className="mb-1 flex items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
-          <h1 className="text-2xl font-bold text-primary-800">Contabilidad</h1>
+          <h1 className="text-2xl font-bold text-brand-800">Contabilidad</h1>
           <span className="hidden text-sm text-charcoal-300 sm:inline">Ministerio de Hacienda · El Salvador</span>
         </div>
         <a
           href="/manual-contable.html"
           target="_blank"
           rel="noopener noreferrer"
-          className="whitespace-nowrap rounded-lg bg-white px-3 py-2 text-sm font-semibold text-primary-700 shadow hover:bg-cream-100"
+          className="whitespace-nowrap rounded-lg bg-white px-3 py-2 text-sm font-semibold text-brand-700 shadow hover:bg-cream-100"
           title="Abrir el manual de usuario (imprimible)"
         >
           📄 Manual
@@ -49,7 +49,7 @@ export default function AccountingPage() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`rounded-lg px-4 py-2 font-medium transition-colors ${
-              tab === t.id ? 'bg-primary-600 text-white' : 'bg-white text-charcoal-500 shadow'
+              tab === t.id ? 'bg-brand-600 text-white' : 'bg-white text-charcoal-500 shadow'
             }`}
           >
             {t.label}

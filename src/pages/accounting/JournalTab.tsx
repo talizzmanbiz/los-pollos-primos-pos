@@ -93,7 +93,7 @@ export default function JournalTab() {
         <div className="flex items-center gap-2">
           {entries.length > 0 && (
             <span className={`rounded-full px-3 py-1 text-sm font-medium ${
-              balanced ? 'bg-olive-100 text-olive-700' : 'bg-primary-100 text-primary-800'
+              balanced ? 'bg-olive-100 text-olive-700' : 'bg-brand-100 text-brand-800'
             }`}>
               {balanced ? '✓ Débitos = Créditos' : '⚠️ Descuadrado'} · {money(grand.debit)}
             </span>
@@ -101,7 +101,7 @@ export default function JournalTab() {
           <button
             onClick={printPdf}
             disabled={entries.length === 0}
-            className="rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white active:bg-primary-700 disabled:opacity-50"
+            className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white active:bg-brand-700 disabled:opacity-50"
           >
             Imprimir / PDF
           </button>
