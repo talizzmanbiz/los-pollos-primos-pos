@@ -23,6 +23,7 @@ const NAV: NavItem[] = [
   { to: '/inventory', label: 'Inventario', roles: ['admin', 'cajero'] },
   { to: '/transfers', label: 'Transferencias', roles: ['admin'] },
   { to: '/reports', label: 'Reportes', roles: ['admin'] },
+  { to: '/contabilidad', label: 'Contabilidad', roles: ['admin', 'contador', 'auditor'] },
   { to: '/admin', label: 'Administración', roles: ['admin'] },
 ];
 
@@ -30,18 +31,21 @@ function LocationSwitcher() {
   const { location, locations, canSwitch, setLocationId } = useWorkingLocationContext();
   if (!canSwitch) {
     return (
-      <span className="text-sm opacity-80">{location ? location.name : 'Cargando…'}</span>
+      <span className="text-sm font-medium text-white opacity-90">
+        📍 {location ? location.name : 'Cargando…'}
+      </span>
     );
   }
   return (
     <select
       value={location?.id ?? ''}
       onChange={(e) => setLocationId(e.target.value)}
-      className="rounded-lg border border-brand-500 bg-brand-600 px-2 py-1 text-sm text-white"
+      className="rounded-lg border border-cream-200/30 bg-primary-600/80 backdrop-blur px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors cursor-pointer"
       title="Cambiar de sucursal"
+      aria-label="Seleccionar sucursal"
     >
       {locations.map((l) => (
-        <option key={l.id} value={l.id}>
+        <option key={l.id} value={l.id} className="bg-primary-700">
           {l.name}
         </option>
       ))}
@@ -74,44 +78,65 @@ export default function AppLayout() {
 
   return (
     <WorkingLocationProvider>
-      <div className="flex min-h-screen flex-col bg-brand-50">
-        <header className="flex items-center justify-between gap-2 bg-brand-700 px-4 py-2 text-white">
-          <div className="flex items-center gap-3">
-            <span className="text-lg font-bold">Los Pollos Primos</span>
+      <div className="flex min-h-screen flex-col bg-gradient-to-br from-cream-100 to-cream-200">
+        <header className="sticky top-0 z-40 glass border-b border-primary-200/20">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
+            {/* Logo & Location */}
+            <div className="flex items-center gap-4">
+              <span className="text-lg sm:text-xl font-semibold text-primary-600">🍗 Pollos Primos</span>
+              <div className="hidden sm:block">
+                <LocationSwitcher />
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex flex-wrap items-center gap-1 overflow-x-auto flex-1 justify-center px-4 max-w-2xl">
+              {visible.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `px-3 py-2 text-sm sm:text-base font-medium rounded-lg transition-all whitespace-nowrap ${
+                      isActive
+                        ? 'bg-primary-600 text-white'
+                        : 'text-charcoal-600 hover:bg-primary-100/50'
+                    }`
+                  }
+                  title={item.label}
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+
+            {/* Profile & Actions */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={handleChangePassword}
+                className="hidden sm:block px-3 py-2 text-sm font-medium text-charcoal-600 hover:text-primary-600 transition-colors rounded-lg hover:bg-primary-100/40"
+                title="Click para cambiar contraseña"
+                aria-label={`Perfil: ${profile.full_name}`}
+              >
+                👤 {profile.full_name}
+              </button>
+              <button
+                onClick={signOut}
+                className="px-3 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors active:scale-95"
+                title="Cerrar sesión"
+                aria-label="Salir de la sesión"
+              >
+                Salir
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile location selector */}
+          <div className="sm:hidden px-4 pb-3 border-t border-primary-200/20">
             <LocationSwitcher />
           </div>
-          <nav className="flex flex-wrap items-center gap-1 overflow-x-auto">
-            {visible.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  `rounded-lg px-3 py-2 text-base font-medium ${
-                    isActive ? 'bg-white text-brand-700' : 'hover:bg-brand-600'
-                  }`
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleChangePassword}
-              className="rounded-lg px-3 py-2 text-sm text-white hover:bg-brand-600 cursor-pointer"
-              title="Click para cambiar contraseña"
-            >
-              {profile.full_name}
-            </button>
-            <button
-              onClick={signOut}
-              className="rounded-lg bg-brand-800 px-3 py-2 text-sm hover:bg-brand-900"
-            >
-              Salir
-            </button>
-          </div>
         </header>
-        <main className="flex-1">
+
+        <main className="flex-1 overflow-auto">
           <Outlet />
         </main>
       </div>

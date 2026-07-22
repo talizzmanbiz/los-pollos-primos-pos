@@ -1,32 +1,96 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme {
-  /* Brand orange scale */
-  --color-brand-50: #fff8ed;
-  --color-brand-100: #ffefd4;
-  --color-brand-200: #ffdba8;
-  --color-brand-300: #ffc070;
-  --color-brand-400: #ff9a36;
-  --color-brand-500: #fd7d10;
-  --color-brand-600: #ee6206;
-  --color-brand-700: #c54908;
-  --color-brand-800: #9c3a0f;
-  --color-brand-900: #7e3210;
+  /* ============ WARM EARTHY PALETTE ============ */
+  /* Burnt Sienna (Primary - Restaurant warmth) */
+  --color-primary-50: #f5e9e4;
+  --color-primary-100: #e8a87b;
+  --color-primary-200: #d98654;
+  --color-primary-300: #c86939;
+  --color-primary-400: #b8653f;
+  --color-primary-500: #a15534;
+  --color-primary-600: #8b4513;
+  --color-primary-700: #6d3410;
+  --color-primary-800: #5a2a0c;
+  --color-primary-900: #4a2108;
 
-  /* Warm charcoal for premium dark sections */
-  --color-charcoal-700: #3a2a20;
-  --color-charcoal-800: #271a12;
-  --color-charcoal-900: #1a110b;
+  /* Amber (Accent - Energy & warmth) */
+  --color-accent-50: #fdf8f3;
+  --color-accent-100: #f5d5b8;
+  --color-accent-200: #ead4a0;
+  --color-accent-300: #dfc989;
+  --color-accent-400: #d4a574;
+  --color-accent-500: #c99660;
+  --color-accent-600: #a68050;
+  --color-accent-700: #8a6940;
 
-  /* Accents */
-  --color-gold-400: #fbbf24;
-  --color-gold-500: #f59e0b;
-  --color-chili-600: #b91c1c;
-  --color-chili-700: #991b1b;
+  /* Olive (Secondary - Balance & growth) */
+  --color-olive-50: #f3f5ec;
+  --color-olive-100: #dfe6c8;
+  --color-olive-200: #bfd199;
+  --color-olive-300: #8fa450;
+  --color-olive-400: #7a9242;
+  --color-olive-500: #6b7f3f;
+  --color-olive-600: #5a6d35;
+  --color-olive-700: #4a5a2a;
 
-  /* Typography */
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  /* Charcoal (Structure & text) */
+  --color-charcoal-50: #f5f5f5;
+  --color-charcoal-100: #e8e8e8;
+  --color-charcoal-200: #d0d0d0;
+  --color-charcoal-300: #878787;
+  --color-charcoal-400: #555555;
+  --color-charcoal-500: #404040;
+  --color-charcoal-600: #2c2c2c;
+  --color-charcoal-700: #1a1a1a;
+
+  /* Cream (Surfaces & Glass) */
+  --color-cream-50: #fefdfb;
+  --color-cream-100: #f9f7f2;
+  --color-cream-200: #f2efeb;
+  --color-cream-300: #e8e4dd;
+  --color-cream-400: #e0ddd7;
+  --color-cream-500: #d4d0cb;
+  --color-cream-600: #c9c3ba;
+
+  /* Semantic Colors */
+  --color-success-50: #f0f4ec;
+  --color-success-100: #d4e5c4;
+  --color-success-500: #5b8c3a;
+  --color-error-50: #fdf3f1;
+  --color-error-100: #f7e1dd;
+  --color-error-500: #c85a54;
+  --color-warning-50: #fdf6f1;
+  --color-warning-100: #f7e8dd;
+  --color-warning-500: #d4a574;
+  --color-info-50: #f0f5f7;
+  --color-info-100: #d4e5ed;
+  --color-info-500: #6b9ba8;
+
+  /* Borders & Dividers */
+  --color-border: #e0ddd7;
+  --color-disabled: #d4d0cb;
+
+  /* Typography - Professional & Elegant */
+  --font-heading: "Playfair Display", serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Spacing (8pt base grid) */
+  --spacing-xs: 0.25rem;   /* 4px */
+  --spacing-sm: 0.5rem;    /* 8px */
+  --spacing-md: 1rem;      /* 16px */
+  --spacing-lg: 1.5rem;    /* 24px */
+  --spacing-xl: 2rem;      /* 32px */
+  --spacing-2xl: 3rem;     /* 48px */
+  --spacing-3xl: 4rem;     /* 64px */
+
+  /* Border Radius - Glass aesthetic */
+  --radius-sm: 0.5rem;     /* 8px */
+  --radius-md: 0.75rem;    /* 12px */
+  --radius-lg: 1rem;       /* 16px */
+  --radius-xl: 1.25rem;    /* 20px */
 }
 
 html {
@@ -36,17 +100,99 @@ html {
 }
 
 body {
-  font-family: var(--font-sans);
-  color: #2a1d15;
-  background: #fff8ed;
+  font-family: var(--font-body);
+  color: var(--color-charcoal-600);
+  background: linear-gradient(135deg, var(--color-cream-100) 0%, var(--color-cream-200) 100%);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  line-height: 1.6;
 }
 
 h1, h2, h3, h4, h5 {
-  font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  font-family: var(--font-heading);
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  color: var(--color-primary-600);
 }
+
+h1 { font-size: 2rem; line-height: 1.2; }
+h2 { font-size: 1.5rem; line-height: 1.3; }
+h3 { font-size: 1.25rem; line-height: 1.4; }
+h4 { font-size: 1.125rem; line-height: 1.5; }
+
+/* ============ GLASSMORPHIC UTILITIES ============ */
+
+/* Glass surface — frosted effect with backdrop blur */
+.glass {
+  background: rgba(249, 247, 242, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(184, 101, 63, 0.12);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(44, 44, 44, 0.08);
+}
+
+.glass-sm {
+  background: rgba(249, 247, 242, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(212, 208, 203, 0.3);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(44, 44, 44, 0.08);
+}
+
+.glass-lg {
+  background: rgba(249, 247, 242, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(184, 101, 63, 0.15);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 16px 48px rgba(44, 44, 44, 0.16);
+}
+
+/* Glass button — primary action with glassmorphic style */
+.glass-button {
+  background: rgba(184, 101, 63, 0.12);
+  border: 1.5px solid rgba(184, 101, 63, 0.3);
+  color: var(--color-primary-600);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.25rem;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+  font-family: var(--font-body);
+}
+
+.glass-button:hover {
+  border-color: rgba(184, 101, 63, 0.5);
+  background: rgba(184, 101, 63, 0.18);
+}
+
+.glass-button:active {
+  transform: scale(0.98);
+  background: rgba(184, 101, 63, 0.22);
+}
+
+.glass-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Glass overlay — modal/scrim background */
+.glass-overlay {
+  background: rgba(44, 44, 44, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Elevation shadows */
+.elevation-1 { box-shadow: 0 2px 8px rgba(44, 44, 44, 0.06); }
+.elevation-2 { box-shadow: 0 4px 16px rgba(44, 44, 44, 0.08); }
+.elevation-3 { box-shadow: 0 8px 32px rgba(44, 44, 44, 0.12); }
+.elevation-4 { box-shadow: 0 16px 48px rgba(44, 44, 44, 0.16); }
+.elevation-5 { box-shadow: 0 24px 64px rgba(44, 44, 44, 0.20); }
 
 ::selection {
   background: #ffdba8;
@@ -76,11 +222,18 @@ label {
   touch-action: manipulation;
 }
 
-/* Consistent, on-brand keyboard focus ring across every page. Low specificity
-   (:where) so components with their own focus ring (inputs) keep theirs. */
+/* Consistent, on-brand keyboard focus ring — burnt sienna for professional feel */
 :where(a[href], button, [role="button"], input, select, textarea):focus-visible {
-  outline: 3px solid var(--color-brand-500);
-  outline-offset: 2px;
+  outline: 2px solid var(--color-primary-600);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Focus state for glass buttons */
+.glass-button:focus-visible {
+  outline: 2px solid var(--color-primary-600);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 4px rgba(184, 101, 63, 0.1);
 }
 
 /* ---- Scroll-reveal + motion (disabled when the user prefers less) ---- */

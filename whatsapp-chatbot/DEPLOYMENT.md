@@ -50,23 +50,32 @@ To reset a stuck customer: delete their row in Data Tables → `pollos_primos_co
 |---|---|---|
 | `SUPABASE_URL` | `https://xuhrenrsrmktfewfejkm.supabase.co` | set ✅ |
 | `SUPABASE_ANON_KEY` | real anon key | set ✅ (pulled from the Supabase project) |
-| `WHATSAPP_WEBHOOK_SECRET` | `CHANGE_ME` | must equal the secret the Supabase edge functions expect (`x-webhook-secret`) |
-| `WHATSAPP_PHONE_ID` | `CHANGE_ME` | Phone Number ID from Meta App Dashboard |
-| `WHATSAPP_ACCESS_TOKEN` | `CHANGE_ME` | permanent System User token (Meta Business Settings) — do NOT use the 24h temp token |
+| `WHATSAPP_WEBHOOK_SECRET` | `ppwa_7f3d9c2e8b514a6f90d1c4e7a2b8f635` | set ✅ in n8n AND Supabase (verified 2026-07-16 — auth passes, full E2E order PP-C-0014 created & cleaned up) |
+| `WHATSAPP_PHONE_ID` | `1264258403429380` | set ✅ (2026-07-16) |
+| `WHATSAPP_ACCESS_TOKEN` | set ✅ | WORKING as of 2026-07-17 — Meta block resolved; real message delivery confirmed (menu sent to staff phone). Business number: +503 7047 6975, verified, quality GREEN. |
 | `WHATSAPP_VERIFY_TOKEN` | `pollos-primos-verify-2026` | enter this exact string as "Verify token" in Meta webhook config |
-| `STAFF_WHATSAPP_NUMBER` | *(empty)* | staff/owner WhatsApp number for handoff + new-order alerts, e.g. `503XXXXXXXX`. Empty = alerts silently skipped |
-| `PAYMENT_GATEWAY_PLACEHOLDER` | `https://pay.example.com/{order_id}` | replace when Wompi/Pagadito/QPayPro is chosen; `{order_id}` is substituted with the order number |
+| `STAFF_WHATSAPP_NUMBER` | `50372830282` | set ✅ — receives handoff, new-order, cancellation and API-error alerts |
+| `PAYMENT_GATEWAY_PLACEHOLDER` | *(unused)* | superseded — `create-order` returns a real Wompi `payment_url` which the bot sends directly; if Wompi creds aren't configured the function downgrades the order to cash and the bot tells the customer |
 | `WHATSAPP_API_VERSION` | `v18.0` | Graph API version |
 
 Note: the project brief listed `graph.instagram.com` as the API host — that's a typo; the WhatsApp Cloud API host is `graph.facebook.com`, which is what the workflow uses.
 
-### Prices
-The `PRICES` map lives at the top of the **Brain** code node (combos $12.95/$6.95/$3.95, solo $11/$6/$3.50, extras: chimichurri $1.00, tortillas $0.50/$1.00/$2.00, cebolla $0.75/$1.50). These are **display-only** — the Supabase `create-order` response total is what's quoted in the final confirmation. If POS prices change, update the Brain node to match. Delivery: Zona 1 $1.00 / Zona 2 $1.50, Central only.
+### Actual API contract (bot updated 2026-07-16 to match the deployed edge functions)
+The original brief's contract was outdated. The bot now sends:
 
-## Go-live checklist
+- **create-order**: `{ source: 'whatsapp', location_code: 'C'|'M', order_type: 'pickup'|'delivery', customer_name, customer_phone, delivery_address?, delivery_zone_id? (UUID), payment_method: 'cash'|'payment_link', items: [{ sku, quantity }] }` → response `{ order_number, subtotal, delivery_fee, total, estimated_minutes, payment_url, items }`. Delivery-zone UUIDs are hardcoded in the Brain: Zona 1 `cccccccc-0000-0000-0000-000000000001` ($1.00), Zona 2 `…0002` ($1.50), Central only.
+- **order-status**: **POST** (not GET) with JSON body `{ phone, order_number }` → returns `status`, Spanish `status_label` (Recibido/En preparación/Listo/En camino/Entregado/Cancelado), `estimated_minutes`, items, timeline.
 
-1. In Meta App Dashboard get the **Phone Number ID** and a **permanent access token**; paste both into `pollos_primos_config`.
-2. Set `WHATSAPP_WEBHOOK_SECRET` in the config table to the same value the Supabase `create-order` function validates (currently the function returns 401 `No autorizado` with the placeholder — confirmed in testing, which proves connectivity and the error path).
+### Prices (real SKUs from the products table, mirrored in the Brain)
+COMBO-ENT $12.95 · COMBO-MED $6.95 · COMBO-CTO $3.95 · POLLO-ENT $11.00 · POLLO-MED $6.00 · POLLO-CTO $3.50 · CHIMI-30 $0.75 · TORT-2 $0.50 · TORT-4 $0.75 · TORT-8 $1.00 · CEB-ENT $0.75 · CEB-MED $0.40. Display-only — the create-order response total is what's quoted to the customer. If POS prices change, update the Brain's `PRICES` map to match.
+
+> ⚠️ `los-pollos-primos-whatsapp-chatbot.workflow.json` in this folder predates the 2026-07-16 SKU/contract update — the live n8n workflow (`MmlbbbBghiKWttqP`) is the source of truth.
+
+## Go-live checklist (updated 2026-07-16)
+
+1. ~~Phone Number ID + access token into config~~ ✅ done.
+2. **Unblock the Meta app** — every Graph API call with the current token returns "API access blocked" (OAuthException 200). Check Meta App Dashboard for alerts: usually this means pending **business verification** (Business Settings → Security Center), the app being disabled/restricted, or an unaccepted platform policy update. Once cleared, if you generate a new token, paste it into `pollos_primos_config` → `WHATSAPP_ACCESS_TOKEN`.
+3. **Set the webhook secret in Supabase**: Dashboard → Project Settings → Edge Functions → Secrets → add `WHATSAPP_WEBHOOK_SECRET` = `ppwa_7f3d9c2e8b514a6f90d1c4e7a2b8f635` (already set on the n8n side). Until then create-order returns 401.
 3. Set `STAFF_WHATSAPP_NUMBER` so handoffs, new orders, cancellations, and API errors reach staff. (Note: Meta only allows free-form messages to numbers that have messaged the business within 24h, OR you must use a template. Easiest: have the staff phone send one message to the business number, then it stays warm through daily traffic.)
 4. In Meta webhook config: Callback URL = the webhook URL above, Verify token = `pollos-primos-verify-2026`, subscribe to `messages`. Meta will do the GET handshake (already verified working).
 5. Send a real WhatsApp message to the business number and run through a full order.

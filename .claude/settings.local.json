@@ -75,7 +75,9 @@
       "Bash(git commit -m 'Fix: move setPaying\\(false\\) AFTER createOrder completes *)",
       "Bash(git commit -m 'Fix: superadmin could not ring POS sales — two stacked bugs *)",
       "Bash(git commit -m 'Add superadmin location switcher + open full access to admin role *)",
-      "Bash(git commit -m 'Detect dead auth sessions instead of failing writes as anonymous *)"
+      "Bash(git commit -m 'Detect dead auth sessions instead of failing writes as anonymous *)",
+      "Read(//c/Users/taliz/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/1ff137c6-b10a-4352-ae80-4ef22e693093/b4c73380-d3b8-4ff4-b301-aafeebd186c5/skills/ui-ux-pro-max/**)",
+      "Bash(python3 scripts/search.py \"restaurant POS service tool professional minimalist glassmorphism warm amber olive\" --design-system -p \"Los Pollos Primos POS\" -f markdown)"
     ]
   }
 }

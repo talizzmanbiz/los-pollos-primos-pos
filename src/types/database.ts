@@ -14,6 +14,267 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounting_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          reason: string | null
+          record_id: string | null
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          reason?: string | null
+          record_id?: string | null
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          reason?: string | null
+          record_id?: string | null
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      accounting_chart_of_accounts: {
+        Row: {
+          account_code: string
+          account_name: string
+          account_type: Database["public"]["Enums"]["accounting_account_type"]
+          active: boolean
+          created_at: string
+        }
+        Insert: {
+          account_code: string
+          account_name: string
+          account_type: Database["public"]["Enums"]["accounting_account_type"]
+          active?: boolean
+          created_at?: string
+        }
+        Update: {
+          account_code?: string
+          account_name?: string
+          account_type?: Database["public"]["Enums"]["accounting_account_type"]
+          active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      accounting_journal: {
+        Row: {
+          account_code: string
+          account_name: string
+          created_at: string
+          credit_amount: number
+          debit_amount: number
+          description: string | null
+          entry_number: number
+          id: string
+          journal_date: string
+          line_number: number
+          source_id: string | null
+          source_type: string | null
+        }
+        Insert: {
+          account_code: string
+          account_name: string
+          created_at?: string
+          credit_amount?: number
+          debit_amount?: number
+          description?: string | null
+          entry_number: number
+          id?: string
+          journal_date: string
+          line_number: number
+          source_id?: string | null
+          source_type?: string | null
+        }
+        Update: {
+          account_code?: string
+          account_name?: string
+          created_at?: string
+          credit_amount?: number
+          debit_amount?: number
+          description?: string | null
+          entry_number?: number
+          id?: string
+          journal_date?: string
+          line_number?: number
+          source_id?: string | null
+          source_type?: string | null
+        }
+        Relationships: []
+      }
+      accounting_periods: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["accounting_period_status"]
+          year_month: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["accounting_period_status"]
+          year_month: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["accounting_period_status"]
+          year_month?: string
+        }
+        Relationships: []
+      }
+      accounting_transactions_expense: {
+        Row: {
+          account_code: string | null
+          base_amount_usd: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          document_number: string | null
+          document_type: Database["public"]["Enums"]["accounting_doc_type"]
+          expense_type: Database["public"]["Enums"]["accounting_expense_type"]
+          id: string
+          is_deductible: boolean
+          iva_amount_usd: number
+          iva_creditable: boolean
+          iva_rate: number | null
+          location_id: string | null
+          retention_amount: number
+          supplier_name: string | null
+          supplier_nit: string | null
+          total_amount_usd: number
+          transaction_date: string
+        }
+        Insert: {
+          account_code?: string | null
+          base_amount_usd: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_number?: string | null
+          document_type?: Database["public"]["Enums"]["accounting_doc_type"]
+          expense_type: Database["public"]["Enums"]["accounting_expense_type"]
+          id?: string
+          is_deductible?: boolean
+          iva_amount_usd?: number
+          iva_creditable?: boolean
+          iva_rate?: number | null
+          location_id?: string | null
+          retention_amount?: number
+          supplier_name?: string | null
+          supplier_nit?: string | null
+          total_amount_usd: number
+          transaction_date?: string
+        }
+        Update: {
+          account_code?: string | null
+          base_amount_usd?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_number?: string | null
+          document_type?: Database["public"]["Enums"]["accounting_doc_type"]
+          expense_type?: Database["public"]["Enums"]["accounting_expense_type"]
+          id?: string
+          is_deductible?: boolean
+          iva_amount_usd?: number
+          iva_creditable?: boolean
+          iva_rate?: number | null
+          location_id?: string | null
+          retention_amount?: number
+          supplier_name?: string | null
+          supplier_nit?: string | null
+          total_amount_usd?: number
+          transaction_date?: string
+        }
+        Relationships: []
+      }
+      accounting_transactions_income: {
+        Row: {
+          base_amount_usd: number
+          created_at: string
+          created_by: string | null
+          customer_name: string | null
+          customer_nit: string | null
+          document_number: string | null
+          id: string
+          iva_amount_usd: number
+          location_id: string | null
+          payment_method: string
+          quantity: number | null
+          source_order_id: string | null
+          synced_from_pos: boolean
+          total_amount_usd: number
+          transaction_date: string
+          transaction_type: string
+        }
+        Insert: {
+          base_amount_usd: number
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          customer_nit?: string | null
+          document_number?: string | null
+          id?: string
+          iva_amount_usd?: number
+          location_id?: string | null
+          payment_method?: string
+          quantity?: number | null
+          source_order_id?: string | null
+          synced_from_pos?: boolean
+          total_amount_usd: number
+          transaction_date?: string
+          transaction_type?: string
+        }
+        Update: {
+          base_amount_usd?: number
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          customer_nit?: string | null
+          document_number?: string | null
+          id?: string
+          iva_amount_usd?: number
+          location_id?: string | null
+          payment_method?: string
+          quantity?: number | null
+          source_order_id?: string | null
+          synced_from_pos?: boolean
+          total_amount_usd?: number
+          transaction_date?: string
+          transaction_type?: string
+        }
+        Relationships: []
+      }
       cash_movements: {
         Row: {
           amount: number
@@ -894,9 +1155,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      accounting_iva_monthly: {
+        Row: {
+          year_month: string | null
+          total_sales_base: number | null
+          iva_debito: number | null
+          total_purchases_base: number | null
+          iva_credito: number | null
+          iva_neto: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      accounting_ledger: {
+        Args: { p_start: string; p_end: string }
+        Returns: {
+          account_code: string
+          account_name: string
+          account_type: Database["public"]["Enums"]["accounting_account_type"]
+          opening_balance: number
+          period_debits: number
+          period_credits: number
+          closing_balance: number
+        }[]
+      }
+      accounting_set_period: {
+        Args: { p_month: string; p_status: Database["public"]["Enums"]["accounting_period_status"]; p_notes?: string }
+        Returns: Database["public"]["Tables"]["accounting_periods"]["Row"]
+      }
+      accounting_sync_from_pos: {
+        Args: { p_since?: string }
+        Returns: number
+      }
       close_cash_session: {
         Args: { p_session: string; p_counted: number; p_notes?: string }
         Returns: Database["public"]["Tables"]["cash_sessions"]["Row"]
@@ -930,6 +1221,19 @@ export type Database = {
       }
     }
     Enums: {
+      accounting_account_type: "activo" | "pasivo" | "capital" | "ingreso" | "gasto"
+      accounting_doc_type: "ccf" | "dte" | "factura" | "recibo" | "ticket" | "ninguno"
+      accounting_period_status: "abierto" | "revisado" | "cerrado"
+      accounting_expense_type:
+        | "ingredientes"
+        | "gas"
+        | "luz"
+        | "agua"
+        | "mod"
+        | "alquiler"
+        | "empaques"
+        | "servicios"
+        | "otros"
       batch_status: "open" | "closed"
       cash_session_status: "open" | "closed"
       inventory_reason:
@@ -956,7 +1260,7 @@ export type Database = {
       product_type: "combo" | "chicken" | "extra" | "beverage"
       purchase_unit: "unidades" | "libras"
       transfer_status: "in_transit" | "received" | "cancelled"
-      user_role: "superadmin" | "admin" | "cajero" | "cocina" | "repartidor"
+      user_role: "superadmin" | "admin" | "cajero" | "cocina" | "repartidor" | "contador" | "auditor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -985,3 +1289,12 @@ export type Product = Tables<"products">
 export type Order = Tables<"orders">
 export type OrderItem = Tables<"order_items">
 export type Review = Tables<"reviews">
+export type AccountingIncome = Tables<"accounting_transactions_income">
+export type AccountingExpense = Tables<"accounting_transactions_expense">
+export type AccountingJournalLine = Tables<"accounting_journal">
+export type AccountingAccount = Tables<"accounting_chart_of_accounts">
+export type AccountingAuditLog = Tables<"accounting_audit_log">
+export type IvaMonthly = Database["public"]["Views"]["accounting_iva_monthly"]["Row"]
+export type LedgerRow = Database["public"]["Functions"]["accounting_ledger"]["Returns"][number]
+export type AccountingPeriod = Tables<"accounting_periods">
+export type AccountingPeriodStatus = Enums<"accounting_period_status">

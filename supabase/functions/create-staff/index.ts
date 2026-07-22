@@ -9,7 +9,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const ROLES = ['admin', 'cajero', 'cocina', 'repartidor'] as const;
+const ROLES = ['admin', 'cajero', 'cocina', 'repartidor', 'contador', 'auditor'] as const;
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
@@ -55,7 +55,7 @@ Deno.serve(async (req: Request) => {
   const role = body.role as (typeof ROLES)[number];
   if (!email || !fullName || !ROLES.includes(role) || !body.location_id) {
     return Response.json(
-      { error: 'Faltan datos: email, full_name, role (admin|cajero|cocina|repartidor), location_id' },
+      { error: 'Faltan datos: email, full_name, role (admin|cajero|cocina|repartidor|contador|auditor), location_id' },
       { status: 400, headers: CORS },
     );
   }

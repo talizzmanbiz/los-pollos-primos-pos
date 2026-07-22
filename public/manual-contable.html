@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual del Sistema Contable — Los Pollos Primos</title>
+<style>
+  :root { --rojo:#B91C1C; --naranja:#F97316; --amarillo:#FBBF24; --tinta:#1f2937; --gris:#6b7280; --linea:#e5e7eb; }
+  * { box-sizing: border-box; }
+  html { font-size: 16px; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--tinta); line-height: 1.6; max-width: 860px; margin: 0 auto;
+    padding: 32px 24px 80px; background: #fff;
+  }
+  header.doc { border-bottom: 4px solid var(--rojo); padding-bottom: 16px; margin-bottom: 8px; }
+  header.doc h1 { color: var(--rojo); font-size: 1.9rem; margin: 0 0 4px; }
+  header.doc .sub { color: var(--gris); font-size: .95rem; }
+  h2 { color: var(--rojo); font-size: 1.35rem; margin: 2.2rem 0 .6rem; padding-top: .4rem; border-top: 1px solid var(--linea); }
+  h3 { color: #9a3412; font-size: 1.08rem; margin: 1.3rem 0 .4rem; }
+  a { color: var(--rojo); }
+  table { width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .93rem; }
+  th, td { border: 1px solid var(--linea); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: #fef3f2; color: #7f1d1d; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; font-size: .9em; }
+  pre { background: #f9fafb; border: 1px solid var(--linea); border-left: 4px solid var(--naranja);
+        padding: 12px 14px; border-radius: 6px; overflow-x: auto; font-size: .9rem; }
+  .callout { border-left: 4px solid var(--amarillo); background: #fffbeb; padding: 10px 14px; border-radius: 6px; margin: 1rem 0; }
+  .callout.warn { border-left-color: var(--naranja); background: #fff7ed; }
+  .callout.info { border-left-color: var(--rojo); background: #fef2f2; }
+  ul, ol { padding-left: 1.3rem; }
+  li { margin: .2rem 0; }
+  .toc { background: #f9fafb; border: 1px solid var(--linea); border-radius: 8px; padding: 14px 20px; margin: 1.2rem 0; }
+  .toc ol { margin: 0; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .8rem; font-weight: 600; }
+  .pill.abierto { background:#dcfce7; color:#166534; }
+  .pill.revisado { background:#fef9c3; color:#854d0e; }
+  .pill.cerrado { background:#fee2e2; color:#991b1b; }
+  footer.doc { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--linea); color: var(--gris); font-size: .85rem; }
+  /* Barra de acciones (no se imprime) */
+  .toolbar { position: sticky; top: 0; background: #fff; padding: 10px 0; margin-bottom: 8px;
+             display: flex; gap: 10px; justify-content: flex-end; border-bottom: 1px solid var(--linea); z-index: 5; }
+  .btn { background: var(--rojo); color: #fff; border: none; border-radius: 8px; padding: 9px 16px;
+         font-size: .95rem; font-weight: 600; cursor: pointer; }
+  .btn.sec { background: #fff; color: var(--rojo); border: 1px solid var(--rojo); }
+  @media print {
+    .noprint { display: none !important; }
+    body { max-width: none; padding: 0; font-size: 11.5pt; }
+    a { color: inherit; text-decoration: none; }
+    h2 { page-break-after: avoid; }
+    h3 { page-break-after: avoid; }
+    table, tr, pre, .callout { page-break-inside: avoid; }
+    thead { display: table-header-group; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar noprint">
+  <button class="btn sec" onclick="window.close()">Cerrar</button>
+  <button class="btn" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+</div>
+
+<header class="doc">
+  <h1>Manual de Usuario — Sistema Contable</h1>
+  <div class="sub">Los Pollos Primos · Conformidad Ministerio de Hacienda (El Salvador)</div>
+</header>
+
+<div class="callout info">
+  <strong>Aviso importante:</strong> este sistema es una <strong>herramienta de conformidad fiscal</strong>,
+  no reemplaza a un contador público autorizado. Conservá siempre los documentos originales (CCF, facturas,
+  recibos) y validá los reportes con tu contador antes de presentarlos a la DGII.
+</div>
+
+<div class="toc noprint">
+  <strong>Contenido</strong>
+  <ol>
+    <li><a href="#s1">¿Qué es y para quién?</a></li>
+    <li><a href="#s2">Cómo entrar y los roles</a></li>
+    <li><a href="#s3">Conceptos clave (leé esto primero)</a></li>
+    <li><a href="#s4">Recorrido por las pestañas</a></li>
+    <li><a href="#s5">Flujos de trabajo</a></li>
+    <li><a href="#s6">Cómo cerrar el mes (paso a paso)</a></li>
+    <li><a href="#s7">Preguntas frecuentes y solución de problemas</a></li>
+    <li><a href="#s8">Catálogo de cuentas contables</a></li>
+    <li><a href="#s9">Glosario</a></li>
+  </ol>
+</div>
+
+<h2 id="s1">1. ¿Qué es y para quién?</h2>
+<p>El <strong>Sistema Contable</strong> es una sección dentro del mismo sistema del POS (punto de venta). Sirve para:</p>
+<ul>
+  <li>Registrar <strong>ingresos</strong> (ventas) y <strong>gastos</strong> con su IVA.</li>
+  <li>Generar automáticamente el <strong>Libro Diario</strong> y el <strong>Libro Mayor</strong> (partida doble).</li>
+  <li>Calcular el <strong>IVA mensual (F-07)</strong> y preparar los <strong>Registros de Ventas y Compras</strong>.</li>
+  <li>Estimar el <strong>ISR anual</strong>.</li>
+  <li>Cerrar cada mes para proteger la información una vez revisada.</li>
+</ul>
+<p><strong>Está pensado para:</strong></p>
+<ul>
+  <li><strong>El dueño (administrador):</strong> hace todo — registra, sincroniza, cierra el mes.</li>
+  <li><strong>El contador:</strong> revisa reportes y marca el mes como "revisado".</li>
+  <li><strong>El auditor:</strong> solo lectura, incluyendo el registro de auditoría.</li>
+</ul>
+<p>Para llegar: iniciá sesión en el sistema y hacé clic en <strong>Contabilidad</strong> en el menú superior.</p>
+
+<h2 id="s2">2. Cómo entrar y los roles</h2>
+<p>El sistema reutiliza los mismos usuarios del POS. La sección de Contabilidad solo es visible para tres roles:</p>
+<table>
+  <thead><tr><th>Rol</th><th>Qué puede hacer</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Admin / Dueño</strong></td><td>Todo: registrar ingresos y gastos, sincronizar del POS, cerrar y reabrir meses.</td></tr>
+    <tr><td><strong>Contador</strong></td><td>Ver todos los reportes y libros; <strong>marcar un mes como "revisado"</strong>. No registra ni cierra.</td></tr>
+    <tr><td><strong>Auditor</strong></td><td>Solo lectura de todo, incluido el historial de cambios (auditoría). No modifica nada.</td></tr>
+  </tbody>
+</table>
+<div class="callout">Los roles <strong>Cajero, Cocina y Repartidor</strong> no ven la sección de Contabilidad.</div>
+<p><strong>Crear un usuario contador o auditor:</strong> el dueño va a <strong>Administración → Personal → + Nuevo</strong>,
+elige el rol <strong>Contador</strong> o <strong>Auditor</strong>, y entrega la contraseña generada a la persona
+(que debe cambiarla al ingresar).</p>
+
+<h2 id="s3">3. Conceptos clave (leé esto primero)</h2>
+<h3>El precio YA incluye el IVA</h3>
+<p>En El Salvador, el precio que paga el cliente <strong>ya trae el IVA adentro</strong>. Por eso el sistema separa cada venta así:</p>
+<pre>Base (sin IVA) = Total ÷ 1.13
+IVA (13%)      = Total − Base</pre>
+<p><strong>Ejemplo:</strong> un combo de <strong>$11.30</strong> → Base <strong>$10.00</strong> + IVA <strong>$1.30</strong>.
+No hay que "sumar" el 13%: ya está incluido en el precio de venta.</p>
+<h3>IVA Débito vs. IVA Crédito</h3>
+<ul>
+  <li><strong>IVA Débito</strong> = el IVA que <strong>cobrás</strong> a tus clientes en las ventas.</li>
+  <li><strong>IVA Crédito</strong> = el IVA que <strong>pagás</strong> en tus compras (recuperable si tenés CCF).</li>
+  <li><strong>IVA a pagar (F-07)</strong> = IVA Débito − IVA Crédito.
+    <ul>
+      <li>Si es <strong>positivo</strong> → le pagás esa diferencia a Hacienda.</li>
+      <li>Si es <strong>negativo</strong> → tenés un <strong>remanente a favor</strong> que se arrastra al mes siguiente.</li>
+    </ul>
+  </li>
+</ul>
+<h3>Partida doble (por qué todo "cuadra")</h3>
+<p>Cada operación genera un <strong>asiento</strong> contable donde <strong>la suma de débitos = la suma de créditos</strong>.
+El sistema arma estos asientos <strong>automáticamente</strong>; vos no hacés contabilidad manual.</p>
+<p><strong>Ejemplo — venta de $11.30 en efectivo:</strong></p>
+<table>
+  <thead><tr><th>Cuenta</th><th class="num">Débito</th><th class="num">Crédito</th></tr></thead>
+  <tbody>
+    <tr><td>Caja y Efectivo</td><td class="num">11.30</td><td class="num"></td></tr>
+    <tr><td>Ventas de Productos</td><td class="num"></td><td class="num">10.00</td></tr>
+    <tr><td>IVA Débito Fiscal</td><td class="num"></td><td class="num">1.30</td></tr>
+    <tr><td><strong>Totales</strong></td><td class="num"><strong>11.30</strong></td><td class="num"><strong>11.30</strong></td></tr>
+  </tbody>
+</table>
+
+<h2 id="s4">4. Recorrido por las pestañas</h2>
+<p>La sección Contabilidad tiene <strong>7 pestañas</strong>: Dashboard · Ingresos · Gastos · Libro Diario ·
+Libro Mayor · Reportes DGII · ISR anual. Casi todas tienen un <strong>selector de mes</strong> arriba a la izquierda.</p>
+
+<h3>4.1 Dashboard</h3>
+<p>Pantalla de resumen fiscal del mes elegido. Muestra:</p>
+<ul>
+  <li><strong>IVA neto a pagar / a favor</strong> (el número grande) — lo que declararás en el F-07.</li>
+  <li>Tarjetas: <strong>Ventas base</strong>, <strong>IVA Débito</strong>, <strong>Compras base</strong>, <strong>IVA Crédito</strong>.</li>
+  <li>Resumen del mes con las ventas totales con IVA.</li>
+  <li><strong>Estado del período</strong> y los botones para cambiarlo.</li>
+</ul>
+<p><strong>Estados del mes:</strong>
+  <span class="pill abierto">Abierto</span> se puede registrar y editar ·
+  <span class="pill revisado">Revisado</span> el contador ya lo revisó (aún editable) ·
+  <span class="pill cerrado">Cerrado</span> bloqueado, no se registra ni edita nada.</p>
+
+<h3>4.2 Ingresos</h3>
+<p>Las ventas. Dos formas de cargarlas:</p>
+<p><strong>A) Sincronizar desde POS (recomendado).</strong> Clic en <strong>↻ Sincronizar desde POS</strong>. Toma
+automáticamente las ventas <strong>pagadas o completadas</strong> del POS (últimos 90 días) que aún no estén
+registradas, y las separa en base + IVA. Es <strong>seguro repetirlo</strong>: no duplica ventas ya importadas.</p>
+<ul>
+  <li>Efectivo → cobro en <strong>Caja</strong>. · Wompi / tarjeta → cobro en <strong>Bancos</strong>.</li>
+  <li>Las ventas del POS llevan la etiqueta <strong>POS</strong> y <strong>no se pueden editar</strong> (inmutabilidad fiscal).</li>
+</ul>
+<p><strong>B) Registrar ingreso manual.</strong> Para ventas que no pasaron por el POS. Clic en
+<strong>+ Registrar ingreso</strong>, escribí el <strong>total cobrado (con IVA incluido)</strong> y el sistema
+calcula base e IVA. Cliente y número de documento son opcionales.</p>
+
+<h3>4.3 Gastos</h3>
+<p>Compras y gastos operativos. Clic en <strong>+ Registrar gasto</strong> y completá:</p>
+<ul>
+  <li><strong>Fecha</strong> y <strong>Categoría</strong> (Ingredientes, Gas, Energía, Agua, Mano de obra, Alquiler, Empaques, Servicios, Otros).</li>
+  <li><strong>Monto base (sin IVA)</strong> — el sistema calcula IVA y total.</li>
+  <li><strong>Proveedor</strong> y <strong>NIT</strong>; <strong>Documento</strong> (tipo CCF/DTE/Factura/Recibo/Ticket + número).</li>
+  <li>Casillas: <strong>Tiene IVA 13%</strong>, <strong>Deducible (ISR)</strong>, <strong>Crédito fiscal recuperable</strong>, <strong>Retención IVA 1%</strong>.</li>
+</ul>
+<div class="callout warn">
+  <strong>Regla del CCF:</strong> para que el IVA sea <strong>crédito fiscal recuperable</strong>, el documento
+  debe ser <strong>CCF o DTE</strong>. Si marcás "crédito fiscal" con otro documento, el sistema muestra una
+  advertencia — sin CCF, Hacienda no reconoce el crédito.
+</div>
+<p><strong>Retención del 1% (solo Gran Contribuyente):</strong> en compras gravadas <strong>mayores a $100</strong>
+con CCF, podés retener el <strong>1% del IVA</strong> al proveedor. Al marcar la casilla, el sistema calcula la
+retención, le paga al proveedor el <strong>neto</strong> (total − retención) y registra la retención como pasivo
+a enterar a Hacienda (aparece en el anexo <strong>F-14</strong>). Si <strong>no</strong> sos Gran Contribuyente, dejá la casilla sin marcar.</p>
+
+<h3>4.4 Libro Diario</h3>
+<p>Todos los <strong>asientos</strong> del mes, cada uno con sus líneas de débito y crédito y un indicador de que
+<strong>cuadra</strong>. Arriba a la derecha: insignia <strong>✓ Débitos = Créditos</strong> y botón
+<strong>Imprimir / PDF</strong> (documento con formato legal y espacio para firma del contribuyente y del contador).</p>
+
+<h3>4.5 Libro Mayor</h3>
+<p>Saldo de <strong>cada cuenta</strong> en el mes: saldo inicial, débitos, créditos y saldo final, marcado con
+<strong>D</strong> (deudor: activos/gastos) o <strong>A</strong> (acreedor: pasivos/capital/ingresos). Abajo, el
+<strong>Balance de Comprobación</strong> confirma que los saldos deudores = acreedores. Botones
+<strong>Imprimir / PDF</strong> y <strong>Descargar CSV</strong>.</p>
+
+<h3>4.6 Reportes DGII</h3>
+<p>Lo que se presenta a Hacienda. Todo se descarga en <strong>CSV</strong> (abre directo en Excel):</p>
+<ul>
+  <li><strong>Declaración F-07 (IVA mensual):</strong> ventas gravadas, débito, compras gravadas, crédito y el <strong>IVA a pagar</strong> (o remanente a favor).</li>
+  <li><strong>Anexo F-14:</strong> aparece solo si hay retenciones — total del 1% retenido a proveedores.</li>
+  <li><strong>Registro de Ventas:</strong> contribuyentes (con NIT) detallados como CCF; consumidor final <strong>resumido por día</strong>.</li>
+  <li><strong>Registro de Compras:</strong> compras con crédito fiscal (CCF/DTE), una por una.</li>
+</ul>
+<div class="callout"><strong>Fecha límite F-07:</strong> antes del <strong>día 20</strong> del mes siguiente.
+Validá el formato de columnas con tu contador según la versión vigente de la DGII.</div>
+
+<h3>4.7 ISR anual</h3>
+<p>Estima el Impuesto sobre la Renta del año. Determina la renta así:</p>
+<pre>Ingresos gravables (base)
+(−) Costo de ventas (COGS: Ingredientes + Empaques)
+(=) Utilidad bruta
+(−) Gastos operativos deducibles
+(=) Utilidad imponible
+     → ISR estimado</pre>
+<p>Podés cambiar entre <strong>Persona natural</strong> (tramos progresivos, exención hasta ~$4,064) y
+<strong>Persona jurídica</strong> (25% hasta $150,000; 30% arriba). Muestra la tasa efectiva, el desglose por
+categoría y botones <strong>Imprimir / PDF</strong> y <strong>Descargar CSV</strong>.</p>
+<div class="callout">El ISR solo toma gastos <strong>marcados como deducibles</strong>. El <strong>pollo crudo</strong>
+comprado en el POS debe registrarse también como gasto (categoría <strong>Ingredientes</strong>) para reflejarse
+aquí. <strong>Fecha límite ISR:</strong> 30 de abril.</div>
+
+<h2 id="s5">5. Flujos de trabajo</h2>
+<h3>Rutina diaria (dueño)</h3>
+<ol><li>Las ventas se registran solas en el POS durante el día.</li>
+<li>Registrá los <strong>gastos</strong> del día en la pestaña <strong>Gastos</strong>.</li></ol>
+<h3>Rutina semanal (dueño)</h3>
+<ol><li>Revisá el <strong>Dashboard</strong> (sin alertas ni descuadres).</li>
+<li>Verificá que los gastos tengan su documento (CCF).</li></ol>
+<h3>Rutina mensual (dueño + contador)</h3>
+<ol>
+  <li><strong>Sincronizá las ventas</strong> del mes desde el POS.</li>
+  <li>Verificá que todos los <strong>gastos</strong> estén cargados con su documento.</li>
+  <li>Revisá el <strong>Dashboard</strong> (IVA neto) y el <strong>Libro Mayor</strong> (que cuadre).</li>
+  <li>Descargá el <strong>F-07</strong> y los <strong>Registros de Ventas y Compras</strong>.</li>
+  <li>El <strong>contador</strong> marca el mes como <strong>Revisado</strong>.</li>
+  <li>El <strong>dueño cierra el mes</strong>.</li>
+  <li>Presentá el <strong>F-07</strong> en el portal de la DGII <strong>antes del día 20</strong>.</li>
+</ol>
+<h3>Rutina anual (contador)</h3>
+<ol><li>En enero–abril, revisá el año en la pestaña <strong>ISR anual</strong>.</li>
+<li>Descargá el cálculo y presentá la declaración <strong>antes del 30 de abril</strong>.</li></ol>
+
+<h2 id="s6">6. Cómo cerrar el mes (paso a paso)</h2>
+<p>Cerrar el mes <strong>bloquea</strong> los ingresos y gastos de ese período. Hacelo <strong>solo cuando el mes
+esté completo y revisado</strong>.</p>
+<ol>
+  <li>En el <strong>Dashboard</strong>, elegí el mes en el selector.</li>
+  <li>Confirmá que las ventas estén sincronizadas y los gastos cargados.</li>
+  <li>(Contador) Clic en <strong>Marcar revisado</strong>.</li>
+  <li>(Dueño) Clic en <strong>Cerrar mes</strong> y confirmá.</li>
+  <li>Verás el candado 🔒 <strong>"Período cerrado"</strong>. Cualquier intento de registrar o editar ese mes será rechazado.</li>
+</ol>
+<div class="callout"><strong>¿Te equivocaste?</strong> El dueño puede <strong>Reabrir mes</strong> desde el Dashboard,
+corregir y volver a cerrar. Todos los cambios quedan en la auditoría.</div>
+
+<h2 id="s7">7. Preguntas frecuentes y solución de problemas</h2>
+<p><strong>No veo la pestaña "Contabilidad".</strong> Tu usuario no tiene rol Admin, Contador o Auditor. Pedile al dueño que ajuste tu rol.</p>
+<p><strong>Sincronicé del POS pero no aparecen ventas.</strong> Solo entran ventas <strong>pagadas o completadas</strong> y no canceladas. Las de tarjeta entran al confirmarse el pago. Ventas de hace más de 90 días no se sincronizan automáticamente.</p>
+<p><strong>Sincronicé dos veces, ¿se duplicaron?</strong> No. Cada venta se importa una sola vez; podés sincronizar cuantas veces quieras.</p>
+<p><strong>No puedo registrar un gasto: el período está cerrado.</strong> Pedile al dueño que <strong>reabra</strong> el mes, o registrá el gasto en el mes correcto.</p>
+<p><strong>Marqué "crédito fiscal" y salió una advertencia.</strong> El crédito fiscal exige <strong>CCF o DTE</strong>. Con factura o recibo común el IVA no es recuperable.</p>
+<p><strong>El IVA me da "a favor" (negativo).</strong> Es normal si compraste más de lo que vendiste (con IVA): tenés un <strong>remanente a favor</strong> que se arrastra al mes siguiente.</p>
+<p><strong>No puedo editar una venta del POS.</strong> Es a propósito (inmutabilidad fiscal). Corregí con un ingreso/ajuste manual, no editando la venta importada.</p>
+<p><strong>¿Cómo obtengo un PDF?</strong> En Libro Diario, Libro Mayor o ISR, usá <strong>Imprimir / PDF</strong> y elegí <strong>"Guardar como PDF"</strong>. Si no se abre la ventana, permití las <strong>ventanas emergentes</strong>.</p>
+<p><strong>Los acentos se ven mal en Excel.</strong> Los CSV traen codificación UTF-8; si se ven raros, importalos desde Excel indicando <strong>UTF-8</strong>.</p>
+
+<h2 id="s8">8. Catálogo de cuentas contables</h2>
+<table>
+  <thead><tr><th>Código</th><th>Cuenta</th><th>Tipo</th></tr></thead>
+  <tbody>
+    <tr><td>1101</td><td>Caja y Efectivo</td><td>Activo</td></tr>
+    <tr><td>1102</td><td>Bancos</td><td>Activo</td></tr>
+    <tr><td>1201</td><td>IVA Crédito Fiscal</td><td>Activo</td></tr>
+    <tr><td>2101</td><td>IVA Débito Fiscal</td><td>Pasivo</td></tr>
+    <tr><td>2103</td><td>IVA Retenido por Pagar</td><td>Pasivo</td></tr>
+    <tr><td>3101</td><td>Capital</td><td>Capital</td></tr>
+    <tr><td>4101</td><td>Ventas de Productos</td><td>Ingreso</td></tr>
+    <tr><td>4102</td><td>Ventas de Chimichurri</td><td>Ingreso</td></tr>
+    <tr><td>5101</td><td>Costo de Ingredientes</td><td>Gasto (COGS)</td></tr>
+    <tr><td>5102</td><td>Costo de Pollo Crudo</td><td>Gasto (COGS)</td></tr>
+    <tr><td>5103</td><td>Costo de Empaques</td><td>Gasto (COGS)</td></tr>
+    <tr><td>6101</td><td>Gasto Gas</td><td>Gasto operativo</td></tr>
+    <tr><td>6102</td><td>Gasto Energía Eléctrica</td><td>Gasto operativo</td></tr>
+    <tr><td>6103</td><td>Gasto Agua</td><td>Gasto operativo</td></tr>
+    <tr><td>6104</td><td>Gasto Mano de Obra</td><td>Gasto operativo</td></tr>
+    <tr><td>6105</td><td>Gasto Alquiler</td><td>Gasto operativo</td></tr>
+    <tr><td>6106</td><td>Gasto Servicios</td><td>Gasto operativo</td></tr>
+    <tr><td>6199</td><td>Otros Gastos</td><td>Gasto operativo</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s9">9. Glosario</h2>
+<ul>
+  <li><strong>Base / Base gravable:</strong> monto de la venta o compra <strong>sin</strong> IVA.</li>
+  <li><strong>IVA Débito:</strong> IVA que cobrás en tus ventas (lo debés a Hacienda).</li>
+  <li><strong>IVA Crédito:</strong> IVA que pagás en tus compras (recuperable con CCF).</li>
+  <li><strong>CCF:</strong> Comprobante de Crédito Fiscal — respalda el crédito fiscal ante la DGII.</li>
+  <li><strong>DTE:</strong> Documento Tributario Electrónico (equivalente electrónico del CCF).</li>
+  <li><strong>F-07:</strong> declaración mensual de IVA (antes del día 20 del mes siguiente).</li>
+  <li><strong>F-14:</strong> anexo de retenciones y percepciones.</li>
+  <li><strong>ISR:</strong> Impuesto sobre la Renta (declaración anual, antes del 30 de abril).</li>
+  <li><strong>Asiento:</strong> registro contable de una operación, con débitos y créditos que cuadran.</li>
+  <li><strong>Libro Diario:</strong> lista cronológica de todos los asientos.</li>
+  <li><strong>Libro Mayor:</strong> resumen de saldos por cuenta.</li>
+  <li><strong>Balance de Comprobación:</strong> verifica que saldos deudores = acreedores.</li>
+  <li><strong>COGS:</strong> costo de los bienes vendidos (ingredientes, pollo, empaques).</li>
+  <li><strong>Gran Contribuyente (GC):</strong> contribuyente obligado a retener el 1% de IVA a ciertos proveedores.</li>
+  <li><strong>Remanente a favor:</strong> crédito de IVA que sobra un mes y se usa el siguiente.</li>
+  <li><strong>Inmutabilidad fiscal:</strong> las ventas del POS y los meses cerrados no se pueden alterar.</li>
+</ul>
+
+<footer class="doc">
+  Documento preparado conforme a la normativa vigente del Ministerio de Hacienda de El Salvador (2024–2025).
+  Sujeto a cambios en la normativa fiscal. Ante cualquier duda, consultá con tu contador.
+</footer>
+
+</body>
+</html>

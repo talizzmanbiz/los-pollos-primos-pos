@@ -13,6 +13,8 @@ const ROLE_LABELS: Record<UserRole, string> = {
   cajero: 'Cajero',
   cocina: 'Cocina',
   repartidor: 'Repartidor',
+  contador: 'Contador',
+  auditor: 'Auditor',
 };
 
 export default function AdminPage() {
@@ -176,6 +178,8 @@ export default function AdminPage() {
                   <option value="cajero">Cajero</option>
                   <option value="cocina">Cocina</option>
                   <option value="repartidor">Repartidor</option>
+                  <option value="contador">Contador</option>
+                  <option value="auditor">Auditor</option>
                 </select>
               </div>
               <div>

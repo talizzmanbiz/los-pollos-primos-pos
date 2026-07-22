@@ -157,42 +157,47 @@ export default function PosPage() {
       </div>
 
       {/* product grid */}
-      <div className="flex-1 overflow-y-auto p-4 relative z-10">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 relative z-10">
         {hasOpenSession === false && (
-          <div className="mb-4 rounded-lg bg-yellow-100 px-4 py-3 text-yellow-900">
-            No hay caja abierta — las ventas en efectivo no se registrarán en un turno de caja.
+          <div className="mb-4 glass rounded-lg px-4 py-3 border-amber-200 bg-opacity-60">
+            <p className="text-sm font-medium text-primary-600">
+              ⚠️ No hay caja abierta — las ventas en efectivo no se registrarán en un turno de caja.
+            </p>
           </div>
         )}
         {pendingSync > 0 && (
-          <div className="mb-4 rounded-lg bg-orange-100 px-4 py-3 text-orange-900">
-            📡 {pendingSync} venta(s) offline pendientes de sincronizar — se enviarán solas al
-            volver la conexión.
+          <div className="mb-4 glass rounded-lg px-4 py-3 border-accent-200 bg-opacity-60">
+            <p className="text-sm font-medium text-accent-600">
+              📡 {pendingSync} venta(s) offline pendientes de sincronizar — se enviarán solas al volver la conexión.
+            </p>
           </div>
         )}
-        <div className="mb-2 flex justify-end">
+        <div className="mb-6 flex justify-end">
           <button
             onClick={() => setShowPrinterConfig(true)}
-            className="rounded-lg bg-white px-3 py-2 text-sm text-gray-500 shadow"
+            className="glass-sm px-4 py-2 text-sm font-medium text-charcoal-600 hover:border-primary-300 transition-all"
             title="Configurar impresora"
           >
             🖨️ {getPrinterUrl() ? 'Impresora lista' : 'Configurar impresora'}
           </button>
         </div>
         {groups.map((g) => (
-          <section key={g.type} className="mb-6">
-            <h2 className="mb-3 text-lg font-bold text-brand-900">{TYPE_LABELS[g.type]}</h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+          <section key={g.type} className="mb-8">
+            <h2 className="mb-4 text-xl font-semibold text-primary-600">{TYPE_LABELS[g.type]}</h2>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
               {g.items.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => addToCart(p)}
-                  className="flex min-h-24 flex-col items-start justify-between rounded-xl bg-white p-4 text-left shadow active:scale-95 active:bg-brand-100"
+                  className="glass-sm group flex min-h-32 flex-col items-start justify-between p-4 text-left transition-all active:scale-95 hover:border-primary-300"
                 >
-                  <span className="text-lg font-semibold text-gray-900">{p.name}</span>
+                  <span className="text-base font-semibold text-charcoal-600 group-hover:text-primary-600 transition-colors">
+                    {p.name}
+                  </span>
                   {p.secondary_name && (
-                    <span className="text-sm text-gray-400">{p.secondary_name}</span>
+                    <span className="text-xs text-charcoal-400 mt-1">{p.secondary_name}</span>
                   )}
-                  <span className="mt-1 text-lg font-bold text-brand-600">{money(p.price)}</span>
+                  <span className="mt-2 text-lg font-bold text-primary-600 font-mono">{money(p.price)}</span>
                 </button>
               ))}
             </div>
@@ -201,83 +206,96 @@ export default function PosPage() {
       </div>
 
       {/* cart */}
-      <div className="flex w-96 flex-col border-l border-brand-200 bg-white">
-        <div className="flex-1 overflow-y-auto p-4">
-          <h2 className="mb-3 text-lg font-bold text-brand-900">Pedido</h2>
-          {cart.length === 0 && <p className="text-gray-400">Tocá un producto para agregarlo</p>}
+      <div className="flex w-full sm:w-96 flex-col glass-lg border-l-0 sm:border-l border-primary-200/20">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+          <h2 className="mb-4 text-2xl font-semibold text-primary-600">Pedido</h2>
+          {cart.length === 0 && (
+            <p className="text-center text-charcoal-400 py-8">Tocá un producto para agregarlo</p>
+          )}
           {cart.map((l) => (
-            <div key={l.product.id} className="mb-3 flex items-center gap-2">
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">{l.product.name}</p>
-                <p className="text-sm text-gray-500">
-                  {money(l.product.price)} × {l.quantity} = {money(l.product.price * l.quantity)}
-                </p>
+            <div key={l.product.id} className="mb-4 pb-4 border-b border-cream-300/50 last:border-b-0">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-charcoal-600 truncate">{l.product.name}</p>
+                  <p className="text-xs text-charcoal-400 mt-1">
+                    {money(l.product.price)} × {l.quantity} = {money(l.product.price * l.quantity)}
+                  </p>
+                </div>
+                <div className="flex gap-2 items-center flex-shrink-0">
+                  <button
+                    onClick={() => changeQty(l.product.id, -1)}
+                    className="h-10 w-10 rounded-md bg-cream-300/40 hover:bg-cream-400/60 text-lg font-bold text-primary-600 transition-colors active:scale-95 flex items-center justify-center"
+                    aria-label={`Reducir cantidad de ${l.product.name}`}
+                  >
+                    −
+                  </button>
+                  <span className="w-8 text-center text-base font-semibold text-charcoal-600">{l.quantity}</span>
+                  <button
+                    onClick={() => changeQty(l.product.id, 1)}
+                    className="h-10 w-10 rounded-md bg-cream-300/40 hover:bg-cream-400/60 text-lg font-bold text-primary-600 transition-colors active:scale-95 flex items-center justify-center"
+                    aria-label={`Aumentar cantidad de ${l.product.name}`}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={() => changeQty(l.product.id, -1)}
-                className="h-12 w-12 rounded-lg bg-gray-100 text-xl font-bold active:bg-gray-200"
-              >
-                −
-              </button>
-              <span className="w-8 text-center text-lg font-semibold">{l.quantity}</span>
-              <button
-                onClick={() => changeQty(l.product.id, 1)}
-                className="h-12 w-12 rounded-lg bg-gray-100 text-xl font-bold active:bg-gray-200"
-              >
-                +
-              </button>
             </div>
           ))}
 
           {/* optional customer capture — never blocks the sale */}
           <button
             onClick={() => setShowCustomer((v) => !v)}
-            className="mt-2 w-full rounded-lg border border-dashed border-brand-300 px-3 py-2 text-brand-700"
+            className="mt-4 w-full glass-sm px-3 py-3 text-sm font-medium text-primary-600 hover:border-primary-300 transition-all text-left"
           >
-            {showCustomer ? 'Ocultar datos del cliente' : '+ Datos del cliente (opcional)'}
+            {showCustomer ? '✕ Ocultar datos del cliente' : '+ Datos del cliente (opcional)'}
           </button>
           {showCustomer && (
-            <div className="mt-3 space-y-2">
+            <div className="mt-4 space-y-3">
               <input
                 placeholder="Nombre"
                 value={customer.name}
                 onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="w-full glass-sm px-3 py-3 text-sm text-charcoal-600 placeholder:text-charcoal-400 border border-cream-400/40 focus:border-primary-400 transition-colors"
+                aria-label="Nombre del cliente"
               />
               <input
-                placeholder="Teléfono"
+                placeholder="Teléfono (WhatsApp)"
                 type="tel"
                 value={customer.phone}
                 onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="w-full glass-sm px-3 py-3 text-sm text-charcoal-600 placeholder:text-charcoal-400 border border-cream-400/40 focus:border-primary-400 transition-colors"
+                aria-label="Teléfono del cliente"
               />
               <input
-                placeholder="Correo"
+                placeholder="Correo (opcional)"
                 type="email"
                 value={customer.email}
                 onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="w-full glass-sm px-3 py-3 text-sm text-charcoal-600 placeholder:text-charcoal-400 border border-cream-400/40 focus:border-primary-400 transition-colors"
+                aria-label="Correo del cliente"
               />
             </div>
           )}
         </div>
 
-        <div className="border-t border-brand-100 p-4">
-          <div className="mb-3 flex justify-between text-xl font-bold text-gray-900">
-            <span>Total</span>
-            <span>{money(subtotal)}</span>
+        <div className="border-t border-primary-200/20 p-4 md:p-6 space-y-3">
+          <div className="flex justify-between items-baseline">
+            <span className="text-sm font-medium text-charcoal-600">Total</span>
+            <span className="text-2xl font-bold text-primary-600 font-mono">{money(subtotal)}</span>
           </div>
           <button
             disabled={cart.length === 0}
             onClick={() => setPaying(true)}
-            className="w-full rounded-xl bg-brand-600 py-4 text-xl font-bold text-white active:bg-brand-700 disabled:opacity-40"
+            className="w-full glass-button py-4 text-lg font-semibold text-white bg-primary-600 border-primary-600 hover:bg-primary-700 hover:border-primary-700 disabled:opacity-40 disabled:cursor-not-allowed min-h-14"
+            aria-label={`Cobrar ${money(subtotal)}`}
           >
-            Cobrar {subtotal > 0 ? money(subtotal) : ''}
+            💰 Cobrar {subtotal > 0 ? money(subtotal) : ''}
           </button>
           {cart.length > 0 && (
             <button
               onClick={clearSale}
-              className="mt-2 w-full rounded-xl border border-gray-300 py-3 text-gray-600 active:bg-gray-100"
+              className="w-full glass-sm py-3 text-sm font-medium text-charcoal-600 hover:border-charcoal-400 transition-all"
+              aria-label="Cancelar pedido"
             >
               Cancelar pedido
             </button>
