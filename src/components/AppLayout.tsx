@@ -1,4 +1,21 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import {
+  Drumstick,
+  ShoppingCart,
+  ChefHat,
+  Bike,
+  Wallet,
+  Package,
+  Boxes,
+  ArrowLeftRight,
+  BarChart3,
+  Calculator,
+  Settings,
+  MapPin,
+  UserRound,
+  LogOut,
+  type LucideIcon,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
   WorkingLocationProvider,
@@ -10,46 +27,51 @@ import type { UserRole } from '../types/database';
 interface NavItem {
   to: string;
   label: string;
+  icon: LucideIcon;
   roles: UserRole[];       // superadmin always included
   productionOnly?: boolean; // only at Central (or superadmin)
 }
 
 const NAV: NavItem[] = [
-  { to: '/pos', label: 'POS', roles: ['admin', 'cajero'] },
-  { to: '/kitchen', label: 'Cocina', roles: ['admin', 'cocina'], productionOnly: true },
-  { to: '/delivery', label: 'Delivery', roles: ['admin', 'repartidor'], productionOnly: true },
-  { to: '/cash', label: 'Caja', roles: ['admin', 'cajero'] },
-  { to: '/batches', label: 'Lotes', roles: ['admin', 'cocina'], productionOnly: true },
-  { to: '/inventory', label: 'Inventario', roles: ['admin', 'cajero'] },
-  { to: '/transfers', label: 'Transferencias', roles: ['admin'] },
-  { to: '/reports', label: 'Reportes', roles: ['admin'] },
-  { to: '/contabilidad', label: 'Contabilidad', roles: ['admin', 'contador', 'auditor'] },
-  { to: '/admin', label: 'Administración', roles: ['admin'] },
+  { to: '/pos', label: 'POS', icon: ShoppingCart, roles: ['admin', 'cajero'] },
+  { to: '/kitchen', label: 'Cocina', icon: ChefHat, roles: ['admin', 'cocina'], productionOnly: true },
+  { to: '/delivery', label: 'Delivery', icon: Bike, roles: ['admin', 'repartidor'], productionOnly: true },
+  { to: '/cash', label: 'Caja', icon: Wallet, roles: ['admin', 'cajero'] },
+  { to: '/batches', label: 'Lotes', icon: Package, roles: ['admin', 'cocina'], productionOnly: true },
+  { to: '/inventory', label: 'Inventario', icon: Boxes, roles: ['admin', 'cajero'] },
+  { to: '/transfers', label: 'Transferencias', icon: ArrowLeftRight, roles: ['admin'] },
+  { to: '/reports', label: 'Reportes', icon: BarChart3, roles: ['admin'] },
+  { to: '/contabilidad', label: 'Contabilidad', icon: Calculator, roles: ['admin', 'contador', 'auditor'] },
+  { to: '/admin', label: 'Administración', icon: Settings, roles: ['admin'] },
 ];
 
 function LocationSwitcher() {
   const { location, locations, canSwitch, setLocationId } = useWorkingLocationContext();
   if (!canSwitch) {
     return (
-      <span className="text-sm font-medium text-white opacity-90">
-        📍 {location ? location.name : 'Cargando…'}
+      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-charcoal-500">
+        <MapPin className="h-4 w-4 text-primary-500" aria-hidden="true" />
+        {location ? location.name : 'Cargando…'}
       </span>
     );
   }
   return (
-    <select
-      value={location?.id ?? ''}
-      onChange={(e) => setLocationId(e.target.value)}
-      className="rounded-lg border border-cream-200/30 bg-primary-600/80 backdrop-blur px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors cursor-pointer"
-      title="Cambiar de sucursal"
-      aria-label="Seleccionar sucursal"
-    >
-      {locations.map((l) => (
-        <option key={l.id} value={l.id} className="bg-primary-700">
-          {l.name}
-        </option>
-      ))}
-    </select>
+    <div className="relative inline-flex items-center">
+      <MapPin className="pointer-events-none absolute left-3 h-4 w-4 text-primary-500" aria-hidden="true" />
+      <select
+        value={location?.id ?? ''}
+        onChange={(e) => setLocationId(e.target.value)}
+        className="cursor-pointer rounded-lg border border-primary-200/40 bg-white/70 py-2 pl-9 pr-3 text-sm font-medium text-charcoal-600 shadow-sm backdrop-blur transition-colors hover:bg-white focus:outline-none"
+        title="Cambiar de sucursal"
+        aria-label="Seleccionar sucursal"
+      >
+        {locations.map((l) => (
+          <option key={l.id} value={l.id}>
+            {l.name}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
@@ -78,60 +100,69 @@ export default function AppLayout() {
 
   return (
     <WorkingLocationProvider>
-      <div className="flex min-h-screen flex-col bg-gradient-to-br from-cream-100 to-cream-200">
-        <header className="sticky top-0 z-40 glass border-b border-primary-200/20">
+      <div className="flex min-h-dvh flex-col bg-gradient-to-br from-cream-100 to-cream-200">
+        <header className="sticky top-0 z-40 border-b border-primary-200/20 bg-cream-50/80 backdrop-blur-xl">
+          {/* Row 1 — brand + location · profile + salir */}
           <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
-            {/* Logo & Location */}
-            <div className="flex items-center gap-4">
-              <span className="text-lg sm:text-xl font-semibold text-primary-600">🍗 Pollos Primos</span>
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex items-center gap-2 whitespace-nowrap text-lg font-bold text-primary-600 sm:text-xl">
+                <Drumstick className="h-6 w-6 text-primary-500" aria-hidden="true" />
+                <span className="hidden sm:inline">Pollos Primos</span>
+              </span>
+              <div className="hidden h-6 w-px bg-primary-200/40 sm:block" />
               <div className="hidden sm:block">
                 <LocationSwitcher />
               </div>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex flex-wrap items-center gap-1 overflow-x-auto flex-1 justify-center px-4 max-w-2xl">
-              {visible.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) =>
-                    `px-3 py-2 text-sm sm:text-base font-medium rounded-lg transition-all whitespace-nowrap ${
-                      isActive
-                        ? 'bg-primary-600 text-white'
-                        : 'text-charcoal-600 hover:bg-primary-100/50'
-                    }`
-                  }
-                  title={item.label}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </nav>
-
-            {/* Profile & Actions */}
             <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={handleChangePassword}
-                className="hidden sm:block px-3 py-2 text-sm font-medium text-charcoal-600 hover:text-primary-600 transition-colors rounded-lg hover:bg-primary-100/40"
+                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-charcoal-500 transition-colors hover:bg-primary-100/50 hover:text-primary-600 sm:inline-flex"
                 title="Click para cambiar contraseña"
-                aria-label={`Perfil: ${profile.full_name}`}
+                aria-label={`Perfil: ${profile.full_name}. Click para cambiar contraseña`}
               >
-                👤 {profile.full_name}
+                <UserRound className="h-4 w-4" aria-hidden="true" />
+                <span className="max-w-[10rem] truncate">{profile.full_name}</span>
               </button>
               <button
                 onClick={signOut}
-                className="px-3 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors active:scale-95"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700 active:scale-95"
                 title="Cerrar sesión"
                 aria-label="Salir de la sesión"
               >
-                Salir
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Salir</span>
               </button>
             </div>
           </div>
 
+          {/* Row 2 — navigation: single-line horizontal scroll (never collapses) */}
+          <nav
+            className="no-scrollbar flex items-center gap-1.5 overflow-x-auto px-3 pb-2.5 sm:px-5"
+            aria-label="Navegación principal"
+          >
+            {visible.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  `inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition-all ${
+                    isActive
+                      ? 'bg-primary-600 text-white shadow-sm'
+                      : 'text-charcoal-500 hover:bg-primary-100/60 hover:text-primary-700'
+                  }`
+                }
+                title={label}
+              >
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+
           {/* Mobile location selector */}
-          <div className="sm:hidden px-4 pb-3 border-t border-primary-200/20">
+          <div className="border-t border-primary-200/20 px-4 py-2.5 sm:hidden">
             <LocationSwitcher />
           </div>
         </header>

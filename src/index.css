@@ -199,6 +199,15 @@ h4 { font-size: 1.125rem; line-height: 1.5; }
   color: #7e3210;
 }
 
+/* Hide scrollbar while keeping horizontal scroll (used by the nav pill bar) */
+.no-scrollbar {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE/Edge legacy */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;                  /* Chrome/Safari */
+}
+
 /* POS/Kitchen tablet targets: min touch 48px */
 button {
   min-height: 3rem;
