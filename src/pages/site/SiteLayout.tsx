@@ -37,7 +37,7 @@ export default function SiteLayout() {
   const wa = whatsappLink('Hola, quiero hacer un pedido 🍗');
 
   return (
-    <div className="flex min-h-screen flex-col bg-brand-50">
+    <div className="flex min-h-screen flex-col bg-brand-50 font-sans">
       <header
         className={`fixed inset-x-0 top-0 z-40 transition-all duration-300 ${
           solid
