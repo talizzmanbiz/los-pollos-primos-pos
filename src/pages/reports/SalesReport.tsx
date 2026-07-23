@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money } from '../../lib/format';
 import type { Tables } from '../../types/database';
@@ -78,7 +78,7 @@ export default function SalesReport() {
             key={r.id}
             onClick={() => setRange(r)}
             className={`rounded-lg px-4 py-2 text-sm font-semibold ${
-              range.id === r.id ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 shadow'
+              range.id === r.id ? 'tab-on' : 'tab-off'
             }`}
           >
             {r.label}
@@ -90,18 +90,18 @@ export default function SalesReport() {
         <p className="text-gray-400">Cargando…</p>
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-2xl bg-white p-5 shadow">
-              <p className="text-sm text-gray-500">Ingresos</p>
-              <p className="text-3xl font-bold text-brand-600">{money(stats.revenue)}</p>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="rounded-2xl bg-white p-3 shadow sm:p-5">
+              <p className="text-xs leading-snug text-gray-500 sm:text-sm">Ingresos</p>
+              <p className="text-lg font-bold tabular-nums text-brand-600 sm:text-3xl">{money(stats.revenue)}</p>
             </div>
-            <div className="rounded-2xl bg-white p-5 shadow">
-              <p className="text-sm text-gray-500">Pedidos</p>
-              <p className="text-3xl font-bold text-gray-900">{orders.length}</p>
+            <div className="rounded-2xl bg-white p-3 shadow sm:p-5">
+              <p className="text-xs leading-snug text-gray-500 sm:text-sm">Pedidos</p>
+              <p className="text-lg font-bold tabular-nums text-gray-900 sm:text-3xl">{orders.length}</p>
             </div>
-            <div className="rounded-2xl bg-white p-5 shadow">
-              <p className="text-sm text-gray-500">Ticket promedio</p>
-              <p className="text-3xl font-bold text-gray-900">
+            <div className="rounded-2xl bg-white p-3 shadow sm:p-5">
+              <p className="text-xs leading-snug text-gray-500 sm:text-sm">Ticket promedio</p>
+              <p className="text-lg font-bold tabular-nums text-gray-900 sm:text-3xl">
                 {orders.length ? money(stats.revenue / orders.length) : '—'}
               </p>
             </div>
@@ -109,7 +109,7 @@ export default function SalesReport() {
 
           <div className="grid gap-6 md:grid-cols-2">
             <div className="rounded-2xl bg-white p-6 shadow">
-              <h3 className="mb-3 font-semibold text-gray-900">Por canal</h3>
+              <h3 className="section-title mb-3">Por canal</h3>
               {[...stats.bySource.entries()].map(([source, s]) => (
                 <div key={source} className="mb-2 flex justify-between">
                   <span className="text-gray-600">{SOURCE_LABELS[source] ?? source} ({s.count})</span>
@@ -119,7 +119,7 @@ export default function SalesReport() {
               {stats.bySource.size === 0 && <p className="text-gray-400">Sin ventas en el período</p>}
             </div>
             <div className="rounded-2xl bg-white p-6 shadow">
-              <h3 className="mb-3 font-semibold text-gray-900">Por sucursal</h3>
+              <h3 className="section-title mb-3">Por sucursal</h3>
               {[...stats.byLocation.entries()].map(([name, s]) => (
                 <div key={name} className="mb-2 flex justify-between">
                   <span className="text-gray-600">{name} ({s.count})</span>
@@ -130,8 +130,8 @@ export default function SalesReport() {
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow">
-            <h3 className="mb-3 font-semibold text-gray-900">Productos más vendidos</h3>
-            <table className="w-full text-left">
+            <h3 className="section-title mb-3">Productos más vendidos</h3>
+            <table className="w-full text-left text-sm sm:text-base">
               <thead className="text-sm text-gray-500">
                 <tr><th className="py-2">Producto</th><th className="text-right">Unidades</th><th className="text-right">Ingresos</th></tr>
               </thead>

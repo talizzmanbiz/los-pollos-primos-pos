@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+﻿import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 import { fmtDateTime } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
@@ -105,11 +105,11 @@ export default function InventoryPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
-      <h1 className="text-2xl font-bold text-brand-900">Inventario — {location.name}</h1>
+      <h1 className="page-title">Inventario — {location.name}</h1>
 
       {incoming.length > 0 && (
         <div className="rounded-2xl border-2 border-blue-300 bg-blue-50 p-6">
-          <h2 className="mb-3 text-lg font-semibold text-blue-900">
+          <h2 className="section-title mb-3 text-blue-900">
             📦 Transferencias por recibir ({incoming.length})
           </h2>
           {incoming.map((t) => (
@@ -127,7 +127,7 @@ export default function InventoryPage() {
               {t.notes && <p className="mb-2 text-sm italic text-gray-500">{t.notes}</p>}
               <button
                 onClick={() => receiveTransfer(t.id)}
-                className="rounded-lg bg-blue-600 px-6 py-3 font-bold text-white active:bg-blue-700"
+                className="btn btn-primary"
               >
                 Confirmar recepción
               </button>
@@ -137,8 +137,8 @@ export default function InventoryPage() {
       )}
 
       <div className="rounded-2xl bg-white p-4 sm:p-6 shadow">
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Existencias</h2>
-        <table className="w-full text-left">
+        <h2 className="section-title mb-3">Existencias</h2>
+        <table className="w-full text-left text-sm sm:text-base">
           <thead className="text-sm text-gray-500">
             <tr>
               <th className="py-2">Artículo</th>
@@ -152,9 +152,9 @@ export default function InventoryPage() {
               const qty = levelOf(item.id);
               return (
                 <tr key={item.id}>
-                  <td className="py-3 font-medium text-gray-800">{item.name}</td>
-                  <td className="text-gray-500">{item.unit}</td>
-                  <td className={`text-right text-lg font-bold ${qty < 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                  <td className="py-3 pr-2 font-medium leading-snug text-gray-800">{item.name}</td>
+                  <td className="pr-2 text-xs leading-snug text-gray-500 sm:text-sm">{item.unit}</td>
+                  <td className={`whitespace-nowrap px-2 text-right text-base font-bold tabular-nums sm:text-lg ${qty < 0 ? 'text-red-600' : 'text-gray-900'}`}>
                     {qty}
                   </td>
                   {canAdjust && (
@@ -165,7 +165,7 @@ export default function InventoryPage() {
                           setNewQty(String(qty));
                           setAdjustNote('');
                         }}
-                        className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 active:bg-gray-200"
+                        className="btn btn-secondary btn-sm"
                       >
                         Ajustar
                       </button>
@@ -179,19 +179,19 @@ export default function InventoryPage() {
       </div>
 
       <div className="rounded-2xl bg-white p-4 sm:p-6 shadow">
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Últimos movimientos</h2>
+        <h2 className="section-title mb-3">Últimos movimientos</h2>
         {movements.length === 0 && <p className="text-gray-400">Sin movimientos</p>}
         <ul className="divide-y divide-gray-100">
           {movements.map((m) => (
             <li key={m.id} className="flex items-center justify-between py-2">
               <div>
-                <p className="text-gray-800">
+                <p className="text-[13px] leading-snug text-gray-800 sm:text-base">
                   {m.item.name} — {REASON_LABELS[m.reason] ?? m.reason}
                   {m.notes ? ` · ${m.notes}` : ''}
                 </p>
                 <p className="text-xs text-gray-400">{fmtDateTime(m.created_at)}</p>
               </div>
-              <span className={`font-semibold ${m.delta >= 0 ? 'text-green-700' : 'text-red-600'}`}>
+              <span className={`ml-2 shrink-0 whitespace-nowrap font-semibold tabular-nums ${m.delta >= 0 ? 'text-green-700' : 'text-red-600'}`}>
                 {m.delta >= 0 ? '+' : ''}
                 {m.delta}
               </span>

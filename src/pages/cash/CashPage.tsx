@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+﻿import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money, fmtDateTime, fmtTime } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
@@ -120,7 +120,7 @@ export default function CashPage() {
 
   return (
     <div className="mx-auto max-w-4xl p-4 sm:p-6">
-      <h1 className="mb-6 text-2xl font-bold text-brand-900">Caja — {location?.name}</h1>
+      <h1 className="page-title mb-4">Caja — {location?.name}</h1>
 
       {!session ? (
         <form onSubmit={openSession} className="rounded-2xl bg-white p-4 sm:p-6 shadow">
@@ -137,7 +137,7 @@ export default function CashPage() {
           />
           <button
             type="submit"
-            className="block rounded-xl bg-brand-600 px-8 py-3 text-lg font-bold text-white active:bg-brand-700"
+            className="btn btn-primary btn-lg"
           >
             Abrir caja
           </button>
@@ -193,12 +193,12 @@ export default function CashPage() {
                   onChange={(e) => setMovReason(e.target.value)}
                   required
                   placeholder="ej. compra de gas, cambio"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-3"
+                  className="input"
                 />
               </div>
               <button
                 type="submit"
-                className="rounded-lg bg-brand-600 px-6 py-3 font-semibold text-white active:bg-brand-700"
+                className="btn btn-primary"
               >
                 Registrar
               </button>
@@ -229,7 +229,7 @@ export default function CashPage() {
           {!closing ? (
             <button
               onClick={() => setClosing(true)}
-              className="rounded-xl bg-gray-800 px-8 py-3 text-lg font-bold text-white active:bg-gray-900"
+              className="btn btn-dark btn-lg"
             >
               Cerrar caja
             </button>
@@ -265,13 +265,13 @@ export default function CashPage() {
                 <button
                   type="button"
                   onClick={() => setClosing(false)}
-                  className="rounded-lg border border-gray-300 px-6 py-3 text-gray-600"
+                  className="btn btn-secondary"
                 >
                   Volver
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-red-600 px-6 py-3 font-bold text-white active:bg-red-700"
+                  className="btn btn-danger"
                 >
                   Confirmar cierre
                 </button>

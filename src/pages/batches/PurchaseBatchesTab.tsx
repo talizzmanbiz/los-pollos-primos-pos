@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+﻿import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money, fmtDate } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
@@ -82,7 +82,7 @@ export default function PurchaseBatchesTab() {
     <div>
       <button
         onClick={() => setShowForm((v) => !v)}
-        className="mb-4 rounded-lg bg-brand-600 px-6 py-3 font-semibold text-white active:bg-brand-700"
+        className="btn btn-primary mb-4"
       >
         {showForm ? 'Cancelar' : '+ Registrar compra de pollo'}
       </button>
@@ -92,12 +92,12 @@ export default function PurchaseBatchesTab() {
           <div>
             <label className="mb-1 block text-sm text-gray-600">Proveedor</label>
             <input value={supplier} onChange={(e) => setSupplier(e.target.value)} required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+              className="input" />
           </div>
           <div>
             <label className="mb-1 block text-sm text-gray-600">Fecha de compra</label>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+              className="input" />
           </div>
 
           <div className="col-span-2 md:col-span-1">
@@ -106,13 +106,13 @@ export default function PurchaseBatchesTab() {
               <div className="flex-1">
                 <input type="number" step="0.001" min="0.001" value={units}
                   onChange={(e) => setUnits(e.target.value)} required placeholder="0"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  className="input" />
                 <span className="mt-1 block text-xs text-gray-500">pollos (unidades)</span>
               </div>
               <div className="flex-1">
                 <input type="number" step="0.001" min="0.001" value={pounds}
                   onChange={(e) => setPounds(e.target.value)} required placeholder="0"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  className="input" />
                 <span className="mt-1 block text-xs text-gray-500">libras</span>
               </div>
             </div>
@@ -123,7 +123,7 @@ export default function PurchaseBatchesTab() {
             <div className="flex gap-2">
               <input type="number" step="0.0001" min="0" value={unitCost}
                 onChange={(e) => setUnitCost(e.target.value)} required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                className="input" />
               <select value={pricedBy} onChange={(e) => setPricedBy(e.target.value as 'unidades' | 'libras')}
                 className="rounded-lg border border-gray-300 px-2 py-2">
                 <option value="libras">por libra</option>
@@ -135,7 +135,7 @@ export default function PurchaseBatchesTab() {
           <div className="col-span-2">
             <label className="mb-1 block text-sm text-gray-600">Notas</label>
             <input value={notes} onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+              className="input" />
           </div>
 
           <div className="col-span-2 flex flex-wrap items-end gap-4 md:col-span-3">
@@ -155,17 +155,17 @@ export default function PurchaseBatchesTab() {
       )}
 
       <div className="overflow-x-auto rounded-2xl bg-white shadow">
-        <table className="w-full text-left">
+        <table className="w-full text-left text-sm sm:text-base">
           <thead className="bg-brand-50 text-sm text-gray-600">
             <tr>
-              <th className="px-4 py-3">Fecha</th>
-              <th className="px-4 py-3">Proveedor</th>
-              <th className="px-4 py-3">Recibido</th>
-              <th className="px-4 py-3">Restante</th>
-              <th className="px-4 py-3">Costo unit.</th>
-              <th className="px-4 py-3">Costo prom./pollo</th>
-              <th className="px-4 py-3">Costo total</th>
-              <th className="px-4 py-3">Notas</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Fecha</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Proveedor</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Recibido</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Restante</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Costo unit.</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Costo prom./pollo</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Costo total</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Notas</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -173,16 +173,16 @@ export default function PurchaseBatchesTab() {
               const perUnit = costPerUnit(b);
               return (
                 <tr key={b.id} className={b.quantity_remaining <= 0 ? 'text-gray-400' : ''}>
-                  <td className="px-4 py-3">{fmtDate(b.purchase_date)}</td>
-                  <td className="px-4 py-3">{b.supplier_name}</td>
-                  <td className="px-4 py-3">
+                  <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">{fmtDate(b.purchase_date)}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">{b.supplier_name}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">
                     {b.quantity_units ?? b.quantity_received} pollos
                     {b.quantity_lb != null && (
                       <span className="text-gray-500"> · {b.quantity_lb} lb</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 font-semibold">{b.quantity_remaining} pollos</td>
-                  <td className="px-4 py-3">
+                  <td className="whitespace-nowrap px-3 py-2.5 font-semibold tabular-nums sm:px-4 sm:py-3">{b.quantity_remaining} pollos</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">
                     {money(b.unit_cost)}
                     <span className="text-xs text-gray-500">
                       {b.unit === 'libras' ? ' / lb' : ' / unid.'}
@@ -191,7 +191,7 @@ export default function PurchaseBatchesTab() {
                   <td className="px-4 py-3 font-semibold text-brand-700">
                     {perUnit != null ? money(perUnit) : '—'}
                   </td>
-                  <td className="px-4 py-3">{money(b.total_cost)}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">{money(b.total_cost)}</td>
                   <td className="px-4 py-3 text-sm text-gray-500">{b.notes}</td>
                 </tr>
               );

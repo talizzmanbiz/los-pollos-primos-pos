@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+﻿import { useState, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -38,7 +38,7 @@ export default function Login() {
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="username"
-          className="mb-4 w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-brand-500 focus:outline-none"
+          className="input mb-4 focus:border-brand-500 focus:outline-none"
         />
 
         <label className="mb-2 block font-medium text-gray-700">Contraseña</label>

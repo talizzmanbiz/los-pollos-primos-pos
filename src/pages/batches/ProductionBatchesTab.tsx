@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+﻿import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 import { fmtDateTime } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
@@ -106,41 +106,41 @@ export default function ProductionBatchesTab() {
     <div>
       <button
         onClick={startBatch}
-        className="mb-4 rounded-lg bg-brand-600 px-6 py-3 font-semibold text-white active:bg-brand-700"
+        className="btn btn-primary mb-4"
       >
         + Iniciar lote de producción (marinado)
       </button>
 
       <div className="overflow-x-auto rounded-2xl bg-white shadow">
-        <table className="w-full text-left">
+        <table className="w-full text-left text-sm sm:text-base">
           <thead className="bg-brand-50 text-sm text-gray-600">
             <tr>
-              <th className="px-4 py-3">Creado</th>
-              <th className="px-4 py-3">Marinado</th>
-              <th className="px-4 py-3">Horneado</th>
-              <th className="px-4 py-3">Producido</th>
-              <th className="px-4 py-3">Merma</th>
-              <th className="px-4 py-3">Rendimiento</th>
-              <th className="px-4 py-3">Estado</th>
-              <th className="px-4 py-3"></th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Creado</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Marinado</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Horneado</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Producido</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Merma</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Rendimiento</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Estado</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {batches.map((b) => (
               <tr key={b.id}>
-                <td className="px-4 py-3 text-sm">{fmtDateTime(b.created_at)}</td>
-                <td className="px-4 py-3 text-sm">
+                <td className="whitespace-nowrap px-3 py-2.5 text-sm sm:px-4 sm:py-3">{fmtDateTime(b.created_at)}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-sm sm:px-4 sm:py-3">
                   {b.marination_start_at ? fmtDateTime(b.marination_start_at) : '—'}
                 </td>
-                <td className="px-4 py-3 text-sm">
+                <td className="whitespace-nowrap px-3 py-2.5 text-sm sm:px-4 sm:py-3">
                   {b.roast_start_at ? fmtDateTime(b.roast_start_at) : '—'}
                 </td>
-                <td className="px-4 py-3 font-semibold">{b.quantity_produced || '—'}</td>
-                <td className="px-4 py-3">{b.quantity_wasted || '—'}</td>
-                <td className="px-4 py-3">
+                <td className="whitespace-nowrap px-3 py-2.5 font-semibold tabular-nums sm:px-4 sm:py-3">{b.quantity_produced || '—'}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">{b.quantity_wasted || '—'}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">
                   {b.yield_percentage != null ? `${b.yield_percentage}%` : '—'}
                 </td>
-                <td className="px-4 py-3">
+                <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">
                   <span
                     className={`rounded-full px-2 py-1 text-xs font-semibold ${
                       b.status === 'open' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
@@ -149,7 +149,7 @@ export default function ProductionBatchesTab() {
                     {b.status === 'open' ? 'Abierto' : 'Cerrado'}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">
                   {/* fixed width + nowrap so both actions render as the same
                       pill; without it the labels wrapped onto two lines and
                       each button ended up a different size */}
@@ -157,7 +157,7 @@ export default function ProductionBatchesTab() {
                     {b.status === 'open' && !b.roast_start_at && (
                       <button
                         onClick={() => markRoastStart(b)}
-                        className="h-12 w-28 shrink-0 whitespace-nowrap rounded-lg bg-amber-500 px-3 text-sm font-semibold text-white"
+                        className="btn btn-warm w-28"
                       >
                         Al horno
                       </button>
@@ -165,7 +165,7 @@ export default function ProductionBatchesTab() {
                     {b.status === 'open' && (
                       <button
                         onClick={() => openCloseModal(b)}
-                        className="h-12 w-28 shrink-0 whitespace-nowrap rounded-lg bg-brand-600 px-3 text-sm font-semibold text-white"
+                        className="btn btn-primary w-28"
                       >
                         Cerrar lote
                       </button>
@@ -190,13 +190,13 @@ export default function ProductionBatchesTab() {
                 <label className="mb-1 block text-sm text-gray-600">Pollos producidos</label>
                 <input type="number" step="0.001" min="0" value={produced} required
                   onChange={(e) => setProduced(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-lg" autoFocus />
+                  className="input" autoFocus />
               </div>
               <div>
                 <label className="mb-1 block text-sm text-gray-600">Merma (dañados)</label>
                 <input type="number" step="0.001" min="0" value={wasted}
                   onChange={(e) => setWasted(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-lg" />
+                  className="input" />
               </div>
             </div>
             <div className="mt-3">
@@ -205,7 +205,7 @@ export default function ProductionBatchesTab() {
               </label>
               <input type="number" step="0.001" min="0" value={rawConsumed}
                 onChange={(e) => setRawConsumed(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                className="input" />
             </div>
 
             <label className="mt-4 flex items-center gap-2 text-gray-700">

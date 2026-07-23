@@ -215,6 +215,117 @@ html {
   .elevation-3 { box-shadow: 0 8px 32px rgba(39, 26, 18, 0.12); }
   .elevation-4 { box-shadow: 0 16px 48px rgba(39, 26, 18, 0.16); }
   .elevation-5 { box-shadow: 0 24px 64px rgba(39, 26, 18, 0.20); }
+
+  /* ============ BUTTONS ============
+     One shape for every action in the POS. Before this the app had ~14 ad-hoc
+     combinations (px-3/px-4/px-6/px-8, py-2/py-3, text-sm/text-lg/none,
+     bg-gray-100/bg-green-700/bg-gray-800/…), so buttons sitting next to each
+     other rendered at different heights and weights. Compose as
+     `btn btn-primary` (+ optional `btn-sm` / `btn-lg` / `btn-block`). */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0 1rem;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 150ms ease-out,
+      border-color 150ms ease-out,
+      transform 150ms ease-out;
+  }
+  .btn:active:not(:disabled) { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-sm { min-height: 2.5rem; padding: 0 0.75rem; font-size: 0.8125rem; }
+  .btn-lg { min-height: 3.25rem; padding: 0 1.5rem; font-size: 1rem; }
+  .btn-block { display: flex; width: 100%; }
+
+  /* Primary — the one action that moves the workflow forward. */
+  .btn-primary { background: var(--color-brand-600); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--color-brand-700); }
+
+  /* Secondary — supporting actions (Ajustar, Volver, Editar). */
+  .btn-secondary {
+    background: #fff;
+    color: var(--color-charcoal-800);
+    box-shadow: inset 0 0 0 1px var(--color-brand-200);
+  }
+  .btn-secondary:hover:not(:disabled) { background: var(--color-brand-50); }
+
+  /* Subtle — low-emphasis actions on a white card. */
+  .btn-subtle { background: var(--color-brand-50); color: var(--color-brand-700); }
+  .btn-subtle:hover:not(:disabled) { background: var(--color-brand-100); }
+
+  /* Destructive and stateful accents. */
+  .btn-danger { background: var(--color-chili-600); color: #fff; }
+  .btn-danger:hover:not(:disabled) { background: var(--color-chili-700); }
+  .btn-warm { background: var(--color-gold-500); color: var(--color-charcoal-900); }
+  .btn-warm:hover:not(:disabled) { background: var(--color-gold-400); }
+  .btn-dark { background: var(--color-charcoal-800); color: #fff; }
+  .btn-dark:hover:not(:disabled) { background: var(--color-charcoal-900); }
+
+  /* ============ TAB PILLS ============ */
+  .tab {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.5rem;
+    padding: 0 0.875rem;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 150ms ease-out, color 150ms ease-out;
+  }
+  .tab-on { background: var(--color-brand-600); color: #fff; }
+  .tab-off { background: #fff; color: var(--color-charcoal-400); box-shadow: 0 1px 3px rgba(39, 26, 18, 0.08); }
+  .tab-off:hover { background: var(--color-brand-50); color: var(--color-brand-700); }
+
+  /* ============ INPUTS ============ */
+  .input {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-cream-500);
+    border-radius: var(--radius-md);
+    background: #fff;
+    font-family: var(--font-sans);
+    font-size: 1rem; /* >=16px so Android/iOS don't zoom on focus */
+    color: var(--color-charcoal-800);
+  }
+  .input:focus { border-color: var(--color-brand-500); outline: none; }
+
+  /* ============ TYPOGRAPHY ============
+     Page/section headings step down on phones instead of using one desktop
+     size everywhere (text-2xl titles were wrapping onto three lines at 375px). */
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-brand-900);
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-charcoal-800);
+  }
+  @media (min-width: 640px) {
+    .page-title { font-size: 1.5rem; }
+    .section-title { font-size: 1.125rem; }
+  }
 }
 
 ::selection {
@@ -231,10 +342,13 @@ html {
   display: none;                  /* Chrome/Safari */
 }
 
-/* POS/Kitchen tablet targets: min touch 48px */
-button {
-  min-height: 3rem;
-  min-width: 3rem;
+/* POS/Kitchen touch targets. In @layer base so .btn-sm can opt down to 40px —
+   un-layered this would beat every component class. */
+@layer base {
+  button {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
 }
 
 /* ---- Interaction + a11y polish (ui-ux-pro-max: focus-states, cursor-pointer, tap-delay) ---- */

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money } from '../../lib/format';
 import { toCsv, downloadCsv } from '../../lib/csv';
@@ -109,7 +109,7 @@ export default function LedgerTab() {
           <button
             onClick={exportCsv}
             disabled={rows.length === 0}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white active:bg-brand-700 disabled:opacity-50"
+            className="btn btn-primary btn-sm active:bg-brand-700 disabled:opacity-50"
           >
             Descargar CSV
           </button>

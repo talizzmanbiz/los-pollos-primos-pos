@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money, fmtDate } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
@@ -210,32 +210,32 @@ export default function ExpenseTab() {
       )}
 
       <div className="overflow-x-auto rounded-2xl bg-white shadow">
-        <table className="w-full text-left">
+        <table className="w-full text-left text-sm sm:text-base">
           <thead className="bg-cream-100 text-sm text-charcoal-400">
             <tr>
-              <th className="px-4 py-3">Fecha</th>
-              <th className="px-4 py-3">Categoría</th>
-              <th className="px-4 py-3">Proveedor</th>
-              <th className="px-4 py-3">Doc.</th>
-              <th className="px-4 py-3 text-right">Base</th>
-              <th className="px-4 py-3 text-right">IVA</th>
-              <th className="px-4 py-3 text-right">Total</th>
-              <th className="px-4 py-3">Crédito</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Fecha</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Categoría</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Proveedor</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Doc.</th>
+              <th className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">Base</th>
+              <th className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">IVA</th>
+              <th className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">Total</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Crédito</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-cream-200">
             {rows.map((r) => (
               <tr key={r.id}>
-                <td className="px-4 py-3">{fmtDate(r.transaction_date)}</td>
-                <td className="px-4 py-3">{EXPENSE_TYPE_LABELS[r.expense_type] ?? r.expense_type}</td>
-                <td className="px-4 py-3">{r.supplier_name ?? '—'}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">{fmtDate(r.transaction_date)}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">{EXPENSE_TYPE_LABELS[r.expense_type] ?? r.expense_type}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">{r.supplier_name ?? '—'}</td>
                 <td className="px-4 py-3 text-sm text-charcoal-400">
                   {r.document_type.toUpperCase()}{r.document_number ? ` ${r.document_number}` : ''}
                 </td>
-                <td className="px-4 py-3 text-right">{money(Number(r.base_amount_usd))}</td>
-                <td className="px-4 py-3 text-right text-charcoal-400">{money(Number(r.iva_amount_usd))}</td>
-                <td className="px-4 py-3 text-right font-semibold">{money(Number(r.total_amount_usd))}</td>
-                <td className="px-4 py-3">
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">{money(Number(r.base_amount_usd))}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-charcoal-400 sm:px-4 sm:py-3">{money(Number(r.iva_amount_usd))}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums sm:px-4 sm:py-3">{money(Number(r.total_amount_usd))}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">
                   {r.iva_creditable ? (
                     <span className="rounded-full bg-olive-100 px-2 py-0.5 text-xs font-medium text-olive-700">Sí</span>
                   ) : (
@@ -251,10 +251,10 @@ export default function ExpenseTab() {
           {rows.length > 0 && (
             <tfoot className="border-t-2 border-cream-300 bg-cream-50 font-semibold">
               <tr>
-                <td className="px-4 py-3" colSpan={4}>Total ({rows.length})</td>
-                <td className="px-4 py-3 text-right">{money(totals.base)}</td>
-                <td className="px-4 py-3 text-right">{money(totals.iva)}</td>
-                <td className="px-4 py-3 text-right">{money(totals.total)}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3" colSpan={4}>Total ({rows.length})</td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">{money(totals.base)}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">{money(totals.iva)}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">{money(totals.total)}</td>
                 <td></td>
               </tr>
             </tfoot>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money, fmtDateTime } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
@@ -100,18 +100,18 @@ export default function AccountingDashboard() {
         <div className="flex gap-2">
           {canReview && status !== 'revisado' && status !== 'cerrado' && (
             <button onClick={() => setStatus('revisado')} disabled={busy}
-              className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-accent-700 shadow active:bg-cream-100 disabled:opacity-50">
+              className="btn btn-secondary btn-sm">
               Marcar revisado
             </button>
           )}
           {isAdmin && (status !== 'cerrado' ? (
             <button onClick={() => setStatus('cerrado')} disabled={busy}
-              className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white active:bg-brand-700 disabled:opacity-50">
+              className="btn btn-primary btn-sm">
               Cerrar mes
             </button>
           ) : (
             <button onClick={() => setStatus('abierto')} disabled={busy}
-              className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-brand-700 shadow active:bg-cream-100 disabled:opacity-50">
+              className="btn btn-secondary btn-sm">
               Reabrir mes
             </button>
           ))}

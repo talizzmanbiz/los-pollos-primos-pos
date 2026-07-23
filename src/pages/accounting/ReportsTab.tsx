@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money, fmtDate } from '../../lib/format';
 import { toCsv, downloadCsv } from '../../lib/csv';
@@ -188,7 +188,7 @@ export default function ReportsTab() {
       <div className="rounded-2xl bg-white p-6 shadow">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-semibold text-charcoal-600">Declaración F-07 (IVA mensual)</h3>
-          <button onClick={exportF07} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white active:bg-brand-700">
+          <button onClick={exportF07} className="btn btn-primary btn-sm active:bg-brand-700">
             Descargar F-07 (CSV)
           </button>
         </div>
@@ -288,7 +288,7 @@ function Register({
         <button
           onClick={onExport}
           disabled={disabled}
-          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white active:bg-brand-700 disabled:opacity-50"
+          className="btn btn-primary btn-sm active:bg-brand-700 disabled:opacity-50"
         >
           Descargar CSV
         </button>

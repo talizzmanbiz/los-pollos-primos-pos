@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import AccountingDashboard from './AccountingDashboard';
 import IncomeTab from './IncomeTab';
 import ExpenseTab from './ExpenseTab';
@@ -26,14 +26,14 @@ export default function AccountingPage() {
     <div className="mx-auto max-w-6xl p-4 sm:p-6">
       <div className="mb-1 flex items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
-          <h1 className="text-2xl font-bold text-brand-800">Contabilidad</h1>
+          <h1 className="page-title">Contabilidad</h1>
           <span className="hidden text-sm text-charcoal-300 sm:inline">Ministerio de Hacienda · El Salvador</span>
         </div>
         <a
           href="/manual-contable.html"
           target="_blank"
           rel="noopener noreferrer"
-          className="whitespace-nowrap rounded-lg bg-white px-3 py-2 text-sm font-semibold text-brand-700 shadow hover:bg-cream-100"
+          className="btn btn-secondary btn-sm"
           title="Abrir el manual de usuario (imprimible)"
         >
           📄 Manual
@@ -48,8 +48,8 @@ export default function AccountingPage() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium sm:px-4 sm:text-base transition-colors ${
-              tab === t.id ? 'bg-brand-600 text-white' : 'bg-white text-charcoal-500 shadow'
+            className={`tab ${
+              tab === t.id ? 'tab-on' : 'tab-off'
             }`}
           >
             {t.label}

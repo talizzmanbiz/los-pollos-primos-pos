@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { UserRole } from '../types/database';
 
@@ -35,19 +35,23 @@ export default function Home() {
   });
 
   return (
-    <div className="p-6">
-      <h1 className="mb-6 text-2xl font-bold text-brand-900">
+    <div className="p-4 sm:p-6">
+      <h1 className="page-title mb-4">
         Hola, {profile.full_name.split(' ')[0]}
       </h1>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
         {tiles.map((t) => (
           <Link
             key={t.to}
             to={t.to}
-            className="rounded-2xl bg-white p-6 shadow transition hover:shadow-md active:scale-95"
+            className="rounded-2xl bg-white p-3 shadow transition hover:shadow-md active:scale-95 sm:p-6"
           >
-            <h2 className="text-xl font-semibold text-brand-700">{t.title}</h2>
-            <p className="mt-1 text-gray-500">{t.desc}</p>
+            <h2 className="text-sm font-semibold leading-snug text-brand-700 sm:text-xl">
+              {t.title}
+            </h2>
+            <p className="mt-0.5 text-xs leading-snug text-gray-500 sm:mt-1 sm:text-base">
+              {t.desc}
+            </p>
           </Link>
         ))}
       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money, fmtDateTime } from '../../lib/format';
 import type { Tables } from '../../types/database';
@@ -88,26 +88,26 @@ export default function BatchReport() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <div className="rounded-2xl bg-white p-5 shadow">
-          <p className="text-sm text-gray-500">Rendimiento promedio</p>
-          <p className="text-3xl font-bold text-gray-900">
+        <div className="rounded-2xl bg-white p-3 shadow sm:p-5">
+          <p className="text-xs leading-snug text-gray-500 sm:text-sm">Rendimiento promedio</p>
+          <p className="text-lg font-bold tabular-nums text-gray-900 sm:text-3xl">
             {totals.avgYield != null ? `${totals.avgYield.toFixed(1)}%` : '—'}
           </p>
           <p className="text-xs text-gray-400">{totals.produced} producidos · {totals.wasted} merma</p>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow">
-          <p className="text-sm text-gray-500">Costo por pollo producido</p>
-          <p className="text-3xl font-bold text-gray-900">
+        <div className="rounded-2xl bg-white p-3 shadow sm:p-5">
+          <p className="text-xs leading-snug text-gray-500 sm:text-sm">Costo por pollo producido</p>
+          <p className="text-lg font-bold tabular-nums text-gray-900 sm:text-3xl">
             {totals.avgCostPerChicken != null ? money(totals.avgCostPerChicken) : '—'}
           </p>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow">
-          <p className="text-sm text-gray-500">Pollos vendidos (equiv.)</p>
-          <p className="text-3xl font-bold text-gray-900">{totals.sold.toFixed(2)}</p>
+        <div className="rounded-2xl bg-white p-3 shadow sm:p-5">
+          <p className="text-xs leading-snug text-gray-500 sm:text-sm">Pollos vendidos (equiv.)</p>
+          <p className="text-lg font-bold tabular-nums text-gray-900 sm:text-3xl">{totals.sold.toFixed(2)}</p>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow">
-          <p className="text-sm text-gray-500">Costo del pollo vendido</p>
-          <p className="text-3xl font-bold text-brand-600">
+        <div className="rounded-2xl bg-white p-3 shadow sm:p-5">
+          <p className="text-xs leading-snug text-gray-500 sm:text-sm">Costo del pollo vendido</p>
+          <p className="text-lg font-bold tabular-nums text-brand-600 sm:text-3xl">
             {totals.costOfChickenSold != null ? money(totals.costOfChickenSold) : '—'}
           </p>
           <p className="text-xs text-gray-400">costo de compra asignado a unidades vendidas</p>
@@ -115,37 +115,37 @@ export default function BatchReport() {
       </div>
 
       <div className="overflow-x-auto rounded-2xl bg-white shadow">
-        <table className="w-full text-left">
+        <table className="w-full text-left text-sm sm:text-base">
           <thead className="bg-brand-50 text-sm text-gray-600">
             <tr>
-              <th className="px-4 py-3">Horneado</th>
-              <th className="px-4 py-3 text-right">Producido</th>
-              <th className="px-4 py-3 text-right">Merma</th>
-              <th className="px-4 py-3 text-right">Rendimiento</th>
-              <th className="px-4 py-3 text-right">Costo del lote</th>
-              <th className="px-4 py-3 text-right">Costo / pollo</th>
-              <th className="px-4 py-3 text-right">Vendidos</th>
-              <th className="px-4 py-3">Proveedores</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Horneado</th>
+              <th className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">Producido</th>
+              <th className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">Merma</th>
+              <th className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">Rendimiento</th>
+              <th className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">Costo del lote</th>
+              <th className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">Costo / pollo</th>
+              <th className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">Vendidos</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Proveedores</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {stats.map((s) => (
               <tr key={s.batch.id}>
-                <td className="px-4 py-3 text-sm">
+                <td className="whitespace-nowrap px-3 py-2.5 text-sm sm:px-4 sm:py-3">
                   {s.batch.roast_end_at ? fmtDateTime(s.batch.roast_end_at) : '—'}
                 </td>
-                <td className="px-4 py-3 text-right font-semibold">{s.batch.quantity_produced}</td>
-                <td className="px-4 py-3 text-right">{s.batch.quantity_wasted}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums sm:px-4 sm:py-3">{s.batch.quantity_produced}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">{s.batch.quantity_wasted}</td>
                 <td className={`px-4 py-3 text-right font-semibold ${
                   (s.batch.yield_percentage ?? 100) < 85 ? 'text-red-600' : 'text-green-700'
                 }`}>
                   {s.batch.yield_percentage != null ? `${s.batch.yield_percentage}%` : '—'}
                 </td>
-                <td className="px-4 py-3 text-right">{money(s.rawCost)}</td>
-                <td className="px-4 py-3 text-right">
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">{money(s.rawCost)}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">
                   {s.costPerChicken != null ? money(s.costPerChicken) : '—'}
                 </td>
-                <td className="px-4 py-3 text-right">{s.sold.toFixed(2)}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">{s.sold.toFixed(2)}</td>
                 <td className="px-4 py-3 text-sm text-gray-500">
                   {[...new Set(s.batch.inputs.map((i) => i.purchase_batch?.supplier_name).filter(Boolean))].join(', ')}
                 </td>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money } from '../../lib/format';
 import { toCsv, downloadCsv } from '../../lib/csv';
@@ -121,7 +121,7 @@ export default function IsrTab() {
         <div className="flex overflow-hidden rounded-lg border border-charcoal-200 text-sm">
           {(['natural', 'juridica'] as const).map((p) => (
             <button key={p} onClick={() => setPersona(p)}
-              className={`px-3 py-2 font-medium ${persona === p ? 'bg-brand-600 text-white' : 'bg-white text-charcoal-500'}`}>
+              className={`tab rounded-none ${persona === p ? 'tab-on' : 'tab-off'}`}>
               Persona {p}
             </button>
           ))}
@@ -130,7 +130,7 @@ export default function IsrTab() {
           <button onClick={printPdf} className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow active:bg-cream-100">
             Imprimir / PDF
           </button>
-          <button onClick={exportCsv} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white active:bg-brand-700">
+          <button onClick={exportCsv} className="btn btn-primary btn-sm active:bg-brand-700">
             Descargar CSV
           </button>
         </div>

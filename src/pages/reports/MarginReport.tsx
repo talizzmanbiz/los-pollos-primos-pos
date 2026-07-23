@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money, marginPct } from '../../lib/format';
 import type { Product } from '../../types/database';
@@ -22,7 +22,7 @@ export default function MarginReport() {
         de lote (pestaña «Lotes y rendimiento»); acá se muestran los costos estimados cargados
         en el catálogo.
       </p>
-      <table className="w-full text-left">
+      <table className="w-full text-left text-sm sm:text-base">
         <thead className="text-sm text-gray-500">
           <tr>
             <th className="py-2">Producto</th>

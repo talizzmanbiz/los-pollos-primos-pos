@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+﻿import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 import { fmtDateTime } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
@@ -97,7 +97,7 @@ export default function TransfersPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
-      <h1 className="text-2xl font-bold text-brand-900">Transferencias entre sucursales</h1>
+      <h1 className="page-title">Transferencias entre sucursales</h1>
       <p className="text-gray-600">
         Modelo «push»: {central?.name ?? 'Central'} envía, la sucursal destino confirma la
         recepción desde su pantalla de Inventario.
@@ -106,7 +106,7 @@ export default function TransfersPage() {
       {canCreate && (
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-lg bg-brand-600 px-6 py-3 font-semibold text-white active:bg-brand-700"
+          className="btn btn-primary"
         >
           {showForm ? 'Cancelar' : '+ Nueva transferencia'}
         </button>
@@ -168,7 +168,7 @@ export default function TransfersPage() {
           <input
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2"
+            className="mb-4 input"
           />
 
           <button

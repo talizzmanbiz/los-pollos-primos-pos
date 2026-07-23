@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money, fmtDate } from '../../lib/format';
 import { printReport } from '../../lib/printDoc';
@@ -101,7 +101,7 @@ export default function JournalTab() {
           <button
             onClick={printPdf}
             disabled={entries.length === 0}
-            className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white active:bg-brand-700 disabled:opacity-50"
+            className="btn btn-primary btn-sm"
           >
             Imprimir / PDF
           </button>
