@@ -1,19 +1,15 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Only the mono face is loaded here (tabular figures for prices/quantities).
+   Inter + Poppins are preconnected and loaded from index.html. Playfair Display
+   and DM Sans were dropped with the reverted redesign — they were still being
+   downloaded on every page load without a single reference left. */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme {
-  /* ============ WARM EARTHY PALETTE ============ */
-  /* Burnt Sienna (Primary - Restaurant warmth) */
-  --color-primary-50: #f5e9e4;
-  --color-primary-100: #e8a87b;
-  --color-primary-200: #d98654;
-  --color-primary-300: #c86939;
-  --color-primary-400: #b8653f;
-  --color-primary-500: #a15534;
-  --color-primary-600: #8b4513;
-  --color-primary-700: #6d3410;
-  --color-primary-800: #5a2a0c;
-  --color-primary-900: #4a2108;
+  /* The brand accent is brand-* (orange) further down — see src/design/README.md.
+     The primary-* burnt-sienna scale that used to live here was removed: it had
+     0 usages left after the POS went back to brand-*, and keeping it around
+     invited re-adopting a palette the owner had already rejected. */
 
   /* Amber (Accent - Energy & warmth) */
   --color-accent-50: #fdf8f3;
@@ -72,9 +68,10 @@
   --color-border: #e0ddd7;
   --color-disabled: #d4d0cb;
 
-  /* Typography - Professional & Elegant */
-  --font-heading: "Playfair Display", serif;
-  --font-body: "DM Sans", sans-serif;
+  /* Typography. The app's real pair is --font-display (Poppins) + --font-sans
+     (Inter), declared below. --font-heading/--font-body (Playfair + DM Sans)
+     were removed with the reverted redesign; only the mono scale survives, for
+     prices and quantities. */
   --font-mono: "JetBrains Mono", monospace;
 
   /* NOTE: named --spacing-* tokens were removed — in Tailwind v4 they hijack
