@@ -76,7 +76,7 @@ export default function AccountingDashboard() {
         <select
           value={month.value}
           onChange={(e) => setMonth(months.find((m) => m.value === e.target.value) ?? months[0])}
-          className="rounded-lg border border-charcoal-200 bg-white px-3 py-2 text-sm font-medium"
+          className="input w-auto"
         >
           {months.map((m) => (
             <option key={m.value} value={m.value}>{m.label}</option>
@@ -146,7 +146,7 @@ export default function AccountingDashboard() {
         <Kpi label="IVA Crédito (pagado)" value={money(n(row.iva_credito))} />
       </div>
 
-      <div className="rounded-2xl bg-white p-6 shadow">
+      <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
         <h3 className="mb-3 font-semibold text-charcoal-600">Resumen del mes</h3>
         <Row label="Ventas totales (con IVA)" value={money(salesTotal)} />
         <Row label="IVA Débito Fiscal (13%)" value={money(n(row.iva_debito))} />

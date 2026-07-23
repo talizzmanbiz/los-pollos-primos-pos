@@ -84,7 +84,7 @@ export default function JournalTab() {
         <select
           value={month.value}
           onChange={(e) => setMonth(months.find((m) => m.value === e.target.value) ?? months[0])}
-          className="rounded-lg border border-charcoal-200 bg-white px-3 py-2 text-sm font-medium"
+          className="input w-auto"
         >
           {months.map((m) => (
             <option key={m.value} value={m.value}>{m.label}</option>

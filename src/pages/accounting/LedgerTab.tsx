@@ -90,7 +90,7 @@ export default function LedgerTab() {
           <select
             value={month.value}
             onChange={(e) => setMonth(months.find((m) => m.value === e.target.value) ?? months[0])}
-            className="rounded-lg border border-charcoal-200 bg-white px-3 py-2 text-sm font-medium"
+            className="input w-auto"
           >
             {months.map((m) => (
               <option key={m.value} value={m.value}>{m.label}</option>
@@ -102,7 +102,7 @@ export default function LedgerTab() {
           <button
             onClick={printPdf}
             disabled={rows.length === 0}
-            className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow active:bg-cream-100 disabled:opacity-50"
+            className="btn btn-secondary btn-sm"
           >
             Imprimir / PDF
           </button>

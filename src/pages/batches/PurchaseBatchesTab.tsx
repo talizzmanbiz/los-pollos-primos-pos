@@ -125,7 +125,7 @@ export default function PurchaseBatchesTab() {
                 onChange={(e) => setUnitCost(e.target.value)} required
                 className="input" />
               <select value={pricedBy} onChange={(e) => setPricedBy(e.target.value as 'unidades' | 'libras')}
-                className="rounded-lg border border-gray-300 px-2 py-2">
+                className="input">
                 <option value="libras">por libra</option>
                 <option value="unidades">por unidad</option>
               </select>
@@ -147,7 +147,7 @@ export default function PurchaseBatchesTab() {
                 <span className="text-brand-600"> · por libra: {money(avgPerPound)}</span>
               )}
             </p>
-            <button type="submit" className="ml-auto rounded-lg bg-brand-600 px-6 py-3 font-bold text-white active:bg-brand-700">
+            <button type="submit" className="btn btn-primary ml-auto">
               Guardar
             </button>
           </div>
@@ -188,11 +188,11 @@ export default function PurchaseBatchesTab() {
                       {b.unit === 'libras' ? ' / lb' : ' / unid.'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-semibold text-brand-700">
+                  <td className="whitespace-nowrap px-3 py-2.5 font-semibold text-brand-700 sm:px-4 sm:py-3">
                     {perUnit != null ? money(perUnit) : '—'}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">{money(b.total_cost)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{b.notes}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-500 sm:px-4 sm:py-3">{b.notes}</td>
                 </tr>
               );
             })}

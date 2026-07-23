@@ -146,7 +146,7 @@ export default function BatchReport() {
                   {s.costPerChicken != null ? money(s.costPerChicken) : '—'}
                 </td>
                 <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">{s.sold.toFixed(2)}</td>
-                <td className="px-4 py-3 text-sm text-gray-500">
+                <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-500 sm:px-4 sm:py-3">
                   {[...new Set(s.batch.inputs.map((i) => i.purchase_batch?.supplier_name).filter(Boolean))].join(', ')}
                 </td>
               </tr>

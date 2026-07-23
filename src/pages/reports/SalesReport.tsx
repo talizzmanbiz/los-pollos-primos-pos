@@ -72,14 +72,12 @@ export default function SalesReport() {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2">
+      <div className="no-scrollbar flex gap-2 overflow-x-auto">
         {RANGES.map((r) => (
           <button
             key={r.id}
             onClick={() => setRange(r)}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold ${
-              range.id === r.id ? 'tab-on' : 'tab-off'
-            }`}
+            className={`tab ${range.id === r.id ? 'tab-on' : 'tab-off'}`}
           >
             {r.label}
           </button>
@@ -108,7 +106,7 @@ export default function SalesReport() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="rounded-2xl bg-white p-6 shadow">
+            <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
               <h3 className="section-title mb-3">Por canal</h3>
               {[...stats.bySource.entries()].map(([source, s]) => (
                 <div key={source} className="mb-2 flex justify-between">
@@ -118,7 +116,7 @@ export default function SalesReport() {
               ))}
               {stats.bySource.size === 0 && <p className="text-gray-400">Sin ventas en el período</p>}
             </div>
-            <div className="rounded-2xl bg-white p-6 shadow">
+            <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
               <h3 className="section-title mb-3">Por sucursal</h3>
               {[...stats.byLocation.entries()].map(([name, s]) => (
                 <div key={name} className="mb-2 flex justify-between">
@@ -129,7 +127,7 @@ export default function SalesReport() {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white p-6 shadow">
+          <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
             <h3 className="section-title mb-3">Productos más vendidos</h3>
             <table className="w-full text-left text-sm sm:text-base">
               <thead className="text-sm text-gray-500">

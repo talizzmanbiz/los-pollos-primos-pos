@@ -224,9 +224,14 @@ html {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    /* Pill, to match the nav pills, tab pills and the sucursal selector — the
+       app had rounded-lg buttons sitting next to rounded-full tabs. */
+    border-radius: 9999px;
+    /* Width follows the label; height is fixed per size. min-width:auto undoes
+       the global button floor so a short label doesn't get a stretched pill. */
     min-height: 2.75rem;
-    padding: 0 1rem;
-    border-radius: var(--radius-md);
+    min-width: auto;
+    padding: 0 1.125rem;
     font-family: var(--font-sans);
     font-size: 0.875rem;
     font-weight: 600;
@@ -235,13 +240,21 @@ html {
     cursor: pointer;
     transition:
       background-color 150ms ease-out,
-      border-color 150ms ease-out,
+      color 150ms ease-out,
       transform 150ms ease-out;
   }
   .btn:active:not(:disabled) { transform: scale(0.98); }
-  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-  .btn-sm { min-height: 2.5rem; padding: 0 0.75rem; font-size: 0.8125rem; }
+  /* A solid muted fill, not opacity: a 40%-alpha orange button reads as broken
+     rather than disabled, especially on the cream background. */
+  .btn:disabled {
+    background: var(--color-cream-400);
+    color: var(--color-charcoal-300);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .btn-sm { min-height: 2.5rem; padding: 0 0.875rem; font-size: 0.8125rem; }
   .btn-lg { min-height: 3.25rem; padding: 0 1.5rem; font-size: 1rem; }
   .btn-block { display: flex; width: 100%; }
 

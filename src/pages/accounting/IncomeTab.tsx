@@ -107,7 +107,7 @@ export default function IncomeTab() {
         <select
           value={month.value}
           onChange={(e) => setMonth(months.find((m) => m.value === e.target.value) ?? months[0])}
-          className="rounded-lg border border-charcoal-200 bg-white px-3 py-2 text-sm font-medium"
+          className="input w-auto"
         >
           {months.map((m) => (
             <option key={m.value} value={m.value}>{m.label}</option>
@@ -118,13 +118,13 @@ export default function IncomeTab() {
             <button
               onClick={sync}
               disabled={syncing}
-              className="rounded-lg bg-brand-600 px-4 py-2 font-semibold text-white active:bg-brand-700 disabled:opacity-60"
+              className="btn btn-primary btn-sm"
             >
               {syncing ? 'Sincronizando…' : '↻ Sincronizar desde POS'}
             </button>
             <button
               onClick={() => setShowForm((v) => !v)}
-              className="rounded-lg bg-white px-4 py-2 font-semibold text-brand-700 shadow active:bg-cream-100"
+              className="btn btn-secondary btn-sm"
             >
               {showForm ? 'Cancelar' : '+ Registrar ingreso'}
             </button>
@@ -133,16 +133,16 @@ export default function IncomeTab() {
       </div>
 
       {showForm && (
-        <form onSubmit={submit} className="grid grid-cols-2 gap-4 rounded-2xl bg-white p-6 shadow md:grid-cols-3">
+        <form onSubmit={submit} className="grid grid-cols-1 gap-3 rounded-2xl bg-white p-4 shadow sm:grid-cols-2 sm:gap-4 sm:p-6 md:grid-cols-3">
           <div>
             <label className="mb-1 block text-sm text-charcoal-400">Fecha</label>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required
-              className="w-full rounded-lg border border-charcoal-200 px-3 py-2" />
+              className="input" />
           </div>
           <div>
             <label className="mb-1 block text-sm text-charcoal-400">Tipo</label>
             <select value={type} onChange={(e) => setType(e.target.value)}
-              className="w-full rounded-lg border border-charcoal-200 px-3 py-2">
+              className="input">
               <option value="venta">Venta</option>
               <option value="venta_chimichurri">Venta chimichurri</option>
               <option value="otro">Otro ingreso</option>
@@ -151,12 +151,12 @@ export default function IncomeTab() {
           <div>
             <label className="mb-1 block text-sm text-charcoal-400">Total cobrado (con IVA)</label>
             <input type="number" step="0.01" min="0.01" value={total} onChange={(e) => setTotal(e.target.value)}
-              required placeholder="0.00" className="w-full rounded-lg border border-charcoal-200 px-3 py-2" />
+              required placeholder="0.00" className="input" />
           </div>
           <div>
             <label className="mb-1 block text-sm text-charcoal-400">Pago</label>
             <select value={payment} onChange={(e) => setPayment(e.target.value as 'efectivo' | 'wompi')}
-              className="w-full rounded-lg border border-charcoal-200 px-3 py-2">
+              className="input">
               <option value="efectivo">Efectivo</option>
               <option value="wompi">Wompi / tarjeta</option>
             </select>
@@ -164,12 +164,12 @@ export default function IncomeTab() {
           <div>
             <label className="mb-1 block text-sm text-charcoal-400">Cliente (opcional)</label>
             <input value={customer} onChange={(e) => setCustomer(e.target.value)}
-              className="w-full rounded-lg border border-charcoal-200 px-3 py-2" />
+              className="input" />
           </div>
           <div>
             <label className="mb-1 block text-sm text-charcoal-400">N° documento (opcional)</label>
             <input value={docNumber} onChange={(e) => setDocNumber(e.target.value)}
-              className="w-full rounded-lg border border-charcoal-200 px-3 py-2" />
+              className="input" />
           </div>
           <div className="col-span-2 flex flex-wrap items-center gap-4 md:col-span-3">
             <p className="rounded-lg bg-accent-50 px-3 py-2 text-sm text-charcoal-500">
@@ -177,7 +177,7 @@ export default function IncomeTab() {
               <span className="font-bold">{money(iva)}</span>
             </p>
             <button type="submit" disabled={saving || nTotal <= 0}
-              className="ml-auto rounded-lg bg-brand-600 px-6 py-3 font-bold text-white active:bg-brand-700 disabled:opacity-60">
+              className="btn btn-primary ml-auto">
               {saving ? 'Guardando…' : 'Guardar'}
             </button>
           </div>

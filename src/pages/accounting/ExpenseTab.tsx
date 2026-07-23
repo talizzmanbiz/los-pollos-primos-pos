@@ -110,7 +110,7 @@ export default function ExpenseTab() {
         <select
           value={month.value}
           onChange={(e) => setMonth(months.find((m) => m.value === e.target.value) ?? months[0])}
-          className="rounded-lg border border-charcoal-200 bg-white px-3 py-2 text-sm font-medium"
+          className="input w-auto"
         >
           {months.map((m) => (
             <option key={m.value} value={m.value}>{m.label}</option>
@@ -119,7 +119,7 @@ export default function ExpenseTab() {
         {isAdmin && (
           <button
             onClick={() => setShowForm((v) => !v)}
-            className="rounded-lg bg-brand-600 px-4 py-2 font-semibold text-white active:bg-brand-700"
+            className="btn btn-primary btn-sm"
           >
             {showForm ? 'Cancelar' : '+ Registrar gasto'}
           </button>
@@ -127,73 +127,73 @@ export default function ExpenseTab() {
       </div>
 
       {showForm && (
-        <form onSubmit={submit} className="grid grid-cols-2 gap-4 rounded-2xl bg-white p-6 shadow md:grid-cols-3">
+        <form onSubmit={submit} className="grid grid-cols-1 gap-3 rounded-2xl bg-white p-4 shadow sm:grid-cols-2 sm:gap-4 sm:p-6 md:grid-cols-3">
           <div>
             <label className="mb-1 block text-sm text-charcoal-400">Fecha</label>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required
-              className="w-full rounded-lg border border-charcoal-200 px-3 py-2" />
+              className="input" />
           </div>
           <div>
             <label className="mb-1 block text-sm text-charcoal-400">Categoría</label>
             <select value={expenseType} onChange={(e) => setExpenseType(e.target.value as Enums<'accounting_expense_type'>)}
-              className="w-full rounded-lg border border-charcoal-200 px-3 py-2">
+              className="input">
               {EXPENSE_TYPES.map((t) => <option key={t} value={t}>{EXPENSE_TYPE_LABELS[t]}</option>)}
             </select>
           </div>
           <div>
             <label className="mb-1 block text-sm text-charcoal-400">Monto base (sin IVA)</label>
             <input type="number" step="0.01" min="0.01" value={baseInput} onChange={(e) => setBaseInput(e.target.value)}
-              required placeholder="0.00" className="w-full rounded-lg border border-charcoal-200 px-3 py-2" />
+              required placeholder="0.00" className="input" />
           </div>
           <div>
             <label className="mb-1 block text-sm text-charcoal-400">Proveedor</label>
             <input value={supplier} onChange={(e) => setSupplier(e.target.value)}
-              className="w-full rounded-lg border border-charcoal-200 px-3 py-2" />
+              className="input" />
           </div>
           <div>
             <label className="mb-1 block text-sm text-charcoal-400">NIT proveedor</label>
             <input value={nit} onChange={(e) => setNit(e.target.value)}
-              className="w-full rounded-lg border border-charcoal-200 px-3 py-2" />
+              className="input" />
           </div>
           <div>
             <label className="mb-1 block text-sm text-charcoal-400">Documento</label>
             <div className="flex gap-2">
               <select value={docType} onChange={(e) => setDocType(e.target.value as Enums<'accounting_doc_type'>)}
-                className="rounded-lg border border-charcoal-200 px-2 py-2">
+                className="input w-24 shrink-0">
                 {DOC_TYPES.map((t) => <option key={t} value={t}>{t.toUpperCase()}</option>)}
               </select>
               <input value={docNumber} onChange={(e) => setDocNumber(e.target.value)} placeholder="N°"
-                className="w-full rounded-lg border border-charcoal-200 px-3 py-2" />
+                className="input min-w-0 flex-1" />
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-charcoal-500">
+          <label className="flex items-center gap-2 text-sm leading-snug text-charcoal-500">
             <input type="checkbox" checked={hasIva} onChange={(e) => setHasIva(e.target.checked)} />
             Tiene IVA 13%
           </label>
-          <label className="flex items-center gap-2 text-sm text-charcoal-500">
+          <label className="flex items-center gap-2 text-sm leading-snug text-charcoal-500">
             <input type="checkbox" checked={deductible} onChange={(e) => setDeductible(e.target.checked)} />
             Deducible (ISR)
           </label>
-          <label className={`flex items-center gap-2 text-sm ${hasIva ? 'text-charcoal-500' : 'text-charcoal-200'}`}>
+          <label className={`flex items-center gap-2 text-sm leading-snug ${hasIva ? 'text-charcoal-500' : 'text-charcoal-200'}`}>
             <input type="checkbox" checked={creditable} disabled={!hasIva}
               onChange={(e) => setCreditable(e.target.checked)} />
             Crédito fiscal recuperable
           </label>
-          <label className={`flex items-center gap-2 text-sm ${retentionEligible ? 'text-charcoal-500' : 'text-charcoal-200'}`}>
+          <label className={`flex items-center gap-2 text-sm leading-snug ${retentionEligible ? 'text-charcoal-500' : 'text-charcoal-200'}`}>
             <input type="checkbox" checked={retain} disabled={!retentionEligible}
               onChange={(e) => setRetain(e.target.checked)} />
             Retención IVA 1% (Gran Contribuyente)
           </label>
 
           {ccfWarning && (
-            <p className="col-span-2 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800 md:col-span-3">
+            <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800 sm:col-span-2 md:col-span-3">
               ⚠️ El crédito fiscal requiere un <strong>CCF o DTE</strong> como soporte. Con “{DOC_TYPE_LABELS[docType]}”
               no es recuperable ante Hacienda.
             </p>
           )}
 
-          <div className="col-span-2 flex flex-wrap items-center gap-4 md:col-span-3">
+          <div className="flex flex-wrap items-center gap-3 sm:col-span-2 md:col-span-3">
             <p className="rounded-lg bg-accent-50 px-3 py-2 text-sm text-charcoal-500">
               IVA: <span className="font-bold">{money(iva)}</span> · Total:{' '}
               <span className="font-bold">{money(total)}</span>
@@ -202,7 +202,7 @@ export default function ExpenseTab() {
               )}
             </p>
             <button type="submit" disabled={saving || base <= 0}
-              className="ml-auto rounded-lg bg-brand-600 px-6 py-3 font-bold text-white active:bg-brand-700 disabled:opacity-60">
+              className="btn btn-primary ml-auto">
               {saving ? 'Guardando…' : 'Guardar'}
             </button>
           </div>

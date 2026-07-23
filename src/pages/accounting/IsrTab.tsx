@@ -115,7 +115,7 @@ export default function IsrTab() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <select value={year} onChange={(e) => setYear(e.target.value)}
-          className="rounded-lg border border-charcoal-200 bg-white px-3 py-2 text-sm font-medium">
+          className="input w-auto">
           {years.map((y) => <option key={y} value={y}>{y}</option>)}
         </select>
         <div className="flex overflow-hidden rounded-lg border border-charcoal-200 text-sm">
@@ -127,10 +127,10 @@ export default function IsrTab() {
           ))}
         </div>
         <div className="ml-auto flex gap-2">
-          <button onClick={printPdf} className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow active:bg-cream-100">
+          <button onClick={printPdf} className="btn btn-secondary btn-sm">
             Imprimir / PDF
           </button>
-          <button onClick={exportCsv} className="btn btn-primary btn-sm active:bg-brand-700">
+          <button onClick={exportCsv} className="btn btn-primary btn-sm">
             Descargar CSV
           </button>
         </div>
@@ -145,7 +145,7 @@ export default function IsrTab() {
         </p>
       </div>
 
-      <div className="rounded-2xl bg-white p-6 shadow">
+      <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
         <h3 className="mb-3 font-semibold text-charcoal-600">Determinación de la renta</h3>
         {summaryRows.map(([label, value], i) => {
           const isResult = label.startsWith('(=)') || label === 'ISR estimado';
@@ -159,7 +159,7 @@ export default function IsrTab() {
       </div>
 
       {calc.byCat.size > 0 && (
-        <div className="rounded-2xl bg-white p-6 shadow">
+        <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
           <h3 className="mb-3 font-semibold text-charcoal-600">Gastos deducibles por categoría</h3>
           {[...calc.byCat.entries()].sort((a, b) => b[1] - a[1]).map(([cat, v]) => (
             <div key={cat} className="flex justify-between py-1">

@@ -113,14 +113,14 @@ export default function TransfersPage() {
       )}
 
       {showForm && central && (
-        <form onSubmit={submit} className="rounded-2xl bg-white p-6 shadow">
+        <form onSubmit={submit} className="rounded-2xl bg-white p-4 shadow sm:p-6">
           <div className="mb-4">
             <label className="mb-1 block text-sm text-gray-600">Destino</label>
             <select
               value={toLocation}
               onChange={(e) => setToLocation(e.target.value)}
               required
-              className="w-64 rounded-lg border border-gray-300 px-3 py-3"
+              className="w-64 input"
             >
               <option value="">Elegir sucursal…</option>
               {locations
@@ -174,15 +174,15 @@ export default function TransfersPage() {
           <button
             type="submit"
             disabled={busy || !toLocation}
-            className="rounded-xl bg-brand-600 px-8 py-3 text-lg font-bold text-white active:bg-brand-700 disabled:opacity-40"
+            className="btn btn-primary btn-lg"
           >
             {busy ? 'Enviando…' : 'Enviar transferencia'}
           </button>
         </form>
       )}
 
-      <div className="rounded-2xl bg-white p-6 shadow">
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Historial</h2>
+      <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
+        <h2 className="section-title mb-3">Historial</h2>
         {transfers.length === 0 && <p className="text-gray-400">Sin transferencias</p>}
         {transfers.map((t) => {
           const st = STATUS_LABELS[t.status];

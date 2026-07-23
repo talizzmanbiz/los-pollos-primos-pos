@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { fmtDateTime, fmtDate } from '../../lib/format';
 
@@ -151,33 +151,33 @@ export default function TraceabilityTab() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl bg-white p-6 shadow">
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Venta → origen del pollo</h2>
-        <div className="flex gap-3">
+      <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
+        <h2 className="section-title mb-3">Venta → origen del pollo</h2>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <input
             value={orderNumber}
             onChange={(e) => setOrderNumber(e.target.value)}
             placeholder="PP-C-0001"
-            className="w-56 rounded-lg border border-gray-300 px-4 py-3"
+            className="input min-w-0 flex-1"
           />
           <button
             onClick={traceSale}
             disabled={busy || !orderNumber.trim()}
-            className="rounded-lg bg-brand-600 px-6 py-3 font-semibold text-white disabled:opacity-40"
+            className="btn btn-primary shrink-0"
           >
             Rastrear
           </button>
         </div>
       </div>
 
-      <div className="rounded-2xl bg-white p-6 shadow">
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Lote de compra → ventas</h2>
-        <div className="flex gap-3">
+      <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
+        <h2 className="section-title mb-3">Lote de compra → ventas</h2>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <select
             value={selectedPurchase}
             onFocus={() => purchaseList.length === 0 && loadPurchases()}
             onChange={(e) => setSelectedPurchase(e.target.value)}
-            className="w-72 rounded-lg border border-gray-300 px-4 py-3"
+            className="input min-w-0 flex-1"
           >
             <option value="">Elegir lote de compra…</option>
             {purchaseList.map((p) => (
@@ -189,7 +189,7 @@ export default function TraceabilityTab() {
           <button
             onClick={tracePurchase}
             disabled={busy || !selectedPurchase}
-            className="rounded-lg bg-brand-600 px-6 py-3 font-semibold text-white disabled:opacity-40"
+            className="btn btn-primary shrink-0"
           >
             Rastrear
           </button>
@@ -199,7 +199,7 @@ export default function TraceabilityTab() {
       {error && <p className="text-red-600">{error}</p>}
 
       {saleTrace && (
-        <div className="rounded-2xl bg-white p-6 shadow">
+        <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
           <h3 className="text-xl font-bold text-gray-900">
             {saleTrace.orderNumber}{' '}
             <span className="text-sm font-normal text-gray-400">{fmtDateTime(saleTrace.createdAt)}</span>
@@ -231,7 +231,7 @@ export default function TraceabilityTab() {
       )}
 
       {purchaseTrace && (
-        <div className="rounded-2xl bg-white p-6 shadow">
+        <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
           <h3 className="text-xl font-bold text-gray-900">
             🛒 {purchaseTrace.supplier} — {fmtDate(purchaseTrace.date)}
           </h3>

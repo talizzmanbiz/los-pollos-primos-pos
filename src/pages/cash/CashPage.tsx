@@ -124,7 +124,7 @@ export default function CashPage() {
 
       {!session ? (
         <form onSubmit={openSession} className="rounded-2xl bg-white p-4 sm:p-6 shadow">
-          <h2 className="mb-4 text-xl font-semibold text-gray-900">Abrir caja</h2>
+          <h2 className="section-title mb-3">Abrir caja</h2>
           <label className="mb-1 block text-gray-600">Monto inicial (efectivo en gaveta)</label>
           <input
             type="number"
@@ -133,7 +133,7 @@ export default function CashPage() {
             value={openingAmount}
             onChange={(e) => setOpeningAmount(e.target.value)}
             required
-            className="mb-4 w-full max-w-xs rounded-lg border border-gray-300 px-4 py-3 text-xl"
+            className="input mb-4 max-w-xs"
           />
           <button
             type="submit"
@@ -161,14 +161,14 @@ export default function CashPage() {
           </div>
 
           <div className="rounded-2xl bg-white p-4 sm:p-6 shadow">
-            <h2 className="mb-3 text-lg font-semibold text-gray-900">Registrar movimiento</h2>
+            <h2 className="section-title mb-3">Registrar movimiento</h2>
             <form onSubmit={addMovement} className="flex flex-wrap items-end gap-3">
               <div>
                 <label className="mb-1 block text-sm text-gray-600">Tipo</label>
                 <select
                   value={movType}
                   onChange={(e) => setMovType(e.target.value as 'in' | 'out')}
-                  className="rounded-lg border border-gray-300 px-3 py-3"
+                  className="input"
                 >
                   <option value="out">Salida (gasto)</option>
                   <option value="in">Entrada</option>
@@ -183,7 +183,7 @@ export default function CashPage() {
                   value={movAmount}
                   onChange={(e) => setMovAmount(e.target.value)}
                   required
-                  className="w-32 rounded-lg border border-gray-300 px-3 py-3"
+                  className="input w-32"
                 />
               </div>
               <div className="flex-1">
@@ -206,7 +206,7 @@ export default function CashPage() {
           </div>
 
           <div className="rounded-2xl bg-white p-4 sm:p-6 shadow">
-            <h2 className="mb-3 text-lg font-semibold text-gray-900">Movimientos del turno</h2>
+            <h2 className="section-title mb-3">Movimientos del turno</h2>
             {movements.length === 0 && <p className="text-gray-400">Sin movimientos todavía</p>}
             <ul className="divide-y divide-gray-100">
               {movements.map((m) => (
@@ -235,7 +235,7 @@ export default function CashPage() {
             </button>
           ) : (
             <form onSubmit={closeSession} className="rounded-2xl bg-white p-4 sm:p-6 shadow">
-              <h2 className="mb-3 text-lg font-semibold text-gray-900">Cierre de caja</h2>
+              <h2 className="section-title mb-3">Cierre de caja</h2>
               <p className="mb-3 text-gray-600">
                 Esperado: <strong>{money(expected)}</strong> — contá el efectivo y anotá el total real.
               </p>
@@ -248,7 +248,7 @@ export default function CashPage() {
                 onChange={(e) => setCountedAmount(e.target.value)}
                 required
                 autoFocus
-                className="mb-2 w-48 rounded-lg border border-gray-300 px-4 py-3 text-xl"
+                className="input mb-2 w-48"
               />
               {countedAmount !== '' && (
                 <p
@@ -283,7 +283,7 @@ export default function CashPage() {
 
       {history.length > 0 && (
         <div className="mt-8 rounded-2xl bg-white p-4 sm:p-6 shadow">
-          <h2 className="mb-3 text-lg font-semibold text-gray-900">Cierres anteriores</h2>
+          <h2 className="section-title mb-3">Cierres anteriores</h2>
           <div className="overflow-x-auto">
           <table className="w-full min-w-[32rem] text-left">
             <thead>

@@ -48,7 +48,7 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="current-password"
-          className="mb-6 w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-brand-500 focus:outline-none"
+          className="input mb-6"
         />
 
         {error && <p className="mb-4 text-center text-red-600">{error}</p>}

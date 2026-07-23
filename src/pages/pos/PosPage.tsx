@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
@@ -175,7 +175,7 @@ export default function PosPage() {
         <div className="mb-6 flex justify-end">
           <button
             onClick={() => setShowPrinterConfig(true)}
-            className="glass-sm px-4 py-2 text-sm font-medium text-charcoal-800 hover:border-brand-400 transition-all"
+            className="btn btn-secondary btn-sm"
             title="Configurar impresora"
           >
             🖨️ {getPrinterUrl() ? 'Impresora lista' : 'Configurar impresora'}
@@ -321,7 +321,7 @@ export default function PosPage() {
               value={printerUrl}
               onChange={(e) => setPrinterUrlState(e.target.value)}
               placeholder="http://192.168.1.50"
-              className="mb-4 w-full rounded-lg border border-gray-300 px-4 py-3 font-mono"
+              className="input mb-4 font-mono"
             />
             <div className="flex gap-3">
               <button

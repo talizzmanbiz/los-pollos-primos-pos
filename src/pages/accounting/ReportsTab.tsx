@@ -175,7 +175,7 @@ export default function ReportsTab() {
         <select
           value={month.value}
           onChange={(e) => setMonth(months.find((m) => m.value === e.target.value) ?? months[0])}
-          className="rounded-lg border border-charcoal-200 bg-white px-3 py-2 text-sm font-medium"
+          className="input w-auto"
         >
           {months.map((m) => (
             <option key={m.value} value={m.value}>{m.label}</option>
@@ -185,10 +185,10 @@ export default function ReportsTab() {
       </div>
 
       {/* F-07 */}
-      <div className="rounded-2xl bg-white p-6 shadow">
+      <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-semibold text-charcoal-600">Declaración F-07 (IVA mensual)</h3>
-          <button onClick={exportF07} className="btn btn-primary btn-sm active:bg-brand-700">
+          <button onClick={exportF07} className="btn btn-primary btn-sm">
             Descargar F-07 (CSV)
           </button>
         </div>
@@ -209,7 +209,7 @@ export default function ReportsTab() {
 
       {/* F-14: retenciones (solo aparece si hay retenciones registradas) */}
       {f14 > 0 && (
-        <div className="rounded-2xl bg-white p-6 shadow">
+        <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
           <h3 className="mb-2 font-semibold text-charcoal-600">Anexo F-14 — IVA retenido a proveedores</h3>
           <div className="flex justify-between">
             <span className="text-charcoal-400">Total 1% IVA retenido en el mes</span>

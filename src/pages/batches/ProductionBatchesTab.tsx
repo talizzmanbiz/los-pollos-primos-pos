@@ -157,7 +157,7 @@ export default function ProductionBatchesTab() {
                     {b.status === 'open' && !b.roast_start_at && (
                       <button
                         onClick={() => markRoastStart(b)}
-                        className="btn btn-warm w-28"
+                        className="btn btn-warm"
                       >
                         Al horno
                       </button>
@@ -165,7 +165,7 @@ export default function ProductionBatchesTab() {
                     {b.status === 'open' && (
                       <button
                         onClick={() => openCloseModal(b)}
-                        className="btn btn-primary w-28"
+                        className="btn btn-primary"
                       >
                         Cerrar lote
                       </button>
@@ -184,8 +184,8 @@ export default function ProductionBatchesTab() {
       {closing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <form onSubmit={submitClose} className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="mb-4 text-xl font-bold text-gray-900">Cerrar lote de producción</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <h3 className="section-title mb-3">Cerrar lote de producción</h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
               <div>
                 <label className="mb-1 block text-sm text-gray-600">Pollos producidos</label>
                 <input type="number" step="0.001" min="0" value={produced} required
@@ -232,7 +232,7 @@ export default function ProductionBatchesTab() {
                             ),
                           )
                         }
-                        className="w-24 rounded-lg border border-gray-300 px-2 py-1" />
+                        className="input w-24" />
                     </div>
                   );
                 })}

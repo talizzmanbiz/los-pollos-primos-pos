@@ -108,7 +108,7 @@ export default function InventoryPage() {
       <h1 className="page-title">Inventario — {location.name}</h1>
 
       {incoming.length > 0 && (
-        <div className="rounded-2xl border-2 border-blue-300 bg-blue-50 p-6">
+        <div className="rounded-2xl border-2 border-blue-300 bg-blue-50 p-4 sm:p-6">
           <h2 className="section-title mb-3 text-blue-900">
             📦 Transferencias por recibir ({incoming.length})
           </h2>
@@ -208,11 +208,11 @@ export default function InventoryPage() {
             <label className="mb-1 block text-sm text-gray-600">Nueva cantidad (conteo físico)</label>
             <input type="number" step="0.001" value={newQty} required autoFocus
               onChange={(e) => setNewQty(e.target.value)}
-              className="mb-3 w-full rounded-lg border border-gray-300 px-4 py-3 text-xl" />
+              className="input mb-3" />
             <label className="mb-1 block text-sm text-gray-600">Motivo</label>
             <input value={adjustNote} onChange={(e) => setAdjustNote(e.target.value)}
               placeholder="ej. conteo físico semanal"
-              className="mb-4 w-full rounded-lg border border-gray-300 px-4 py-3" />
+              className="input mb-4" />
             <div className="flex gap-3">
               <button type="button" onClick={() => setAdjusting(null)}
                 className="flex-1 rounded-xl border border-gray-300 py-3 text-gray-600">

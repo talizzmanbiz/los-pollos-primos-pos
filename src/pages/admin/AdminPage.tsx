@@ -218,7 +218,7 @@ export default function AdminPage() {
               <tbody className="divide-y divide-gray-100">
                 {staff.map((p) => (
                   <tr key={p.id} className={p.active ? '' : 'text-gray-400'}>
-                    <td className="px-4 py-3 font-medium">{p.full_name}</td>
+                    <td className="whitespace-nowrap px-3 py-2.5 font-medium sm:px-4 sm:py-3">{p.full_name}</td>
                     <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">{ROLE_LABELS[p.role]}</td>
                     <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">{p.location?.name ?? 'Todas'}</td>
                     <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">
@@ -258,8 +258,8 @@ export default function AdminPage() {
             <tbody className="divide-y divide-gray-100">
               {products.map((p) => (
                 <tr key={p.id} className={p.active ? '' : 'text-gray-400'}>
-                  <td className="px-4 py-3 font-mono text-sm">{p.sku}</td>
-                  <td className="px-4 py-3 font-medium">{p.name}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs sm:px-4 sm:py-3 sm:text-sm">{p.sku}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 font-medium sm:px-4 sm:py-3">{p.name}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">{money(p.price)}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums sm:px-4 sm:py-3">{p.cost_price != null ? money(p.cost_price) : '—'}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">
@@ -340,7 +340,7 @@ export default function AdminPage() {
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <form onSubmit={saveProduct} className="w-full max-w-sm rounded-2xl bg-white p-4 sm:p-6 shadow-xl">
-            <h3 className="mb-4 text-xl font-bold text-gray-900">{editing.name}</h3>
+            <h3 className="section-title mb-3">{editing.name}</h3>
             <label className="mb-1 block text-sm text-gray-600">Precio ($)</label>
             <input type="number" step="0.01" min="0" value={editPrice} required
               onChange={(e) => setEditPrice(e.target.value)}
