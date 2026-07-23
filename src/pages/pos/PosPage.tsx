@@ -146,7 +146,7 @@ export default function PosPage() {
     .filter((g) => g.items.length > 0);
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col lg:flex-row bg-brand-50">
+    <div className="relative flex h-full flex-col bg-brand-50 lg:flex-row">
       {/* watermark background */}
       <div className="absolute inset-0 pointer-events-none opacity-5 flex items-center justify-center overflow-hidden">
         <img

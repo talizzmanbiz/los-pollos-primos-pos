@@ -23,7 +23,7 @@ export default function AccountingPage() {
   const [tab, setTab] = useState<TabId>('dashboard');
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
+    <div className="mx-auto max-w-6xl p-4 sm:p-6">
       <div className="mb-1 flex items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
           <h1 className="text-2xl font-bold text-brand-800">Contabilidad</h1>
@@ -43,12 +43,12 @@ export default function AccountingPage() {
         Herramienta de conformidad fiscal. No reemplaza a un contador público.
       </p>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="no-scrollbar mb-6 flex gap-2 overflow-x-auto">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`rounded-lg px-4 py-2 font-medium transition-colors ${
+            className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium sm:px-4 sm:text-base transition-colors ${
               tab === t.id ? 'bg-brand-600 text-white' : 'bg-white text-charcoal-500 shadow'
             }`}
           >

@@ -15,14 +15,14 @@ export default function ReportsPage() {
   const [tab, setTab] = useState<TabId>('sales');
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
+    <div className="mx-auto max-w-6xl p-4 sm:p-6">
       <h1 className="mb-4 text-2xl font-bold text-brand-900">Reportes</h1>
-      <div className="mb-6 flex gap-2">
+      <div className="no-scrollbar mb-6 flex gap-2 overflow-x-auto">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`rounded-lg px-4 py-2 font-medium ${
+            className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium sm:px-4 sm:text-base ${
               tab === t.id ? 'bg-brand-600 text-white' : 'bg-white text-gray-700 shadow'
             }`}
           >

@@ -119,11 +119,11 @@ export default function CashPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
+    <div className="mx-auto max-w-4xl p-4 sm:p-6">
       <h1 className="mb-6 text-2xl font-bold text-brand-900">Caja — {location?.name}</h1>
 
       {!session ? (
-        <form onSubmit={openSession} className="rounded-2xl bg-white p-6 shadow">
+        <form onSubmit={openSession} className="rounded-2xl bg-white p-4 sm:p-6 shadow">
           <h2 className="mb-4 text-xl font-semibold text-gray-900">Abrir caja</h2>
           <label className="mb-1 block text-gray-600">Monto inicial (efectivo en gaveta)</label>
           <input
@@ -160,7 +160,7 @@ export default function CashPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white p-6 shadow">
+          <div className="rounded-2xl bg-white p-4 sm:p-6 shadow">
             <h2 className="mb-3 text-lg font-semibold text-gray-900">Registrar movimiento</h2>
             <form onSubmit={addMovement} className="flex flex-wrap items-end gap-3">
               <div>
@@ -205,7 +205,7 @@ export default function CashPage() {
             </form>
           </div>
 
-          <div className="rounded-2xl bg-white p-6 shadow">
+          <div className="rounded-2xl bg-white p-4 sm:p-6 shadow">
             <h2 className="mb-3 text-lg font-semibold text-gray-900">Movimientos del turno</h2>
             {movements.length === 0 && <p className="text-gray-400">Sin movimientos todavía</p>}
             <ul className="divide-y divide-gray-100">
@@ -234,7 +234,7 @@ export default function CashPage() {
               Cerrar caja
             </button>
           ) : (
-            <form onSubmit={closeSession} className="rounded-2xl bg-white p-6 shadow">
+            <form onSubmit={closeSession} className="rounded-2xl bg-white p-4 sm:p-6 shadow">
               <h2 className="mb-3 text-lg font-semibold text-gray-900">Cierre de caja</h2>
               <p className="mb-3 text-gray-600">
                 Esperado: <strong>{money(expected)}</strong> — contá el efectivo y anotá el total real.
@@ -282,9 +282,10 @@ export default function CashPage() {
       )}
 
       {history.length > 0 && (
-        <div className="mt-8 rounded-2xl bg-white p-6 shadow">
+        <div className="mt-8 rounded-2xl bg-white p-4 sm:p-6 shadow">
           <h2 className="mb-3 text-lg font-semibold text-gray-900">Cierres anteriores</h2>
-          <table className="w-full text-left">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[32rem] text-left">
             <thead>
               <tr className="text-sm text-gray-500">
                 <th className="py-2">Cerrada</th>
@@ -309,6 +310,7 @@ export default function CashPage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

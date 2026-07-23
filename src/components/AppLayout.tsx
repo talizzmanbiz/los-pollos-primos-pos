@@ -110,7 +110,7 @@ export default function AppLayout() {
                   alt="Los Pollos Primos"
                   className="h-10 w-10 rounded-full object-cover ring-2 ring-brand-200"
                 />
-                <span className="hidden font-display text-lg font-extrabold leading-none tracking-tight text-charcoal-800 sm:inline">
+                <span className="font-display text-sm font-extrabold leading-none tracking-tight text-charcoal-800 sm:text-lg">
                   Los Pollos Primos
                 </span>
               </span>
@@ -174,7 +174,11 @@ export default function AppLayout() {
           </div>
         </header>
 
-        <main className="flex min-h-0 flex-1 flex-col overflow-auto">
+        {/* Block, not flex: as a flex column container its line grows to max-content
+            when a wide table overflows, stretching the page root to 860px on a 375px
+            screen. As a block, children are exactly the container width and their own
+            overflow-x-auto scrolls. Pages that need full height use h-full. */}
+        <main className="min-h-0 flex-1 overflow-auto">
           <Outlet />
         </main>
       </div>

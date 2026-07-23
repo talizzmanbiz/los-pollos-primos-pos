@@ -104,7 +104,7 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
       <h1 className="text-2xl font-bold text-brand-900">Inventario — {location.name}</h1>
 
       {incoming.length > 0 && (
@@ -136,7 +136,7 @@ export default function InventoryPage() {
         </div>
       )}
 
-      <div className="rounded-2xl bg-white p-6 shadow">
+      <div className="rounded-2xl bg-white p-4 sm:p-6 shadow">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Existencias</h2>
         <table className="w-full text-left">
           <thead className="text-sm text-gray-500">
@@ -178,7 +178,7 @@ export default function InventoryPage() {
         </table>
       </div>
 
-      <div className="rounded-2xl bg-white p-6 shadow">
+      <div className="rounded-2xl bg-white p-4 sm:p-6 shadow">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Últimos movimientos</h2>
         {movements.length === 0 && <p className="text-gray-400">Sin movimientos</p>}
         <ul className="divide-y divide-gray-100">
@@ -202,7 +202,7 @@ export default function InventoryPage() {
 
       {adjusting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <form onSubmit={submitAdjust} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+          <form onSubmit={submitAdjust} className="w-full max-w-sm rounded-2xl bg-white p-4 sm:p-6 shadow-xl">
             <h3 className="mb-2 text-xl font-bold text-gray-900">Ajustar {adjusting.name}</h3>
             <p className="mb-4 text-gray-500">Cantidad actual: {adjusting.current}</p>
             <label className="mb-1 block text-sm text-gray-600">Nueva cantidad (conteo físico)</label>

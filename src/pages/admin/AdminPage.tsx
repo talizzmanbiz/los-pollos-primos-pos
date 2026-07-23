@@ -118,19 +118,19 @@ export default function AdminPage() {
   const pendingReviews = reviews.filter((r) => !r.approved).length;
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
+    <div className="mx-auto max-w-5xl p-4 sm:p-6">
       <h1 className="mb-4 text-2xl font-bold text-brand-900">Administración</h1>
-      <div className="mb-6 flex gap-2">
+      <div className="no-scrollbar mb-6 flex gap-2 overflow-x-auto">
         <button onClick={() => setTab('staff')}
-          className={`rounded-lg px-4 py-2 font-medium ${tab === 'staff' ? 'bg-brand-600 text-white' : 'bg-white text-gray-700 shadow'}`}>
+          className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium sm:px-4 sm:text-base ${tab === 'staff' ? 'bg-brand-600 text-white' : 'bg-white text-gray-700 shadow'}`}>
           Personal
         </button>
         <button onClick={() => setTab('products')}
-          className={`rounded-lg px-4 py-2 font-medium ${tab === 'products' ? 'bg-brand-600 text-white' : 'bg-white text-gray-700 shadow'}`}>
+          className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium sm:px-4 sm:text-base ${tab === 'products' ? 'bg-brand-600 text-white' : 'bg-white text-gray-700 shadow'}`}>
           Catálogo
         </button>
         <button onClick={() => setTab('reviews')}
-          className={`rounded-lg px-4 py-2 font-medium ${tab === 'reviews' ? 'bg-brand-600 text-white' : 'bg-white text-gray-700 shadow'}`}>
+          className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium sm:px-4 sm:text-base ${tab === 'reviews' ? 'bg-brand-600 text-white' : 'bg-white text-gray-700 shadow'}`}>
           Reseñas
           {pendingReviews > 0 && (
             <span className="ml-2 rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold text-amber-900">
@@ -159,7 +159,7 @@ export default function AdminPage() {
           </button>
 
           {showForm && (
-            <form onSubmit={createStaff} className="mb-6 grid grid-cols-2 gap-4 rounded-2xl bg-white p-6 shadow md:grid-cols-4">
+            <form onSubmit={createStaff} className="mb-6 grid grid-cols-2 gap-4 rounded-2xl bg-white p-4 sm:p-6 shadow md:grid-cols-4">
               <div>
                 <label className="mb-1 block text-sm text-gray-600">Correo</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
@@ -292,7 +292,7 @@ export default function AdminPage() {
       {tab === 'reviews' && (
         <div className="space-y-3">
           {reviews.length === 0 && (
-            <p className="rounded-2xl bg-white p-6 text-center text-gray-500 shadow">
+            <p className="rounded-2xl bg-white p-4 sm:p-6 text-center text-gray-500 shadow">
               Aún no hay reseñas.
             </p>
           )}
@@ -339,7 +339,7 @@ export default function AdminPage() {
 
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <form onSubmit={saveProduct} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+          <form onSubmit={saveProduct} className="w-full max-w-sm rounded-2xl bg-white p-4 sm:p-6 shadow-xl">
             <h3 className="mb-4 text-xl font-bold text-gray-900">{editing.name}</h3>
             <label className="mb-1 block text-sm text-gray-600">Precio ($)</label>
             <input type="number" step="0.01" min="0" value={editPrice} required
