@@ -146,7 +146,7 @@ export default function PosPage() {
     .filter((g) => g.items.length > 0);
 
   return (
-    <div className="relative flex h-[calc(100vh-3.5rem)]">
+    <div className="relative flex min-h-0 flex-1 flex-col lg:flex-row bg-brand-50">
       {/* watermark background */}
       <div className="absolute inset-0 pointer-events-none opacity-5 flex items-center justify-center overflow-hidden">
         <img
@@ -156,18 +156,18 @@ export default function PosPage() {
         />
       </div>
 
-      {/* product grid */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 relative z-10">
+      {/* product grid — mobile full width, desktop left panel */}
+      <div className="flex-1 overflow-y-auto p-3 lg:p-6 relative z-10 lg:border-r lg:border-brand-100">
         {hasOpenSession === false && (
-          <div className="mb-4 glass rounded-lg px-4 py-3 border-amber-200 bg-opacity-60">
-            <p className="text-sm font-medium text-primary-600">
+          <div className="mb-4 glass rounded-lg px-4 py-3 border-gold-400 bg-opacity-60">
+            <p className="text-sm font-medium text-brand-700">
               ⚠️ No hay caja abierta — las ventas en efectivo no se registrarán en un turno de caja.
             </p>
           </div>
         )}
         {pendingSync > 0 && (
-          <div className="mb-4 glass rounded-lg px-4 py-3 border-accent-200 bg-opacity-60">
-            <p className="text-sm font-medium text-accent-600">
+          <div className="mb-4 glass rounded-lg px-4 py-3 border-gold-400 bg-opacity-60">
+            <p className="text-sm font-medium text-brand-800">
               📡 {pendingSync} venta(s) offline pendientes de sincronizar — se enviarán solas al volver la conexión.
             </p>
           </div>
@@ -175,29 +175,29 @@ export default function PosPage() {
         <div className="mb-6 flex justify-end">
           <button
             onClick={() => setShowPrinterConfig(true)}
-            className="glass-sm px-4 py-2 text-sm font-medium text-charcoal-600 hover:border-primary-300 transition-all"
+            className="glass-sm px-4 py-2 text-sm font-medium text-charcoal-800 hover:border-brand-400 transition-all"
             title="Configurar impresora"
           >
             🖨️ {getPrinterUrl() ? 'Impresora lista' : 'Configurar impresora'}
           </button>
         </div>
         {groups.map((g) => (
-          <section key={g.type} className="mb-8">
-            <h2 className="mb-4 text-xl font-semibold text-primary-600">{TYPE_LABELS[g.type]}</h2>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
+          <section key={g.type} className="mb-6 lg:mb-8">
+            <h2 className="mb-2 lg:mb-4 text-base lg:text-xl font-semibold text-brand-700">{TYPE_LABELS[g.type]}</h2>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
               {g.items.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => addToCart(p)}
-                  className="glass-sm group flex min-h-32 flex-col items-start justify-between p-4 text-left transition-all active:scale-95 hover:border-primary-300"
+                  className="glass-sm group flex flex-col items-start justify-between p-2 lg:p-4 text-left transition-all active:scale-95 hover:border-brand-400 min-h-20 lg:min-h-32"
                 >
-                  <span className="text-base font-semibold text-charcoal-600 group-hover:text-primary-600 transition-colors">
+                  <span className="text-xs lg:text-base font-semibold text-charcoal-800 group-hover:text-brand-700 transition-colors line-clamp-2">
                     {p.name}
                   </span>
                   {p.secondary_name && (
-                    <span className="text-xs text-charcoal-400 mt-1">{p.secondary_name}</span>
+                    <span className="text-[10px] lg:text-xs text-gray-500 mt-1 line-clamp-1">{p.secondary_name}</span>
                   )}
-                  <span className="mt-2 text-lg font-bold text-primary-600 font-mono">{money(p.price)}</span>
+                  <span className="mt-1 lg:mt-2 text-sm lg:text-lg font-bold text-brand-700 font-mono">{money(p.price)}</span>
                 </button>
               ))}
             </div>
@@ -205,34 +205,34 @@ export default function PosPage() {
         ))}
       </div>
 
-      {/* cart */}
-      <div className="flex w-full sm:w-96 flex-col glass-lg border-l-0 sm:border-l border-primary-200/20">
-        <div className="flex-1 overflow-y-auto p-4 md:p-6">
-          <h2 className="mb-4 text-2xl font-semibold text-primary-600">Pedido</h2>
+      {/* cart — full width on mobile, sidebar on desktop */}
+      <div className="w-full lg:w-96 flex flex-col glass-lg border-t lg:border-t-0 lg:border-l border-brand-100 order-last lg:order-none">
+        <div className="flex-1 overflow-y-auto p-3 lg:p-6">
+          <h2 className="mb-2 lg:mb-4 text-lg lg:text-2xl font-semibold text-brand-700">Pedido</h2>
           {cart.length === 0 && (
-            <p className="text-center text-charcoal-400 py-8">Tocá un producto para agregarlo</p>
+            <p className="text-center text-gray-500 py-4 lg:py-8 text-sm">Tocá un producto para agregarlo</p>
           )}
           {cart.map((l) => (
-            <div key={l.product.id} className="mb-4 pb-4 border-b border-cream-300/50 last:border-b-0">
-              <div className="flex items-center justify-between gap-3">
+            <div key={l.product.id} className="mb-2 lg:mb-4 pb-2 lg:pb-4 border-b border-brand-100 last:border-b-0">
+              <div className="flex items-center justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-charcoal-600 truncate">{l.product.name}</p>
-                  <p className="text-xs text-charcoal-400 mt-1">
+                  <p className="font-medium text-charcoal-800 truncate text-sm lg:text-base">{l.product.name}</p>
+                  <p className="text-[11px] lg:text-xs text-gray-500 mt-0.5">
                     {money(l.product.price)} × {l.quantity} = {money(l.product.price * l.quantity)}
                   </p>
                 </div>
-                <div className="flex gap-2 items-center flex-shrink-0">
+                <div className="flex gap-1 lg:gap-2 items-center flex-shrink-0">
                   <button
                     onClick={() => changeQty(l.product.id, -1)}
-                    className="h-10 w-10 rounded-md bg-cream-300/40 hover:bg-cream-400/60 text-lg font-bold text-primary-600 transition-colors active:scale-95 flex items-center justify-center"
+                    className="h-9 lg:h-10 w-9 lg:w-10 rounded-md bg-brand-50 hover:bg-brand-100 text-base lg:text-lg font-bold text-brand-700 transition-colors active:scale-95 flex items-center justify-center"
                     aria-label={`Reducir cantidad de ${l.product.name}`}
                   >
                     −
                   </button>
-                  <span className="w-8 text-center text-base font-semibold text-charcoal-600">{l.quantity}</span>
+                  <span className="w-6 lg:w-8 text-center text-sm lg:text-base font-semibold text-charcoal-800">{l.quantity}</span>
                   <button
                     onClick={() => changeQty(l.product.id, 1)}
-                    className="h-10 w-10 rounded-md bg-cream-300/40 hover:bg-cream-400/60 text-lg font-bold text-primary-600 transition-colors active:scale-95 flex items-center justify-center"
+                    className="h-9 lg:h-10 w-9 lg:w-10 rounded-md bg-brand-50 hover:bg-brand-100 text-base lg:text-lg font-bold text-brand-700 transition-colors active:scale-95 flex items-center justify-center"
                     aria-label={`Aumentar cantidad de ${l.product.name}`}
                   >
                     +
@@ -242,51 +242,53 @@ export default function PosPage() {
             </div>
           ))}
 
-          {/* optional customer capture — never blocks the sale */}
+          {/* optional customer capture — collapsible on mobile */}
           <button
             onClick={() => setShowCustomer((v) => !v)}
-            className="mt-4 w-full glass-sm px-3 py-3 text-sm font-medium text-primary-600 hover:border-primary-300 transition-all text-left"
+            className="mt-2 lg:mt-4 w-full glass-sm px-2 lg:px-3 py-2 lg:py-3 text-xs lg:text-sm font-medium text-brand-700 hover:border-brand-400 transition-all text-left"
           >
-            {showCustomer ? '✕ Ocultar datos del cliente' : '+ Datos del cliente (opcional)'}
+            {showCustomer ? '✕ Ocultar datos' : '+ Datos cliente (opt.)'}
           </button>
           {showCustomer && (
-            <div className="mt-4 space-y-3">
+            <div className="mt-2 lg:mt-4 space-y-2 lg:space-y-3">
               <input
                 placeholder="Nombre"
                 value={customer.name}
                 onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-                className="w-full glass-sm px-3 py-3 text-sm text-charcoal-600 placeholder:text-charcoal-400 border border-cream-400/40 focus:border-primary-400 transition-colors"
+                className="w-full glass-sm px-2 lg:px-3 py-2 lg:py-3 text-xs lg:text-sm text-charcoal-800 placeholder:text-gray-500 border border-brand-200 focus:border-brand-500 transition-colors"
                 aria-label="Nombre del cliente"
               />
               <input
-                placeholder="Teléfono (WhatsApp)"
+                placeholder="Teléfono"
                 type="tel"
+                inputMode="tel"
                 value={customer.phone}
                 onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
-                className="w-full glass-sm px-3 py-3 text-sm text-charcoal-600 placeholder:text-charcoal-400 border border-cream-400/40 focus:border-primary-400 transition-colors"
+                className="w-full glass-sm px-2 lg:px-3 py-2 lg:py-3 text-xs lg:text-sm text-charcoal-800 placeholder:text-gray-500 border border-brand-200 focus:border-brand-500 transition-colors"
                 aria-label="Teléfono del cliente"
               />
               <input
-                placeholder="Correo (opcional)"
+                placeholder="Correo"
                 type="email"
                 value={customer.email}
                 onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
-                className="w-full glass-sm px-3 py-3 text-sm text-charcoal-600 placeholder:text-charcoal-400 border border-cream-400/40 focus:border-primary-400 transition-colors"
+                className="w-full glass-sm px-2 lg:px-3 py-2 lg:py-3 text-xs lg:text-sm text-charcoal-800 placeholder:text-gray-500 border border-brand-200 focus:border-brand-500 transition-colors"
                 aria-label="Correo del cliente"
               />
             </div>
           )}
         </div>
 
-        <div className="border-t border-primary-200/20 p-4 md:p-6 space-y-3">
+        {/* Total & Payment CTA — sticky on mobile */}
+        <div className="sticky bottom-0 z-20 border-t border-brand-100 bg-white/95 p-3 shadow-[0_-4px_20px_rgba(39,26,18,0.08)] backdrop-blur-md space-y-2 lg:space-y-3 lg:p-6">
           <div className="flex justify-between items-baseline">
-            <span className="text-sm font-medium text-charcoal-600">Total</span>
-            <span className="text-2xl font-bold text-primary-600 font-mono">{money(subtotal)}</span>
+            <span className="text-xs lg:text-sm font-medium text-charcoal-800">Total</span>
+            <span className="text-xl lg:text-2xl font-bold text-brand-700 font-mono">{money(subtotal)}</span>
           </div>
           <button
             disabled={cart.length === 0}
             onClick={() => setPaying(true)}
-            className="w-full glass-button py-4 text-lg font-semibold text-white bg-primary-600 border-primary-600 hover:bg-primary-700 hover:border-primary-700 disabled:opacity-40 disabled:cursor-not-allowed min-h-14"
+            className="w-full rounded-xl bg-brand-600 py-3 lg:py-4 text-base lg:text-lg font-bold text-white shadow-lg shadow-brand-600/25 transition-colors hover:bg-brand-700 active:bg-brand-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none min-h-12 lg:min-h-14"
             aria-label={`Cobrar ${money(subtotal)}`}
           >
             💰 Cobrar {subtotal > 0 ? money(subtotal) : ''}
@@ -294,10 +296,10 @@ export default function PosPage() {
           {cart.length > 0 && (
             <button
               onClick={clearSale}
-              className="w-full glass-sm py-3 text-sm font-medium text-charcoal-600 hover:border-charcoal-400 transition-all"
+              className="w-full glass-sm py-2 lg:py-3 text-xs lg:text-sm font-medium text-charcoal-800 hover:border-brand-300 transition-all"
               aria-label="Cancelar pedido"
             >
-              Cancelar pedido
+              Cancelar
             </button>
           )}
         </div>

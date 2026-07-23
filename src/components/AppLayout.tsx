@@ -99,7 +99,7 @@ export default function AppLayout() {
 
   return (
     <WorkingLocationProvider>
-      <div className="flex min-h-dvh flex-col bg-brand-50/40 font-sans">
+      <div className="flex h-dvh flex-col overflow-hidden bg-brand-50/40 font-sans">
         <header className="sticky top-0 z-40 border-b border-brand-100 bg-white/90 shadow-[0_4px_20px_rgba(0,0,0,0.06)] backdrop-blur-md">
           {/* Row 1 — brand + sucursal · perfil + salir */}
           <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
@@ -174,7 +174,7 @@ export default function AppLayout() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto">
+        <main className="flex min-h-0 flex-1 flex-col overflow-auto">
           <Outlet />
         </main>
       </div>

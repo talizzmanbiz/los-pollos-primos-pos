@@ -121,19 +121,19 @@ html {
    public site. POS/accounting pages without utility overrides still get these. */
 @layer base {
   body {
-    font-family: var(--font-body);
-    color: var(--color-charcoal-600);
-    background: linear-gradient(135deg, var(--color-cream-100) 0%, var(--color-cream-200) 100%);
+    font-family: var(--font-sans);
+    color: var(--color-charcoal-800);
+    background: var(--color-brand-50);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     line-height: 1.6;
   }
 
   h1, h2, h3, h4, h5 {
-    font-family: var(--font-heading);
-    letter-spacing: 0.5px;
-    font-weight: 600;
-    color: var(--color-primary-600);
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    color: var(--color-brand-900);
   }
 
   h1 { font-size: 2rem; line-height: 1.2; }
@@ -142,79 +142,80 @@ html {
   h4 { font-size: 1.125rem; line-height: 1.5; }
 }
 
-/* ============ GLASSMORPHIC UTILITIES ============ */
+/* ============ GLASSMORPHIC SURFACES ============
+   In @layer components so Tailwind utilities still win: a button that needs a
+   solid fill (bg-brand-600 text-white) must be able to override .glass-button.
+   Un-layered rules beat utilities and silently washed out the POS "Cobrar" CTA. */
+@layer components {
+  /* Glass surface — frosted effect with backdrop blur */
+  .glass {
+    background: rgba(255, 248, 237, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(238, 98, 6, 0.12);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 32px rgba(39, 26, 18, 0.08);
+  }
 
-/* Glass surface — frosted effect with backdrop blur */
-.glass {
-  background: rgba(249, 247, 242, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(184, 101, 63, 0.12);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 8px 32px rgba(44, 44, 44, 0.08);
+  .glass-sm {
+    background: rgba(255, 255, 255, 0.86);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(238, 98, 6, 0.14);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 16px rgba(39, 26, 18, 0.08);
+  }
+
+  .glass-lg {
+    background: rgba(255, 248, 237, 0.78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(238, 98, 6, 0.16);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 16px 48px rgba(39, 26, 18, 0.14);
+  }
+
+  /* Glass button — secondary/ghost action. Primary CTAs use bg-brand-600. */
+  .glass-button {
+    background: rgba(238, 98, 6, 0.10);
+    border: 1.5px solid rgba(238, 98, 6, 0.28);
+    color: var(--color-brand-700);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.25rem;
+    min-height: 3rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 150ms ease-out, border-color 150ms ease-out, transform 150ms ease-out;
+  }
+
+  .glass-button:hover {
+    border-color: rgba(238, 98, 6, 0.5);
+    background: rgba(238, 98, 6, 0.16);
+  }
+
+  .glass-button:active {
+    transform: scale(0.98);
+  }
+
+  .glass-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Glass overlay — modal/scrim background */
+  .glass-overlay {
+    background: rgba(39, 26, 18, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Elevation shadows */
+  .elevation-1 { box-shadow: 0 2px 8px rgba(39, 26, 18, 0.06); }
+  .elevation-2 { box-shadow: 0 4px 16px rgba(39, 26, 18, 0.08); }
+  .elevation-3 { box-shadow: 0 8px 32px rgba(39, 26, 18, 0.12); }
+  .elevation-4 { box-shadow: 0 16px 48px rgba(39, 26, 18, 0.16); }
+  .elevation-5 { box-shadow: 0 24px 64px rgba(39, 26, 18, 0.20); }
 }
-
-.glass-sm {
-  background: rgba(249, 247, 242, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(212, 208, 203, 0.3);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 16px rgba(44, 44, 44, 0.08);
-}
-
-.glass-lg {
-  background: rgba(249, 247, 242, 0.75);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(184, 101, 63, 0.15);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 16px 48px rgba(44, 44, 44, 0.16);
-}
-
-/* Glass button — primary action with glassmorphic style */
-.glass-button {
-  background: rgba(184, 101, 63, 0.12);
-  border: 1.5px solid rgba(184, 101, 63, 0.3);
-  color: var(--color-primary-600);
-  border-radius: var(--radius-md);
-  padding: 0.75rem 1.25rem;
-  min-height: 2.75rem;
-  min-width: 2.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 150ms ease-out;
-  font-family: var(--font-body);
-}
-
-.glass-button:hover {
-  border-color: rgba(184, 101, 63, 0.5);
-  background: rgba(184, 101, 63, 0.18);
-}
-
-.glass-button:active {
-  transform: scale(0.98);
-  background: rgba(184, 101, 63, 0.22);
-}
-
-.glass-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Glass overlay — modal/scrim background */
-.glass-overlay {
-  background: rgba(44, 44, 44, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-/* Elevation shadows */
-.elevation-1 { box-shadow: 0 2px 8px rgba(44, 44, 44, 0.06); }
-.elevation-2 { box-shadow: 0 4px 16px rgba(44, 44, 44, 0.08); }
-.elevation-3 { box-shadow: 0 8px 32px rgba(44, 44, 44, 0.12); }
-.elevation-4 { box-shadow: 0 16px 48px rgba(44, 44, 44, 0.16); }
-.elevation-5 { box-shadow: 0 24px 64px rgba(44, 44, 44, 0.20); }
 
 ::selection {
   background: #ffdba8;
@@ -253,18 +254,11 @@ label {
   touch-action: manipulation;
 }
 
-/* Consistent, on-brand keyboard focus ring — burnt sienna for professional feel */
+/* Consistent, on-brand keyboard focus ring */
 :where(a[href], button, [role="button"], input, select, textarea):focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 3px;
+  outline: 3px solid var(--color-brand-500);
+  outline-offset: 2px;
   border-radius: 2px;
-}
-
-/* Focus state for glass buttons */
-.glass-button:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 4px;
-  box-shadow: 0 0 0 4px rgba(184, 101, 63, 0.1);
 }
 
 /* ---- Scroll-reveal + motion (disabled when the user prefers less) ---- */
