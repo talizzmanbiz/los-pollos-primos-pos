@@ -124,25 +124,26 @@ export default function JournalTab() {
                   </span>
                   <span className="text-charcoal-400">{e.description}</span>
                 </div>
-                <table className="w-full text-left text-sm">
+                <div className="no-scrollbar overflow-x-auto">
+                <table className="w-full min-w-max text-left text-[13px] sm:text-sm">
                   <thead className="text-charcoal-300">
                     <tr>
-                      <th className="px-4 py-2">Cuenta</th>
-                      <th className="px-4 py-2 text-right">Débito</th>
-                      <th className="px-4 py-2 text-right">Crédito</th>
+                      <th className="px-3 py-2 sm:px-4">Cuenta</th>
+                      <th className="whitespace-nowrap px-3 py-2 text-right tabular-nums sm:px-4">Débito</th>
+                      <th className="whitespace-nowrap px-3 py-2 text-right tabular-nums sm:px-4">Crédito</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-cream-200">
                     {e.lines.map((l) => (
                       <tr key={l.id}>
-                        <td className="px-4 py-2">
+                        <td className="px-3 py-2 leading-snug sm:px-4">
                           <span className="text-charcoal-300">{l.account_code}</span>{' '}
                           <span className="text-charcoal-600">{l.account_name}</span>
                         </td>
-                        <td className="px-4 py-2 text-right">
+                        <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums sm:px-4">
                           {Number(l.debit_amount) > 0 ? money(Number(l.debit_amount)) : ''}
                         </td>
-                        <td className="px-4 py-2 text-right">
+                        <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums sm:px-4">
                           {Number(l.credit_amount) > 0 ? money(Number(l.credit_amount)) : ''}
                         </td>
                       </tr>
@@ -153,11 +154,12 @@ export default function JournalTab() {
                       <td className="px-4 py-2 text-right text-charcoal-400">
                         {ok ? '' : '⚠️ '}Totales
                       </td>
-                      <td className="px-4 py-2 text-right">{money(e.debit)}</td>
-                      <td className="px-4 py-2 text-right">{money(e.credit)}</td>
+                      <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums sm:px-4">{money(e.debit)}</td>
+                      <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums sm:px-4">{money(e.credit)}</td>
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               </div>
             );
           })}

@@ -117,7 +117,7 @@ export default function LedgerTab() {
       </div>
 
       <div className="overflow-x-auto rounded-2xl bg-white shadow">
-        <table className="w-full text-left text-sm">
+        <table className="w-full min-w-max text-left text-[13px] sm:text-sm">
           <thead className="bg-cream-100 text-charcoal-400">
             <tr>
               <th className="px-3 py-2">Código</th>

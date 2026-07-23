@@ -1,9 +1,8 @@
 @import "tailwindcss";
-/* Only the mono face is loaded here (tabular figures for prices/quantities).
-   Inter + Poppins are preconnected and loaded from index.html. Playfair Display
-   and DM Sans were dropped with the reverted redesign — they were still being
-   downloaded on every page load without a single reference left. */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+/* Web fonts (Inter, Poppins, JetBrains Mono) load from index.html — see the
+   comment there. Adding a font @import below this line silently does nothing:
+   the Tailwind import is inlined at build time, so the font rule ends up after
+   real rules and the browser drops it. */
 
 @theme {
   /* The brand accent is brand-* (orange) further down — see src/design/README.md.

@@ -186,8 +186,8 @@ export default function ReportsTab() {
 
       {/* F-07 */}
       <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="font-semibold text-charcoal-600">Declaración F-07 (IVA mensual)</h3>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="section-title">Declaración F-07 (IVA mensual)</h3>
           <button onClick={exportF07} className="btn btn-primary btn-sm">
             Descargar F-07 (CSV)
           </button>
@@ -282,7 +282,7 @@ function Register({
     <div className="rounded-2xl bg-white shadow">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-cream-200 p-4">
         <div>
-          <h3 className="font-semibold text-charcoal-600">{title}</h3>
+          <h3 className="section-title">{title}</h3>
           <p className="text-xs text-charcoal-300">{subtitle}</p>
         </div>
         <button
@@ -294,7 +294,7 @@ function Register({
         </button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-full min-w-max text-left text-[13px] sm:text-sm">
           <thead className="bg-cream-100 text-charcoal-400">
             <tr>{headers.map((h, i) => (
               <th key={i} className={`px-3 py-2 ${i >= 6 ? 'text-right' : ''}`}>{h}</th>

@@ -205,8 +205,8 @@ export default function AdminPage() {
           )}
 
           <div className="overflow-x-auto rounded-2xl bg-white shadow">
-            <table className="w-full text-left text-sm sm:text-base">
-              <thead className="bg-brand-50 text-sm text-gray-600">
+            <table className="w-full min-w-max text-left text-[13px] sm:text-base">
+              <thead className="bg-brand-50 text-[12px] text-gray-600 sm:text-sm">
                 <tr>
                   <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Nombre</th>
                   <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Rol</th>
@@ -244,8 +244,8 @@ export default function AdminPage() {
 
       {tab === 'products' && (
         <div className="overflow-x-auto rounded-2xl bg-white shadow">
-          <table className="w-full text-left text-sm sm:text-base">
-            <thead className="bg-brand-50 text-sm text-gray-600">
+          <table className="w-full min-w-max text-left text-[13px] sm:text-base">
+            <thead className="bg-brand-50 text-[12px] text-gray-600 sm:text-sm">
               <tr>
                 <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">SKU</th>
                 <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Producto</th>

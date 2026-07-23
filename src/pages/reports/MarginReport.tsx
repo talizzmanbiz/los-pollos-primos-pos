@@ -22,8 +22,11 @@ export default function MarginReport() {
         de lote (pestaña «Lotes y rendimiento»); acá se muestran los costos estimados cargados
         en el catálogo.
       </p>
-      <table className="w-full text-left text-sm sm:text-base">
-        <thead className="text-sm text-gray-500">
+      {/* The table had no scroll container, so with nowrap money columns the
+          last one ("Margen %") was painted outside the card and cut off. */}
+      <div className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      <table className="w-full min-w-max text-left text-[13px] sm:text-base">
+        <thead className="text-[12px] text-gray-500 sm:text-sm">
           <tr>
             <th className="py-2 pr-3">Producto</th>
             <th className="whitespace-nowrap px-2 py-2 text-right">Precio</th>
@@ -54,6 +57,7 @@ export default function MarginReport() {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

@@ -146,7 +146,7 @@ export default function IsrTab() {
       </div>
 
       <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
-        <h3 className="mb-3 font-semibold text-charcoal-600">Determinación de la renta</h3>
+        <h3 className="section-title mb-3">Determinación de la renta</h3>
         {summaryRows.map(([label, value], i) => {
           const isResult = label.startsWith('(=)') || label === 'ISR estimado';
           return (
@@ -160,7 +160,7 @@ export default function IsrTab() {
 
       {calc.byCat.size > 0 && (
         <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
-          <h3 className="mb-3 font-semibold text-charcoal-600">Gastos deducibles por categoría</h3>
+          <h3 className="section-title mb-3">Gastos deducibles por categoría</h3>
           {[...calc.byCat.entries()].sort((a, b) => b[1] - a[1]).map(([cat, v]) => (
             <div key={cat} className="flex justify-between py-1">
               <span className="text-charcoal-400">

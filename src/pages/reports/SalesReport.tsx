@@ -129,22 +129,28 @@ export default function SalesReport() {
 
           <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
             <h3 className="section-title mb-3">Productos más vendidos</h3>
-            <table className="w-full text-left text-sm sm:text-base">
-              <thead className="text-sm text-gray-500">
-                <tr><th className="py-2">Producto</th><th className="text-right">Unidades</th><th className="text-right">Ingresos</th></tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {[...stats.byProduct.entries()]
-                  .sort((a, b) => b[1].revenue - a[1].revenue)
-                  .map(([name, p]) => (
-                    <tr key={name}>
-                      <td className="py-2 text-gray-800">{name}</td>
-                      <td className="text-right">{p.quantity}</td>
-                      <td className="text-right font-semibold">{money(p.revenue)}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+            <div className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+              <table className="w-full min-w-max text-left text-[13px] sm:text-base">
+                <thead className="text-[12px] text-gray-500 sm:text-sm">
+                  <tr>
+                    <th className="py-2 pr-3">Producto</th>
+                    <th className="whitespace-nowrap px-2 py-2 text-right">Unidades</th>
+                    <th className="whitespace-nowrap py-2 pl-2 text-right">Ingresos</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {[...stats.byProduct.entries()]
+                    .sort((a, b) => b[1].revenue - a[1].revenue)
+                    .map(([name, p]) => (
+                      <tr key={name}>
+                        <td className="py-2 pr-3 leading-snug text-gray-800">{name}</td>
+                        <td className="whitespace-nowrap px-2 text-right tabular-nums">{p.quantity}</td>
+                        <td className="whitespace-nowrap pl-2 text-right font-semibold tabular-nums">{money(p.revenue)}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       )}

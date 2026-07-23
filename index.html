@@ -28,11 +28,14 @@
     <meta property="og:image" content="/images/hero.webp" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <!-- Fonts: Poppins (display) + Inter (body) -->
+    <!-- Fonts: Poppins (display) + Inter (body) + JetBrains Mono (prices/qty).
+         All three load here, not from index.css: `@import "tailwindcss"` is
+         inlined at build time, so a font @import after it lands mid-stylesheet
+         and browsers drop it (@import must precede all rules). -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
   </head>

@@ -96,9 +96,9 @@ export default function TransfersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="mx-auto max-w-5xl space-y-4 p-4 sm:space-y-6 sm:p-6">
       <h1 className="page-title">Transferencias entre sucursales</h1>
-      <p className="text-gray-600">
+      <p className="text-sm text-gray-600 sm:text-base">
         Modelo «push»: {central?.name ?? 'Central'} envía, la sucursal destino confirma la
         recepción desde su pantalla de Inventario.
       </p>
@@ -133,22 +133,26 @@ export default function TransfersPage() {
             </select>
           </div>
 
-          <table className="mb-4 w-full text-left">
-            <thead className="text-sm text-gray-500">
+          {/* "Disponible en {sucursal}" as a column header wrapped onto four
+              lines at 400px. The branch is already named in the section above,
+              so the column only needs "Disponible". */}
+          <table className="mb-4 w-full text-left text-sm sm:text-base">
+            <thead className="text-[12px] text-gray-500 sm:text-sm">
               <tr>
-                <th className="py-2">Artículo</th>
-                <th>Disponible en {central.name}</th>
-                <th className="w-36">Enviar</th>
+                <th className="py-2 pr-2">Artículo</th>
+                <th className="whitespace-nowrap py-2 pr-2 text-right">Disponible</th>
+                <th className="w-24 py-2 text-right sm:w-32">Enviar</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {items.map((i) => (
                 <tr key={i.id}>
-                  <td className="py-2 font-medium text-gray-800">{i.name}</td>
-                  <td className="text-gray-500">
-                    {stock[i.id] ?? 0} {i.unit}
+                  <td className="py-2 pr-2 font-medium leading-snug text-gray-800">{i.name}</td>
+                  <td className="whitespace-nowrap py-2 pr-2 text-right tabular-nums text-gray-500">
+                    {stock[i.id] ?? 0}
+                    <span className="ml-1 text-xs text-gray-400">{i.unit}</span>
                   </td>
-                  <td>
+                  <td className="py-2 text-right">
                     <input
                       type="number"
                       step="0.001"
@@ -156,7 +160,7 @@ export default function TransfersPage() {
                       value={quantities[i.id] ?? ''}
                       onChange={(e) => setQuantities({ ...quantities, [i.id]: e.target.value })}
                       placeholder="0"
-                      className="w-28 rounded-lg border border-gray-300 px-3 py-2"
+                      className="input w-full text-right tabular-nums"
                     />
                   </td>
                 </tr>

@@ -147,7 +147,7 @@ export default function AccountingDashboard() {
       </div>
 
       <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
-        <h3 className="mb-3 font-semibold text-charcoal-600">Resumen del mes</h3>
+        <h3 className="section-title mb-3">Resumen del mes</h3>
         <Row label="Ventas totales (con IVA)" value={money(salesTotal)} />
         <Row label="IVA Débito Fiscal (13%)" value={money(n(row.iva_debito))} />
         <Row label="IVA Crédito Fiscal (compras)" value={money(n(row.iva_credito))} />

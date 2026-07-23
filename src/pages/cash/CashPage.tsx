@@ -285,7 +285,7 @@ export default function CashPage() {
         <div className="mt-8 rounded-2xl bg-white p-4 sm:p-6 shadow">
           <h2 className="section-title mb-3">Cierres anteriores</h2>
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[32rem] text-left">
+          <table className="w-full min-w-max text-left text-[13px] sm:text-sm">
             <thead>
               <tr className="text-sm text-gray-500">
                 <th className="py-2">Cerrada</th>
