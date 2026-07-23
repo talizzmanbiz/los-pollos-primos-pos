@@ -150,22 +150,27 @@ export default function ProductionBatchesTab() {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  {b.status === 'open' && !b.roast_start_at && (
-                    <button
-                      onClick={() => markRoastStart(b)}
-                      className="mr-2 rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white"
-                    >
-                      Al horno
-                    </button>
-                  )}
-                  {b.status === 'open' && (
-                    <button
-                      onClick={() => openCloseModal(b)}
-                      className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white"
-                    >
-                      Cerrar lote
-                    </button>
-                  )}
+                  {/* fixed width + nowrap so both actions render as the same
+                      pill; without it the labels wrapped onto two lines and
+                      each button ended up a different size */}
+                  <div className="flex items-center gap-2">
+                    {b.status === 'open' && !b.roast_start_at && (
+                      <button
+                        onClick={() => markRoastStart(b)}
+                        className="h-12 w-28 shrink-0 whitespace-nowrap rounded-lg bg-amber-500 px-3 text-sm font-semibold text-white"
+                      >
+                        Al horno
+                      </button>
+                    )}
+                    {b.status === 'open' && (
+                      <button
+                        onClick={() => openCloseModal(b)}
+                        className="h-12 w-28 shrink-0 whitespace-nowrap rounded-lg bg-brand-600 px-3 text-sm font-semibold text-white"
+                      >
+                        Cerrar lote
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

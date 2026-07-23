@@ -29,9 +29,13 @@ function Ticket({
         ? 'Listo p/ enviar'
         : 'Listo';
 
+  // border, not ring: a ring paints outside the box and the scroll container
+  // clips it, so the late-order outline rendered broken along the card edges
   return (
     <div
-      className={`mb-2 rounded-xl bg-white p-2.5 shadow sm:mb-3 sm:p-4 ${age > 20 ? 'ring-2 ring-red-400' : ''}`}
+      className={`mb-2 rounded-xl border-2 bg-white p-2.5 shadow sm:mb-3 sm:p-4 ${
+        age > 20 ? 'border-red-400' : 'border-transparent'
+      }`}
     >
       <div className="mb-1.5 flex items-center justify-between gap-1 sm:mb-2 sm:gap-2">
         <span className="whitespace-nowrap text-sm font-bold tabular-nums text-gray-900 sm:text-xl">
