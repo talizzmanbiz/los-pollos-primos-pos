@@ -198,7 +198,7 @@ calcula base e IVA. Cliente y número de documento son opcionales.</p>
 <p><strong>Retención del 1% (solo Gran Contribuyente):</strong> en compras gravadas <strong>mayores a $100</strong>
 con CCF, podés retener el <strong>1% del IVA</strong> al proveedor. Al marcar la casilla, el sistema calcula la
 retención, le paga al proveedor el <strong>neto</strong> (total − retención) y registra la retención como pasivo
-a enterar a Hacienda (aparece en el anexo <strong>F-14</strong>). Si <strong>no</strong> sos Gran Contribuyente, dejá la casilla sin marcar.</p>
+a enterar a Hacienda (se declara junto con el <strong>F-07</strong> de IVA). Si <strong>no</strong> sos Gran Contribuyente, dejá la casilla sin marcar.</p>
 
 <h3>4.4 Libro Diario</h3>
 <p>Todos los <strong>asientos</strong> del mes, cada uno con sus líneas de débito y crédito y un indicador de que
@@ -215,7 +215,8 @@ a enterar a Hacienda (aparece en el anexo <strong>F-14</strong>). Si <strong>no<
 <p>Lo que se presenta a Hacienda. Todo se descarga en <strong>CSV</strong> (abre directo en Excel):</p>
 <ul>
   <li><strong>Declaración F-07 (IVA mensual):</strong> ventas gravadas, débito, compras gravadas, crédito y el <strong>IVA a pagar</strong> (o remanente a favor).</li>
-  <li><strong>Anexo F-14:</strong> aparece solo si hay retenciones — total del 1% retenido a proveedores.</li>
+  <li><strong>Declaración F-14 (Pago a Cuenta · renta):</strong> anticipo del <strong>1.75%</strong> sobre los ingresos brutos del mes (base sin IVA), acreditable contra el ISR anual. Incluye el renglón de ISR retenido a terceros (el sistema no lo registra; sumalo manualmente si lo hubo).</li>
+  <li><strong>Retención IVA 1%:</strong> aparece solo si hay retenciones — total del 1% de IVA retenido a proveedores; se entera junto con el F-07.</li>
   <li><strong>Registro de Ventas:</strong> contribuyentes (con NIT) detallados como CCF; consumidor final <strong>resumido por día</strong>.</li>
   <li><strong>Registro de Compras:</strong> compras con crédito fiscal (CCF/DTE), una por una.</li>
 </ul>
@@ -315,7 +316,8 @@ corregir y volver a cerrar. Todos los cambios quedan en la auditoría.</div>
   <li><strong>CCF:</strong> Comprobante de Crédito Fiscal — respalda el crédito fiscal ante la DGII.</li>
   <li><strong>DTE:</strong> Documento Tributario Electrónico (equivalente electrónico del CCF).</li>
   <li><strong>F-07:</strong> declaración mensual de IVA (antes del día 20 del mes siguiente).</li>
-  <li><strong>F-14:</strong> anexo de retenciones y percepciones.</li>
+  <li><strong>F-14:</strong> declaración mensual de Pago a Cuenta (1.75% de ingresos brutos) e Impuesto Retenido de renta (antes del día 10 del mes siguiente).</li>
+  <li><strong>Pago a Cuenta:</strong> anticipo mensual del ISR (1.75% de los ingresos brutos), acreditable contra el impuesto anual.</li>
   <li><strong>ISR:</strong> Impuesto sobre la Renta (declaración anual, antes del 30 de abril).</li>
   <li><strong>Asiento:</strong> registro contable de una operación, con débitos y créditos que cuadran.</li>
   <li><strong>Libro Diario:</strong> lista cronológica de todos los asientos.</li>

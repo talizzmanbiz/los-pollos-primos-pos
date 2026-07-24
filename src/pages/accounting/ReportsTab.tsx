@@ -6,6 +6,11 @@ import type { AccountingIncome, AccountingExpense } from '../../types/database';
 import { monthOptions, EXPENSE_TYPE_LABELS } from './month';
 
 const d2 = (n: number) => n.toFixed(2);
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// Pago a cuenta del ISR: 1.75% sobre los ingresos brutos, sin deducción alguna
+// (Art. 151 Código Tributario). Es un anticipo acreditable contra el ISR anual.
+const PAGO_A_CUENTA_RATE = 0.0175;
 
 interface SalesRow {
   correlativo: number;
@@ -131,8 +136,23 @@ export default function ReportsTab() {
     return { ventasGravadas, debito, comprasGravadas, credito, neto: debito - credito };
   }, [income, expense]);
 
-  // ---- F-14: 1% IVA retenido a proveedores (solo si eres Gran Contribuyente) ----
-  const f14 = useMemo(() => expense.reduce((s, r) => s + Number(r.retention_amount), 0), [expense]);
+  // ---- F-14: Pago a Cuenta e Impuesto Retenido (renta, mensual) ----
+  // Ingresos brutos = ventas del mes SIN IVA (el IVA débito no es ingreso, es un
+  // pasivo a enterar). El sistema no registra retenciones de renta a terceros
+  // (planilla, servicios profesionales), así que ese renglón queda en 0.
+  const f14 = useMemo(() => {
+    const ingresosBrutos = income.reduce((s, r) => s + Number(r.base_amount_usd), 0);
+    const pagoACuenta = round2(ingresosBrutos * PAGO_A_CUENTA_RATE);
+    const rentaRetenida = 0;
+    return { ingresosBrutos, pagoACuenta, rentaRetenida, total: round2(pagoACuenta + rentaRetenida) };
+  }, [income]);
+
+  // 1% de IVA retenido a proveedores (Gran Contribuyente). NO es el F-14: la
+  // retención de IVA se declara junto con el F-07, no en la declaración de renta.
+  const ivaRetenido = useMemo(
+    () => expense.reduce((s, r) => s + Number(r.retention_amount), 0),
+    [expense],
+  );
 
   const sum = (rows: SalesRow[], k: 'base' | 'iva' | 'total') =>
     rows.reduce((s, r) => s + r[k], 0);
@@ -169,6 +189,21 @@ export default function ReportsTab() {
     downloadCsv(`F07-${month.value}.csv`, csv);
   }
 
+  function exportF14() {
+    const csv = toCsv(
+      ['Concepto', 'Monto USD'],
+      [
+        [`Declaración F-14 (Pago a Cuenta e Impuesto Retenido) — ${month.label}`, ''],
+        ['Ingresos brutos del mes (base sin IVA)', d2(f14.ingresosBrutos)],
+        ['Tasa de pago a cuenta', '1.75%'],
+        ['Pago a cuenta (1.75%)', d2(f14.pagoACuenta)],
+        ['ISR retenido a terceros', d2(f14.rentaRetenida)],
+        ['Total a pagar (F-14)', d2(f14.total)],
+      ],
+    );
+    downloadCsv(`F14-${month.value}.csv`, csv);
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
@@ -193,13 +228,13 @@ export default function ReportsTab() {
           </button>
         </div>
         <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
-          <F07Row label="Ventas gravadas (base)" value={money(f07.ventasGravadas)} />
-          <F07Row label="Débito fiscal (13%)" value={money(f07.debito)} />
-          <F07Row label="Compras gravadas (base)" value={money(f07.comprasGravadas)} />
-          <F07Row label="Crédito fiscal (compras)" value={money(f07.credito)} />
+          <SummaryRow label="Ventas gravadas (base)" value={money(f07.ventasGravadas)} />
+          <SummaryRow label="Débito fiscal (13%)" value={money(f07.debito)} />
+          <SummaryRow label="Compras gravadas (base)" value={money(f07.comprasGravadas)} />
+          <SummaryRow label="Crédito fiscal (compras)" value={money(f07.credito)} />
         </div>
         <div className="mt-3 border-t border-charcoal-100 pt-3">
-          <F07Row
+          <SummaryRow
             label={f07.neto >= 0 ? 'IVA a pagar (F-07)' : 'Remanente a favor'}
             value={money(Math.abs(f07.neto))}
             strong
@@ -207,16 +242,41 @@ export default function ReportsTab() {
         </div>
       </div>
 
-      {/* F-14: retenciones (solo aparece si hay retenciones registradas) */}
-      {f14 > 0 && (
+      {/* F-14: Pago a Cuenta e Impuesto Retenido (renta, mensual) */}
+      <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="section-title">Declaración F-14 (Pago a Cuenta · renta)</h3>
+          <button onClick={exportF14} className="btn btn-primary btn-sm">
+            Descargar F-14 (CSV)
+          </button>
+        </div>
+        <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
+          <SummaryRow label="Ingresos brutos (base sin IVA)" value={money(f14.ingresosBrutos)} />
+          <SummaryRow label="Tasa de pago a cuenta" value="1.75%" />
+          <SummaryRow label="Pago a cuenta (1.75%)" value={money(f14.pagoACuenta)} />
+          <SummaryRow label="ISR retenido a terceros" value={money(f14.rentaRetenida)} />
+        </div>
+        <div className="mt-3 border-t border-charcoal-100 pt-3">
+          <SummaryRow label="Total a pagar (F-14)" value={money(f14.total)} strong />
+        </div>
+        <p className="mt-2 text-xs text-charcoal-300">
+          Anticipo mensual del 1.75% sobre los ingresos brutos (Art. 151 Código Tributario), acreditable
+          contra el ISR anual. El sistema no registra retenciones de renta a terceros (planilla, servicios
+          profesionales); si las hubo, sumalas manualmente en el formulario.
+        </p>
+      </div>
+
+      {/* Retención de IVA 1% — se declara con el F-07, no en el F-14 de renta */}
+      {ivaRetenido > 0 && (
         <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
-          <h3 className="mb-2 font-semibold text-charcoal-600">Anexo F-14 — IVA retenido a proveedores</h3>
+          <h3 className="section-title mb-2">Retención IVA 1% a proveedores</h3>
           <div className="flex justify-between">
             <span className="text-charcoal-400">Total 1% IVA retenido en el mes</span>
-            <span className="text-lg font-bold text-brand-700">{money(f14)}</span>
+            <span className="text-lg font-bold text-brand-700">{money(ivaRetenido)}</span>
           </div>
           <p className="mt-2 text-xs text-charcoal-300">
-            Monto retenido a proveedores que debés enterar a Hacienda (F-14). Aplica solo si sos Gran Contribuyente.
+            IVA retenido a proveedores que debés enterar a Hacienda. Se declara dentro del F-07
+            (retenciones y percepciones de IVA), no en el F-14. Aplica solo si sos Gran Contribuyente.
           </p>
         </div>
       )}
@@ -258,7 +318,7 @@ export default function ReportsTab() {
   );
 }
 
-function F07Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+function SummaryRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="flex justify-between py-1">
       <span className={strong ? 'font-semibold text-charcoal-600' : 'text-charcoal-400'}>{label}</span>
