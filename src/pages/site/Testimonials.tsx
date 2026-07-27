@@ -35,15 +35,11 @@ export default function Testimonials() {
   const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
 
   return (
-    <section className="bg-brand-50 py-20">
-      <div className="mx-auto max-w-6xl px-6">
+    <section className="site-section bg-brand-50">
+      <div className="site-container">
         <Reveal className="text-center">
-          <span className="font-display text-xs font-bold uppercase tracking-[0.28em] text-brand-600">
-            Reseñas reales
-          </span>
-          <h2 className="mt-3 font-display text-3xl font-extrabold text-brand-900 sm:text-4xl">
-            Lo que dicen nuestros clientes
-          </h2>
+          <span className="site-eyebrow">Reseñas reales</span>
+          <h2 className="site-heading mt-3">Lo que dicen nuestros clientes</h2>
           <p className="mt-3 flex items-center justify-center gap-1.5 text-lg">
             <Star className="h-5 w-5 fill-gold-400 text-gold-400" />
             <span className="font-display font-bold text-gold-500">{avg.toFixed(1)}</span>
@@ -56,10 +52,10 @@ export default function Testimonials() {
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {reviews.map((r, i) => (
             <Reveal key={r.id} delay={(i % 3) * 100} as="div">
-              <figure className="h-full rounded-3xl bg-white p-7 shadow-[0_10px_40px_rgba(126,50,16,0.07)] ring-1 ring-brand-100">
+              <figure className="h-full rounded-3xl bg-white p-6 shadow-[0_10px_40px_rgba(126,50,16,0.07)] ring-1 ring-brand-100 sm:p-7">
                 <Stars n={r.rating} />
                 {r.comment && (
-                  <blockquote className="mt-3 leading-relaxed text-charcoal-800">"{r.comment}"</blockquote>
+                  <blockquote className="site-body mt-3 text-charcoal-800">"{r.comment}"</blockquote>
                 )}
                 <figcaption className="mt-4 font-display text-sm font-bold text-brand-700">
                   — {r.customer_name?.trim() || 'Cliente'}

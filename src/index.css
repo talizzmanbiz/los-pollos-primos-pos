@@ -111,6 +111,14 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* No horizontal scroll, ever. `clip` and not `hidden` on purpose: overflow
+   hidden on body turns it into a scroll container, which silently breaks the
+   `position: sticky` headers in AppLayout/PosPage/StorePage. `clip` cuts the
+   overflow without creating one. */
+body {
+  overflow-x: clip;
+}
+
 /* Base element defaults live in @layer base so Tailwind utility classes (the
    consumer storefront relies on them: text-6xl, text-white, font-display, …)
    can override them. Un-layered rules would beat utilities and break the
@@ -334,6 +342,46 @@ html {
   @media (min-width: 640px) {
     .page-title { font-size: 1.5rem; }
     .section-title { font-size: 1.125rem; }
+  }
+
+  /* ============ PUBLIC SITE LAYOUT (los-pollosprimos.com) ============
+     One horizontal rhythm for every marketing/storefront section. Before this
+     each section picked its own combination (max-w-6xl px-6, max-w-5xl px-6,
+     max-w-4xl px-4 sm:px-6, max-w-3xl px-6), so gutters jumped between pages
+     and px-6 left only 272px of content on a 320px phone.
+
+     Named .site-* and NOT .section-title/.section-container: .section-title
+     already exists above as the POS heading class (used across 16 POS files),
+     so redefining that name would restyle every internal screen. */
+  .site-container      { @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8; }
+  .site-container-sm   { @apply mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8; }
+  .site-container-xs   { @apply mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8; }
+
+  /* Vertical rhythm — 80px felt cavernous at 320px, so phones step down. */
+  .site-section { @apply py-14 sm:py-20; }
+
+  /* Section headings. Fluid so an h2 never wraps to three lines on a 320px
+     phone, and never exceeds the desktop size the design already used. */
+  .site-eyebrow {
+    @apply font-display text-xs font-bold uppercase tracking-[0.28em] text-brand-600;
+  }
+  .site-heading {
+    @apply font-display text-2xl font-extrabold leading-tight text-brand-900 sm:text-3xl lg:text-4xl;
+  }
+  .site-body { @apply text-left leading-relaxed; }
+
+  /* Definition row (día → horario, zona → tarifa). justify-between alone put
+     "Martes a Domingo" and "10:00 a.m. – 2:00 p.m." shoulder-to-shoulder with
+     no gutter between them.
+
+     The breakpoint is a *container* query, not a viewport one: these rows live
+     inside a padded card that is itself half of a 2-up grid and a quarter of
+     the footer, so at 1280px wide the row still only gets ~250px. Measuring the
+     viewport would put them side by side exactly where they don't fit.
+     Pair with `.site-rows` (or any `@container`) on the wrapping list. */
+  .site-rows { @apply @container; }
+  .site-row {
+    @apply flex flex-col gap-x-6 gap-y-0.5 @2xs:flex-row @2xs:items-baseline @2xs:justify-between;
   }
 }
 

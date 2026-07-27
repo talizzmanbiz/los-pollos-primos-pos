@@ -16,7 +16,7 @@ export default defineConfig({
       manifest: {
         name: 'Los Pollos Primos POS',
         short_name: 'Primos POS',
-        description: 'POS Ahumado Tropical — Los Pollos Primos',
+        description: 'POS Sabor Tropical — Los Pollos Primos',
         theme_color: '#c54908',
         background_color: '#fff8ed',
         display: 'standalone',

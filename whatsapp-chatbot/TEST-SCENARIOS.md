@@ -9,7 +9,7 @@ Scenarios 1, 4 and 5 were **executed live** against the deployed workflow on 202
 | Who | Message |
 |---|---|
 | Cliente | hola |
-| Bot | ¡Ey! 👋 Bienvenido a Los Pollos Primos — Ahumado Tropical 🍗 … (menú 1-5) ¿Cuál es? |
+| Bot | ¡Ey! 👋 Bienvenido a Los Pollos Primos — Sabor Tropical 🍗 … (menú 1-5) ¿Cuál es? |
 | Cliente | 1 |
 | Bot | Dale, 1x El Primo Grande 💪 ¿Querés algo más? (podés escribir 'no' o elegir extras: chimichurri, tortillas, cebolla) |
 | Cliente | cebolla y chimichurri |

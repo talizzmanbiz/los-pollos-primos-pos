@@ -10,16 +10,20 @@
 
 export const site = {
   name: 'Los Pollos Primos',
-  brand: 'Ahumado Tropical',
+  // Sub-brand. Was 'Ahumado Tropical': the recipe no longer uses smoked paprika
+  // (it can't be sourced reliably in Chalchuapa), so "ahumado" would describe a
+  // flavour the customer won't taste. The citrus marinade is now the hook.
+  brand: 'Sabor Tropical',
   domain: 'los-pollosprimos.com',
   url: 'https://los-pollosprimos.com',
 
   // What makes us different (used on Home + Nosotros).
-  tagline: 'Pollo rostizado, ahumado tropical.',
+  tagline: 'Pollo rostizado con marinada cítrica tropical.',
   differentiator:
-    'Nuestro pollo se marina en jugo de piña natural y paprika ahumada, ' +
-    'y se rostiza lento hasta quedar jugoso por dentro y dorado por fuera. ' +
-    'Ese es el sabor Ahumado Tropical que solo encontrás en Los Pollos Primos.',
+    'Nuestro pollo se marina en jugo de naranja natural y jugo de piña, ' +
+    'con especias seleccionadas, y se rostiza lento hasta quedar jugoso por ' +
+    'dentro y dorado por fuera. Ese es el Sabor Tropical que solo encontrás ' +
+    'en Los Pollos Primos.',
 
   city: 'Chalchuapa, Santa Ana, El Salvador',
 

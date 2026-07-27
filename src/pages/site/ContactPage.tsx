@@ -23,22 +23,24 @@ export default function ContactPage() {
     }
   }
 
+  // min-h-12 (48px) + text-base: iOS zooms the page on focus for anything under
+  // 16px, and a 44px-tall field is the platform touch minimum.
   const inputCls =
-    'w-full rounded-xl border border-brand-200 bg-white px-4 py-3 text-charcoal-900 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15';
+    'w-full min-h-12 rounded-xl border border-brand-200 bg-white px-4 py-3 text-base text-charcoal-900 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15';
 
   return (
     <div>
       {/* header */}
-      <section className="relative overflow-hidden bg-charcoal-900 py-20 text-center text-brand-50">
+      <section className="site-section relative overflow-hidden bg-charcoal-900 text-center text-brand-50">
         <div className="bg-radial-warm absolute inset-0" />
-        <div className="relative mx-auto max-w-3xl px-6">
-          <h1 className="font-display text-4xl font-extrabold text-white sm:text-5xl">Contacto</h1>
-          <p className="mt-4 text-lg text-brand-50/85">Estamos para atenderte. Escribinos o visitanos.</p>
+        <div className="site-container-xs relative">
+          <h1 className="font-display text-3xl font-extrabold text-white sm:text-5xl">Contacto</h1>
+          <p className="mt-4 text-base text-brand-50/85 sm:text-lg">Estamos para atenderte. Escribinos o visitanos.</p>
         </div>
       </section>
 
-      <section className="bg-brand-50 py-16">
-        <div className="mx-auto grid max-w-5xl gap-8 px-6 md:grid-cols-2">
+      <section className="site-section bg-brand-50">
+        <div className="site-container grid max-w-5xl gap-6 md:grid-cols-2 md:gap-8">
           {/* info */}
           <Reveal className="space-y-6">
             <InfoCard title="Sucursales" icon={MapPin}>
@@ -53,16 +55,16 @@ export default function ContactPage() {
                 ))}
               </ul>
               {site.mapsUrl && (
-                <a href={site.mapsUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block font-semibold text-brand-700 hover:underline">
+                <a href={site.mapsUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center font-semibold text-brand-700 hover:underline">
                   Ver en Google Maps →
                 </a>
               )}
             </InfoCard>
 
             <InfoCard title="Horarios" icon={Clock}>
-              <ul className="space-y-1.5 text-charcoal-800">
+              <ul className="site-rows space-y-2 text-charcoal-800">
                 {site.hours.map((h) => (
-                  <li key={h.days} className="flex justify-between gap-4">
+                  <li key={h.days} className="site-row">
                     <span className="font-medium">{h.days}</span>
                     <span className="text-charcoal-700/70">{h.time}</span>
                   </li>
@@ -72,17 +74,17 @@ export default function ContactPage() {
 
             {(site.whatsappNumber || site.email) && (
               <InfoCard title="Escribinos" icon={MessageCircle}>
-                <ul className="space-y-1.5">
+                <ul>
                   {site.whatsappNumber && (
                     <li>
-                      <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-700 hover:underline">
+                      <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center font-semibold text-brand-700 hover:underline">
                         WhatsApp {site.whatsappDisplay}
                       </a>
                     </li>
                   )}
                   {site.email && (
                     <li>
-                      <a href={`mailto:${site.email}`} className="font-semibold text-brand-700 hover:underline">{site.email}</a>
+                      <a href={`mailto:${site.email}`} className="inline-flex min-h-11 items-center break-all font-semibold text-brand-700 hover:underline">{site.email}</a>
                     </li>
                   )}
                 </ul>
@@ -93,11 +95,11 @@ export default function ContactPage() {
           {/* form */}
           <Reveal delay={120}>
             {hasChannel ? (
-              <form onSubmit={onSubmit} className="space-y-4 rounded-3xl bg-white p-8 shadow-[0_10px_40px_rgba(126,50,16,0.08)] ring-1 ring-brand-100">
+              <form onSubmit={onSubmit} className="space-y-4 rounded-3xl bg-white p-6 shadow-[0_10px_40px_rgba(126,50,16,0.08)] ring-1 ring-brand-100 sm:p-8">
                 <h2 className="font-display text-xl font-bold text-brand-900">Mandanos un mensaje</h2>
                 <div>
                   <label htmlFor="name" className="mb-1 block text-sm font-medium text-charcoal-700">Tu nombre</label>
-                  <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" className={inputCls} />
+                  <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" className={inputCls} />
                 </div>
                 <div>
                   <label htmlFor="message" className="mb-1 block text-sm font-medium text-charcoal-700">Mensaje</label>
@@ -105,7 +107,7 @@ export default function ContactPage() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full rounded-full bg-brand-600 px-6 py-4 text-lg font-bold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700"
+                  className="flex min-h-14 w-full items-center justify-center rounded-full bg-brand-600 px-6 text-lg font-bold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700"
                 >
                   {site.whatsappNumber ? 'Enviar por WhatsApp' : 'Enviar por correo'}
                 </button>
@@ -114,7 +116,7 @@ export default function ContactPage() {
                 </p>
               </form>
             ) : (
-              <div className="rounded-3xl bg-white p-8 text-center text-charcoal-700/70 ring-1 ring-brand-100">
+              <div className="rounded-3xl bg-white p-6 text-center text-charcoal-700/70 ring-1 ring-brand-100 sm:p-8">
                 Muy pronto podrás escribirnos por aquí.
               </div>
             )}
@@ -127,7 +129,7 @@ export default function ContactPage() {
 
 function InfoCard({ title, icon: Icon, children }: { title: string; icon: LucideIcon; children: React.ReactNode }) {
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-[0_10px_40px_rgba(126,50,16,0.06)] ring-1 ring-brand-100">
+    <div className="rounded-3xl bg-white p-5 shadow-[0_10px_40px_rgba(126,50,16,0.06)] ring-1 ring-brand-100 sm:p-6">
       <div className="flex items-center gap-2.5">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-700">
           <Icon className="h-5 w-5" strokeWidth={2} />

@@ -113,7 +113,7 @@ export function buildReceipt(data: ReceiptData): string {
 
   b.align('center')
     .text('LOS POLLOS PRIMOS\n', { emphasis: true, doubleSize: true })
-    .line('Ahumado Tropical')
+    .line('Sabor Tropical')
     .line(data.locationName)
     .line('Chalchuapa, Santa Ana')
     .feed(1)

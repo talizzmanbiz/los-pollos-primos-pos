@@ -17,8 +17,10 @@ interface OrderConfirmation {
   payment_url: string | null;
 }
 
+// min-h-12 (48px) + text-base: under 16px iOS zooms the whole page on focus,
+// and 44px is the platform touch minimum for a field.
 const inputCls =
-  'w-full rounded-xl border border-brand-200 bg-white px-4 py-3 text-charcoal-900 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15';
+  'w-full min-h-12 rounded-xl border border-brand-200 bg-white px-4 py-3 text-base text-charcoal-900 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -56,7 +58,7 @@ export default function CheckoutPage() {
   if (confirmation) {
     return (
       <div className="min-h-screen bg-brand-50 px-4 py-16">
-        <div className="mx-auto max-w-md rounded-3xl bg-white p-8 text-center shadow-[0_20px_60px_rgba(126,50,16,0.12)] ring-1 ring-brand-100">
+        <div className="mx-auto max-w-md rounded-3xl bg-white p-6 text-center shadow-[0_20px_60px_rgba(126,50,16,0.12)] ring-1 ring-brand-100 sm:p-8">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-brand-700"><ReceiptText className="h-8 w-8" strokeWidth={2} /></div>
           <h2 className="mt-4 font-display text-2xl font-extrabold text-charcoal-900">¡Casi listo!</h2>
           <p className="mt-2 font-display text-4xl font-extrabold text-brand-600">{confirmation.order_number}</p>
@@ -70,7 +72,7 @@ export default function CheckoutPage() {
               </p>
               <a
                 href={confirmation.payment_url}
-                className="mt-4 block rounded-full bg-green-600 py-4 text-lg font-bold text-white shadow-lg shadow-green-600/25 transition hover:-translate-y-0.5 hover:bg-green-700"
+                className="mt-4 flex min-h-14 items-center justify-center rounded-full bg-green-600 px-4 text-lg font-bold text-white shadow-lg shadow-green-600/25 transition hover:-translate-y-0.5 hover:bg-green-700"
               >
                 Pagar ahora · {money(confirmation.total)}
               </a>
@@ -86,7 +88,7 @@ export default function CheckoutPage() {
           </p>
           <Link
             to="/tienda"
-            className="mt-6 block rounded-full border border-brand-200 py-3 font-semibold text-brand-700 transition hover:bg-brand-50"
+            className="mt-6 flex min-h-12 items-center justify-center rounded-full border border-brand-200 font-semibold text-brand-700 transition hover:bg-brand-50"
           >
             Volver al menú
           </Link>
@@ -101,7 +103,7 @@ export default function CheckoutPage() {
       <div className="min-h-screen bg-brand-50 px-4 py-24 text-center">
         <ShoppingCart className="mx-auto h-16 w-16 text-brand-300" strokeWidth={1.5} />
         <p className="mt-4 text-lg text-charcoal-700/70">Tu carrito está vacío.</p>
-        <Link to="/tienda" className="mt-6 inline-block rounded-full bg-brand-600 px-8 py-3.5 font-bold text-white shadow-lg transition hover:bg-brand-700">
+        <Link to="/tienda" className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-brand-600 px-8 font-bold text-white shadow-lg transition hover:bg-brand-700">
           Ver el menú
         </Link>
       </div>
@@ -154,13 +156,13 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-50 px-4 py-10 sm:px-6">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="font-display text-3xl font-extrabold text-brand-900">Finalizar pedido</h1>
+    <div className="min-h-screen bg-brand-50 py-10">
+      <div className="site-container-sm">
+        <h1 className="font-display text-2xl font-extrabold text-brand-900 sm:text-3xl">Finalizar pedido</h1>
         <form onSubmit={submit} className="mt-6 grid gap-6 md:grid-cols-2">
           {/* summary */}
           <div className="md:order-2">
-            <div className="rounded-3xl bg-white p-6 shadow-[0_10px_40px_rgba(126,50,16,0.07)] ring-1 ring-brand-100">
+            <div className="rounded-3xl bg-white p-5 shadow-[0_10px_40px_rgba(126,50,16,0.07)] ring-1 ring-brand-100 sm:p-6">
               <h2 className="font-display text-lg font-bold text-brand-900">Tu pedido</h2>
               <div className="mt-4 space-y-2">
                 {cart.map((l) => (
@@ -168,11 +170,13 @@ export default function CheckoutPage() {
                     <span className="min-w-0 truncate">{l.quantity} × {l.name}</span>
                     <div className="flex shrink-0 items-center gap-2">
                       <span className="font-semibold">{money(l.price * l.quantity)}</span>
+                      {/* 44px, not 36px — below the touch minimum this sat
+                          right next to the price and was easy to mis-tap. */}
                       <button
                         type="button"
                         onClick={() => setCart(changeLineQty(cart, l.sku, -1))}
-                        aria-label="Quitar uno"
-                        className="h-9 w-9 rounded-full bg-brand-50 text-lg font-bold text-brand-600"
+                        aria-label={`Quitar uno de ${l.name}`}
+                        className="h-11 w-11 shrink-0 rounded-full bg-brand-50 text-lg font-bold text-brand-600 transition active:scale-90"
                       >
                         −
                       </button>
@@ -194,14 +198,15 @@ export default function CheckoutPage() {
 
           {/* details */}
           <div className="space-y-4 md:order-1">
-            <div className="rounded-3xl bg-white p-6 shadow-[0_10px_40px_rgba(126,50,16,0.07)] ring-1 ring-brand-100">
+            <div className="rounded-3xl bg-white p-5 shadow-[0_10px_40px_rgba(126,50,16,0.07)] ring-1 ring-brand-100 sm:p-6">
               <div className="grid grid-cols-2 gap-2 rounded-2xl bg-brand-50 p-1.5">
                 {(['pickup', 'delivery'] as const).map((m) => (
                   <button
                     key={m}
                     type="button"
                     onClick={() => setMode(m)}
-                    className={`flex items-center justify-center gap-2 rounded-xl py-3 font-semibold transition ${
+                    aria-pressed={mode === m}
+                    className={`flex min-h-12 items-center justify-center gap-2 rounded-xl font-semibold transition ${
                       mode === m ? 'bg-brand-600 text-white shadow' : 'text-charcoal-700'
                     }`}
                   >
@@ -222,8 +227,8 @@ export default function CheckoutPage() {
                       Delivery disponible solo desde {central?.name ?? 'Sucursal Central'}.
                     </p>
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-charcoal-700">Zona</label>
-                      <select value={zoneId} onChange={(e) => setZoneId(e.target.value)} required className={inputCls}>
+                      <label htmlFor="co-zone" className="mb-1 block text-sm font-medium text-charcoal-700">Zona</label>
+                      <select id="co-zone" value={zoneId} onChange={(e) => setZoneId(e.target.value)} required className={inputCls}>
                         <option value="">Elegir zona…</option>
                         {zones.map((z) => (
                           <option key={z.id} value={z.id}>{z.name} — {money(z.fee)}</option>
@@ -231,27 +236,29 @@ export default function CheckoutPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-charcoal-700">Dirección</label>
-                      <input value={address} onChange={(e) => setAddress(e.target.value)} required placeholder="Calle, número, referencia" className={inputCls} />
+                      <label htmlFor="co-address" className="mb-1 block text-sm font-medium text-charcoal-700">Dirección</label>
+                      <input id="co-address" autoComplete="street-address" value={address} onChange={(e) => setAddress(e.target.value)} required placeholder="Calle, número, referencia" className={inputCls} />
                     </div>
                   </>
                 )}
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-charcoal-700">Nombre</label>
-                  <input value={name} onChange={(e) => setName(e.target.value)} required className={inputCls} />
+                  <label htmlFor="co-name" className="mb-1 block text-sm font-medium text-charcoal-700">Nombre</label>
+                  <input id="co-name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} required className={inputCls} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-charcoal-700">Teléfono (WhatsApp)</label>
-                  <input value={phone} onChange={(e) => setPhone(e.target.value)} required type="tel" placeholder="7777-8888" className={inputCls} />
+                  <label htmlFor="co-phone" className="mb-1 block text-sm font-medium text-charcoal-700">Teléfono (WhatsApp)</label>
+                  {/* inputMode="numeric" so phones open the number pad, not the
+                      full QWERTY keyboard, for a digits-only field. */}
+                  <input id="co-phone" value={phone} onChange={(e) => setPhone(e.target.value)} required type="tel" inputMode="numeric" autoComplete="tel" placeholder="7777-8888" className={inputCls} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-charcoal-700">Correo (opcional)</label>
-                  <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className={inputCls} />
+                  <label htmlFor="co-email" className="mb-1 block text-sm font-medium text-charcoal-700">Correo (opcional)</label>
+                  <input id="co-email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" inputMode="email" autoComplete="email" className={inputCls} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-charcoal-700">Notas (opcional)</label>
-                  <input value={notes} onChange={(e) => setNotes(e.target.value)} className={inputCls} />
+                  <label htmlFor="co-notes" className="mb-1 block text-sm font-medium text-charcoal-700">Notas (opcional)</label>
+                  <input id="co-notes" value={notes} onChange={(e) => setNotes(e.target.value)} className={inputCls} />
                 </div>
 
                 <div className="flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800">
@@ -262,19 +269,21 @@ export default function CheckoutPage() {
                   </span>
                 </div>
 
-                {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-red-600">{error}</p>}
+                {/* role="alert" so screen readers announce a failed submit
+                    instead of it only appearing visually. */}
+                {error && <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-red-600">{error}</p>}
 
                 <button
                   type="submit"
                   disabled={busy}
-                  className="w-full rounded-full bg-brand-600 py-4 font-display text-lg font-bold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700 disabled:opacity-50"
+                  className="flex min-h-14 w-full items-center justify-center rounded-full bg-brand-600 px-4 text-center font-display text-base font-bold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700 disabled:opacity-50 sm:text-lg"
                 >
                   {busy ? 'Enviando…' : `Confirmar pedido · ${money(total)}`}
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate('/tienda')}
-                  className="w-full rounded-full border border-brand-200 py-3 font-semibold text-charcoal-700 transition hover:bg-brand-50"
+                  className="flex min-h-12 w-full items-center justify-center rounded-full border border-brand-200 font-semibold text-charcoal-700 transition hover:bg-brand-50"
                 >
                   Seguir comprando
                 </button>

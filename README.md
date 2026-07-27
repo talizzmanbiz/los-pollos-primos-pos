@@ -1,4 +1,4 @@
-# Los Pollos Primos POS — Ahumado Tropical
+# Los Pollos Primos POS — Sabor Tropical
 
 POS multi-sucursal + tienda online + chatbot de WhatsApp para la pollería
 "Los Pollos Primos" (Chalchuapa, Santa Ana, El Salvador).
