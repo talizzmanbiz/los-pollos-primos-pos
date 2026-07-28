@@ -45,27 +45,27 @@ export default function SiteLayout() {
             : 'bg-gradient-to-b from-black/55 via-black/25 to-transparent'
         }`}
       >
-        <div className="site-container flex items-center justify-between gap-3 py-3">
-          <Link to="/" className="flex min-w-0 items-center gap-2.5">
-            {/* Logo sizing: was 44px on every viewport and read as an afterthought.
-                Now 52px on phones / 56px from md up — the 512px source never
-                gets upscaled, so it stays crisp. */}
+        <div className="site-container flex items-center justify-between gap-3 py-2">
+          {/* The logo is a badge, not a disc: "LOS POLLOS PRIMOS" arcs OUTSIDE
+              the orange circle. Forcing it into a square with object-cover and
+              then masking it with rounded-full clipped exactly that wordmark —
+              which is what looked broken. object-contain + w-auto keeps the
+              842x943 artwork whole; no ring, since a circular ring would cut
+              back across the same text.
+
+              The separate text wordmark is gone on purpose: the badge already
+              spells the name, and reclaiming that width is what lets the logo
+              be big enough for its lettering to actually read. */}
+          <Link to="/" aria-label={`${site.name} — inicio`} className="flex shrink-0 items-center">
             <img
               src="/logo-primos.png"
               alt={`${site.name} — ${site.brand}`}
-              width={56}
-              height={56}
-              className={`h-13 w-13 shrink-0 rounded-full object-cover ring-2 transition md:h-14 md:w-14 ${
-                solid ? 'ring-brand-200' : 'ring-white/40'
+              width={842}
+              height={943}
+              className={`h-16 w-auto object-contain transition md:h-20 ${
+                solid ? '' : 'drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]'
               }`}
             />
-            <span
-              className={`truncate font-display text-xl font-extrabold leading-tight tracking-tight transition-colors md:text-2xl ${
-                solid ? 'text-brand-900' : 'text-white drop-shadow'
-              }`}
-            >
-              {site.name}
-            </span>
           </Link>
 
           <nav className="hidden items-center gap-8 md:flex">
@@ -175,9 +175,8 @@ export default function SiteLayout() {
         </nav>
       </div>
 
-      {/* pt matches the taller header (76px phones / 80px md) — pt-16 used to
-          leave the first heading tucked under the bar. */}
-      <main className={`flex-1 ${isHome ? '' : 'pt-20 md:pt-24'}`}>
+      {/* Clears the fixed header (80px phones / 96px md) with room to spare. */}
+      <main className={`flex-1 ${isHome ? '' : 'pt-24 md:pt-28'}`}>
         <Outlet />
       </main>
 
@@ -211,17 +210,15 @@ function Footer() {
       <div className="bg-radial-warm">
         <div className="site-container grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2.5">
-              <img
-                src="/logo-primos.png"
-                alt=""
-                width={56}
-                height={56}
-                loading="lazy"
-                className="h-13 w-13 shrink-0 rounded-full object-cover ring-2 ring-white/20 md:h-14 md:w-14"
-              />
-              <span className="font-display text-xl font-extrabold md:text-2xl">{site.name}</span>
-            </div>
+            {/* Same badge rule as the header: contain, never crop to a circle. */}
+            <img
+              src="/logo-primos.png"
+              alt={site.name}
+              width={842}
+              height={943}
+              loading="lazy"
+              className="h-20 w-auto object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]"
+            />
             <p className="mt-4 text-sm leading-relaxed text-brand-100/80">
               {site.brand}. {site.differentiator.split('.')[0]}.
             </p>

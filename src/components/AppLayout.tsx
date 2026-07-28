@@ -105,10 +105,14 @@ export default function AppLayout() {
           <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <span className="flex items-center gap-2.5 whitespace-nowrap">
+                {/* Badge artwork, not a disc — the name arcs outside the circle,
+                    so rounded-full + object-cover was clipping it. */}
                 <img
                   src="/logo-primos.png"
                   alt="Los Pollos Primos"
-                  className="h-10 w-10 rounded-full object-cover ring-2 ring-brand-200"
+                  width={842}
+                  height={943}
+                  className="h-11 w-auto shrink-0 object-contain"
                 />
                 <span className="font-display text-sm font-extrabold leading-none tracking-tight text-charcoal-800 sm:text-lg">
                   Los Pollos Primos
