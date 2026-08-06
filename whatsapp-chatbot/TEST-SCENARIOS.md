@@ -37,12 +37,20 @@ Verified: zone auto-parsed from address text; order payload matched the `create-
 
 After an order was created: "cancelar" → *Dale, cancelamos tu orden PP-C-XXXX. Sin problema, che. 👍* + staff alert `⚠️ CANCELACIÓN` for manual POS cancellation.
 
-## Scenario 3 — Question (FAQ)
+## Scenario 3 — Question (FAQ) — **receta secreta**
+
+The bot never lists ingredients. Three branches, by what was asked:
 
 | Who | Message |
 |---|---|
+| Cliente | ¿Qué lleva el pollo? / ¿cómo lo marinan? |
+| Bot | Ahí está el secreto de la casa 🤐 La receta no la compartimos, che — por algo nuestro pollo sabe como sabe 🍗 ¡Pedí uno y juzgá vos! |
 | Cliente | ¿Qué lleva el chimichurri? |
-| Bot | Chimichurri Los Pollos Primos: ajo fresco, perejil, chile dulce, cebolla morada, aceite de oliva y vinagre de manzana. ¡Sabor único! 🌴 (+ "¿Seguimos con tu pedido? 😄" si hay pedido en curso) |
+| Bot | El chimichurri es la salsa de la casa 🌴 La receta es secreta… Eso sí te aclaro: es para acompañar, no es la mezcla con la que marinamos el pollo. |
+| Cliente | ¿Qué trae el combo? |
+| Bot | (menú completo — qué *incluye* un combo es información pública, no receta) |
+
+If a pedido is in progress the bot appends "¿Seguimos con tu pedido? 😄".
 
 Out-of-scope question ("¿tienen estacionamiento?" at any step): *Ey, buena pregunta 🤔 Esa no me la sé. ¿Querés hablar con alguien del equipo? (escribí 'operador')* + re-prompt of current step. No auto-handoff.
 

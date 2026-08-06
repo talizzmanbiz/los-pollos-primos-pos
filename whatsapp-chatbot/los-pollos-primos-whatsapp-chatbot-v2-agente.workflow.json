@@ -1,0 +1,587 @@
+{
+  "name": "Los Pollos Primos WhatsApp Chatbot v2 (Agente IA)",
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/El_Salvador",
+    "saveDataErrorExecution": "all",
+    "binaryMode": "separate"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pollos-primos-whatsapp-v2",
+        "options": {}
+      },
+      "id": "wh_v2",
+      "name": "WhatsApp Webhook v2",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        304
+      ],
+      "notes": "Ruta separada para probar sin tocar el bot en producción."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Saca el mensaje del sobre de Meta. Los callbacks de estado no traen messages[].\nconst body = $json.body || {};\nconst value = body.entry?.[0]?.changes?.[0]?.value;\nconst msg = value?.messages?.[0];\nif (!msg) return [];\nconst phone = msg.from;\nconst name = value.contacts?.[0]?.profile?.name || '';\nlet text = '';\nif (msg.type === 'text') text = msg.text?.body || '';\nelse if (msg.type === 'interactive') text = msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title || '';\nelse if (msg.type === 'button') text = msg.button?.text || '';\nif (!text.trim()) text = '(el cliente mandó un mensaje sin texto)';\nreturn [{ json: { phone, name, text, msgType: msg.type, msgId: msg.id } }];"
+      },
+      "id": "extract_v2",
+      "name": "Extract Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "Mq8RA5GKDrkPMtCY",
+          "cachedResultName": "pollos_primos_config"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": []
+        }
+      },
+      "id": "get_config_v2",
+      "name": "Get Config",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        304
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = {};\nfor (const item of $input.all()) {\n  const j = item.json || {};\n  if (j.key) cfg[j.key] = j.value;\n}\nif (!cfg.WHATSAPP_API_VERSION) cfg.WHATSAPP_API_VERSION = 'v18.0';\nconst msg = $('Extract Message').first().json;\n\n// ---- Horario de atencion -------------------------------------------------\n// Martes a domingo 10:00 a 14:00 (America/El_Salvador). Lunes cerrado.\n// Lo calculamos aca y no en el prompt: el modelo no tiene reloj y hacer\n// aritmetica de fechas con IA es justo donde se equivoca.\nconst TZ = 'America/El_Salvador';\nconst ABRE = 10 * 60;\nconst CIERRA = 14 * 60;\nconst MARGEN = 45; // si no alcanza a salir antes del cierre, va para el siguiente dia\n\nconst partes = new Intl.DateTimeFormat('en-US', {\n  timeZone: TZ, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,\n}).formatToParts(new Date());\nconst p = Object.fromEntries(partes.map((x) => [x.type, x.value]));\nconst DIAS = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };\nconst dow = DIAS[p.weekday];\nconst ahoraMin = (Number(p.hour) % 24) * 60 + Number(p.minute);\n\nconst NOMBRE = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];\nconst abreEseDia = (d) => d !== 1;\nconst hhmm = (m) => {\n  const h24 = Math.floor(m / 60) % 24;\n  const mm = String(m % 60).padStart(2, '0');\n  const ampm = h24 < 12 ? 'a.m.' : 'p.m.';\n  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;\n  return h12 + ':' + mm + ' ' + ampm;\n};\n\nconst abierto = abreEseDia(dow) && ahoraMin >= ABRE && ahoraMin < CIERRA;\nconst alcanzaHoy = abierto && ahoraMin + MARGEN <= CIERRA;\n\nlet baseDia = dow;\nlet baseMin = ahoraMin;\nlet mismoDia = true;\nif (!alcanzaHoy) {\n  if (abreEseDia(dow) && ahoraMin < ABRE) {\n    baseMin = ABRE;\n  } else {\n    let d = dow;\n    do { d = (d + 1) % 7; } while (!abreEseDia(d));\n    baseDia = d;\n    baseMin = ABRE;\n    mismoDia = false;\n  }\n}\n\nconst cuando = mismoDia\n  ? 'hoy'\n  : (baseDia === (dow + 1) % 7 ? 'manana' : 'el ' + NOMBRE[baseDia]);\n\nconst horario = {\n  ahora: NOMBRE[dow] + ' ' + hhmm(ahoraMin),\n  estado: abierto ? 'ABIERTO (cerramos a las 2:00 p.m.)' : 'CERRADO',\n  inmediato: alcanzaHoy,\n  base: cuando + ' a las ' + hhmm(baseMin),\n};\n\nreturn [{ json: { cfg, phone: msg.phone, name: msg.name, text: msg.text, horario } }];"
+      },
+      "id": "merge_config_v2",
+      "name": "Merge Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://xuhrenrsrmktfewfejkm.supabase.co/functions/v1/ghl-contact",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Merge Config').first().json.cfg.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $('Merge Config').first().json.cfg.WHATSAPP_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'lookup', phone: $('Extract Message').first().json.phone }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "ghl_lookup",
+      "name": "Buscar Contacto GHL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        896,
+        304
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "notes": "Busca el cliente en GoHighLevel por teléfono para que el agente lo salude por su nombre."
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Merge Config').first().json.text }}",
+        "options": {
+          "systemMessage": "=Atiende el WhatsApp de *Los Pollos Primos — Sabor Tropical*, pollería en Chalchuapa, Santa Ana.\n\n## CLIENTE ACTUAL\nTeléfono: {{ $('Extract Message').first().json.phone }} (ya lo tiene — nunca se lo pida)\nWhatsApp: {{ $('Extract Message').first().json.name || '(no trae)' }}\nCRM: {{ $('Buscar Contacto GHL').first().json?.found ? 'conocido, se llama ' + ($('Buscar Contacto GHL').first().json?.first_name || '') : 'nuevo' }}\n\nSi es conocido, salúdelo por su nombre. Si es nuevo, pídale el nombre durante el pedido.\n\n## AHORA MISMO\nEs {{ $('Merge Config').first().json.horario.ahora }} y estamos *{{ $('Merge Config').first().json.horario.estado }}*.\nLa preparación empieza {{ $('Merge Config').first().json.horario.inmediato ? 'de una vez' : $('Merge Config').first().json.horario.base }}.\n\nSi estamos CERRADOS, dígaselo de una vez con naturalidad y aclare que igual le deja el pedido encargado y se lo preparan al abrir.\n\n*La hora de entrega va siempre en reloj, nunca solo en minutos.* Sume los minutos que devuelva crear_orden a la hora de inicio de arriba. Ejemplo: si empieza mañana a las 10:00 a.m. y devuelve 40 → «se lo tenemos listo mañana a eso de las 10:40 a.m.».\nUse el mismo día que dice esa línea (hoy / mañana / el día que sea) — no lo cambie, ni ahora ni si después le vuelve a preguntar.\n\n## TRATO\nHable de *usted*, con cortesía salvadoreña: «Buenas tardes», «con mucho gusto», «permítame», «le cuento», «¿me confirma?», «quedo pendiente», «a sus órdenes». Cercano pero profesional.\nProhibido el voseo y la jerga: «qué onda», «cabal», «va pues», «puchica», «chivo», «dale», «che», «te provoca», «querés», «podés», «decime».\nMensajes de 2 a 4 líneas, salvo el menú o el resumen del pedido.\n\n## FORMATO (WhatsApp no entiende Markdown)\nNegrita con UN asterisco: *así* — nunca **doble**, ni # títulos, ni tablas. Viñetas con «•». Línea en blanco entre bloques. Máximo 2 emojis, de comida o servicio (🍗 🛵 ✅ 👍); nada de 🎉 🥳.\n\n## MENÚ\nCombos = pollo + chimichurri + tortillas + cebolla:\n• COMBO-ENT — El Primo Grande — $12.95 — entero, 8 tortillas, cebolla\n• COMBO-MED — El Primo — $6.95 — medio, 4 tortillas, media cebolla\n• COMBO-CTO — El Primito — $3.95 — cuarto, 2 tortillas, media cebolla\n\nSolo pollo: POLLO-ENT $11.00 · POLLO-MED $6.00 · POLLO-CTO $3.50\nExtras: CHIMI-30 (chimichurri 30ml) $0.75 · TORT-2 $0.50 · TORT-4 $0.75 · TORT-8 $1.00 · CEB-ENT $0.75 · CEB-MED $0.40\n\nCuando mencione un producto o extra, diga siempre su precio.\n\n## DATOS FIJOS (contéstelos usted, no los pase al equipo)\n• *Horario:* martes a domingo, 10:00 a.m. a 2:00 p.m. Lunes cerrado.\n• *Dirección:* 7a Av. Norte y 6a Calle Oriente #28, Barrio Las Ánimas, Chalchuapa — Plaza Las Palmeras, Local 5. Es la única que da; nunca dé la del Mercado.\n• *Preparación:* 30 a 45 minutos.\n• *Pagos:* efectivo, o tarjeta con un link que usted mismo manda en el chat.\n• *Delivery:* Chalchuapa y colonias aledañas hasta Ciudad Real y El Refugio.\nSi preguntan algo que no está aquí (promociones, facturación, empleo), dígalo con franqueza y ofrezca pasarlo con el equipo.\n\n## ENTREGA\nTodo pedido de WhatsApp sale de la *Sucursal Central*, sea retiro o domicilio. NUNCA pregunte de cuál sucursal ni ofrezca el Mercado Chalchuapa. Solo pregunte si lo *recoge* o se lo *llevan*.\n\n*Zona de envío: la decide usted con la dirección, nunca se la pregunta.*\n• *Centro — $1.50* — id cccccccc-0000-0000-0000-000000000001 — casco urbano: barrios El Ángel, El Calvario, Santa Cruz, San Juan, Las Ánimas; parque central, Santiago Apóstol, mercado municipal, alcaldía, el Tazumal.\n• *Alrededores — $2.00* — id cccccccc-0000-0000-0000-000000000002 — colonias, lotificaciones y cantones fuera del casco urbano, hasta Ciudad Real y El Refugio.\n\nSi la dirección es vaga, pida UNA referencia («¿cerca de qué queda?») y decida. Si queda más lejos que Ciudad Real o El Refugio, discúlpese y ofrezca retiro.\n\n## DATOS DEL CLIENTE\nNecesita nombre, dirección y correo (el teléfono ya lo tiene). Pídalos repartidos y con naturalidad, nunca como formulario. El correo una sola vez y con motivo («para enviarle el comprobante»); si no lo da, siga — jamás trabe una venta por eso.\nApenas tenga nombre + dirección llame a *guardar_contacto*, sin esperar a la orden. Si es conocido no le pida todo de nuevo: confirme («¿a la misma dirección?»).\n\n## PEDIDO\nSi ya le dijeron todo, no lo haga repetir. Confirme una vez antes de crear la orden:\n\n*Su pedido*\n• 1 El Primo — $6.95\n• Envío a Colonia Los Olivos — $2.00\n\n*Total: $8.95*\nPago: efectivo al recibir\n\n¿Lo confirmo?\n\nYa creada (la línea del link SOLO si paga con tarjeta):\n\n*Pedido confirmado* ✅\nNúmero: *PP-C-0034*\nTotal: *$8.95*\nListo a eso de las *10:40 a.m.*\n\nPague aquí con tarjeta:\nhttps://s.wompi.sv/XXXXXXX\n\nSe lo llevamos a Avenida Las Palmas #23, Colonia Los Olivos.\n\n## REGLAS QUE NO PUEDE ROMPER\n• *Link de pago.* crear_orden devuelve *payment_url*: péguelo completo y tal cual en el MISMO mensaje de confirmación. Si dice que no lo ve, vuelva a pegarlo — no pase el caso al equipo por eso. Si viene vacío, dígaselo y ofrezca efectivo.\n• *No invente envíos.* Lo único que le llega al cliente es el texto de ESTE mensaje; no hay otro canal. Prohibido decir «ya se lo mandé», «le llega en unos segundos» o «revise arriba». Lo que haya que mandar, va escrito ahora.\n• *Total y número de orden* son siempre los que devuelve crear_orden. Estime con los precios de arriba si quiere, pero lo que confirma sale de la herramienta.\n• *La receta es secreta.* Nunca enumere ingredientes ni explique cómo se marina o prepara el pollo ni el chimichurri: es el secreto de la casa 🤐, y de vuelta al pedido. Sí puede decir qué TRAE un combo — eso es menú.\n• No invente productos, precios, promociones ni descuentos.\n• Nunca pida datos de tarjeta, PIN ni contraseñas: para eso está el link.\n• Si pide una persona o tiene un reclamo: llame a *avisar_al_equipo* y diga «Permítame un momento, le paso con alguien del equipo».\n• Para el estado de una orden use *estado_orden* con el número (PP-C-XXXX). Si no lo tiene, pídaselo.\n• Si una herramienta falla, no muestre el error: diga que el sistema no responde en este momento y ofrezca reintentar o pasarlo con el equipo."
+        }
+      },
+      "id": "agent",
+      "name": "Agente Pollos Primos",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1376,
+        304
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Cerebro conversacional. Los precios y el total SIEMPRE los calcula Supabase vía la herramienta crear_orden."
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "claude-haiku-4-5-20251001"
+        },
+        "options": {
+          "maxTokensToSample": 1024
+        }
+      },
+      "id": "model_haiku",
+      "name": "Claude Haiku 4.5",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        560
+      ],
+      "notes": "Requiere una credencial Anthropic API (crearla en n8n → Credentials → Anthropic). En el instance actual: id 1tOHn3MZf5MD2oTB."
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Extract Message').first().json.phone }}",
+        "contextWindowLength": 10
+      },
+      "id": "memoria",
+      "name": "Memoria por Cliente",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        1120,
+        560
+      ],
+      "notes": "Historial por número de teléfono. Se pierde si n8n reinicia — los pedidos duran minutos, es aceptable."
+    },
+    {
+      "id": "tool_crear_code",
+      "name": "crear_orden",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        1312,
+        560
+      ],
+      "notes": "OJO: el sandbox del Code Tool NO tiene fetch(). El HTTP se hace con this.helpers.httpRequest.",
+      "parameters": {
+        "description": "Crea la orden y devuelve el numero (PP-C-XXXX), el total real, los minutos estimados y, si el pago es con link, la URL. Usela solo cuando ya tenga confirmados productos, tipo de entrega y pago. El total que devuelve es el unico valido.",
+        "language": "javaScript",
+        "jsCode": "const helpers = this.helpers;\nconst cfg = $('Merge Config').first().json.cfg;\n\nlet items = query.items;\nif (typeof items === 'string') {\n  try { items = JSON.parse(items); } catch (e) { items = []; }\n}\nif (!Array.isArray(items) || items.length === 0) {\n  return 'ERROR: no mandaste items. Volve a llamar la herramienta con items = [{\"sku\":\"COMBO-ENT\",\"quantity\":1}].';\n}\n\nconst body = {\n  source: 'whatsapp',\n  customer_phone: String(query.customer_phone || ''),\n  customer_name: query.customer_name || 'Cliente WhatsApp',\n  // Todo pedido de WhatsApp sale de Sucursal Central, sea retiro o domicilio.\n  // Se fija aca a proposito para que el agente no pueda mandarlo al Mercado.\n  location_code: 'C',\n  order_type: query.order_type || 'pickup',\n  payment_method: query.payment_method || 'cash',\n  items: items.map((i) => ({ sku: String(i.sku), quantity: Number(i.quantity) || 1 })),\n};\nif (query.customer_email) body.customer_email = query.customer_email;\nif (body.order_type === 'delivery') {\n  body.delivery_address = query.delivery_address || '';\n  if (query.delivery_zone_id) body.delivery_zone_id = query.delivery_zone_id;\n}\n\ntry {\n  const data = await helpers.httpRequest({\n    method: 'POST',\n    url: cfg.SUPABASE_URL + '/functions/v1/create-order',\n    headers: { 'Content-Type': 'application/json', 'x-webhook-secret': cfg.WHATSAPP_WEBHOOK_SECRET },\n    body,\n    json: true,\n  });\n  // Le recordamos al modelo que el link es obligatorio: es el fallo que ya tuvimos.\n  if (body.payment_method === 'payment_link') {\n    data.INSTRUCCION = data.payment_url\n      ? 'OBLIGATORIO: pegue payment_url completo en el mismo mensaje de confirmacion.'\n      : 'No se genero link de pago. Digaselo al cliente y ofrezca efectivo.';\n  }\n  return JSON.stringify(data);\n} catch (e) {\n  const d = (e && e.response && e.response.body) ? e.response.body : (e && e.message ? e.message : String(e));\n  return JSON.stringify({ error: true, detalle: d });\n}",
+        "specifyInputSchema": true,
+        "schemaType": "manual",
+        "inputSchema": "{\n \"type\": \"object\",\n \"properties\": {\n  \"customer_phone\": { \"type\": \"string\", \"description\": \"Teléfono de CLIENTE ACTUAL, solo dígitos. No lo invente.\" },\n  \"customer_name\": { \"type\": \"string\", \"description\": \"Nombre, o 'Cliente WhatsApp'.\" },\n  \"customer_email\": { \"type\": \"string\", \"description\": \"Correo si lo dio en cualquier momento de la conversación; si no, vacío.\" },\n  \"order_type\": { \"type\": \"string\", \"enum\": [\"pickup\", \"delivery\"] },\n  \"payment_method\": { \"type\": \"string\", \"enum\": [\"cash\", \"payment_link\"] },\n  \"delivery_address\": { \"type\": \"string\", \"description\": \"Dirección con referencias. Solo delivery.\" },\n  \"delivery_zone_id\": { \"type\": \"string\", \"description\": \"Centro cccccccc-0000-0000-0000-000000000001, Alrededores cccccccc-0000-0000-0000-000000000002. Solo delivery.\" },\n  \"items\": {\n   \"type\": \"array\",\n   \"description\": \"SKU del menú.\",\n   \"items\": { \"type\": \"object\", \"properties\": { \"sku\": { \"type\": \"string\" }, \"quantity\": { \"type\": \"number\" } }, \"required\": [\"sku\", \"quantity\"] }\n  }\n },\n \"required\": [\"customer_phone\", \"customer_name\", \"customer_email\", \"order_type\", \"payment_method\", \"items\"]\n}"
+      }
+    },
+    {
+      "id": "tool_estado_code",
+      "name": "estado_orden",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        1520,
+        560
+      ],
+      "parameters": {
+        "description": "Consulta el estado de una orden ya creada. Devuelve el estado en espanol y los minutos estimados.",
+        "language": "javaScript",
+        "jsCode": "const helpers = this.helpers;\nconst cfg = $('Merge Config').first().json.cfg;\ntry {\n  const data = await helpers.httpRequest({\n    method: 'POST',\n    url: cfg.SUPABASE_URL + '/functions/v1/order-status',\n    headers: { 'Content-Type': 'application/json' },\n    body: {\n      phone: String(query.customer_phone || ''),\n      order_number: String(query.order_number || ''),\n    },\n    json: true,\n  });\n  return JSON.stringify(data);\n} catch (e) {\n  const d = (e && e.response && e.response.body) ? e.response.body : (e && e.message ? e.message : String(e));\n  return JSON.stringify({ error: true, detalle: d });\n}",
+        "specifyInputSchema": true,
+        "schemaType": "manual",
+        "inputSchema": "{\n \"type\": \"object\",\n \"properties\": {\n  \"customer_phone\": {\n   \"type\": \"string\",\n   \"description\": \"Telefono de CLIENTE ACTUAL, solo digitos.\"\n  },\n  \"order_number\": {\n   \"type\": \"string\",\n   \"description\": \"Ej. PP-C-0042.\"\n  }\n },\n \"required\": [\n  \"customer_phone\",\n  \"order_number\"\n ]\n}"
+      }
+    },
+    {
+      "id": "tool_ghl_save_code",
+      "name": "guardar_contacto",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        1744,
+        560
+      ],
+      "parameters": {
+        "description": "Guarda o actualiza el cliente en el CRM. Usela apenas tenga nombre y direccion, sin esperar a la orden.",
+        "language": "javaScript",
+        "jsCode": "const helpers = this.helpers;\nconst cfg = $('Merge Config').first().json.cfg;\ntry {\n  await helpers.httpRequest({\n    method: 'POST',\n    url: cfg.SUPABASE_URL + '/functions/v1/ghl-contact',\n    headers: { 'Content-Type': 'application/json', 'x-webhook-secret': cfg.WHATSAPP_WEBHOOK_SECRET },\n    body: {\n      action: 'upsert',\n      phone: String(query.customer_phone || ''),\n      name: query.nombre || '',\n      email: query.correo || '',\n      address: query.direccion || '',\n    },\n    json: true,\n  });\n  return 'Contacto guardado en el CRM.';\n} catch (e) {\n  const d = (e && e.response && e.response.body) ? e.response.body : (e && e.message ? e.message : String(e));\n  return JSON.stringify({ error: true, detalle: d });\n}",
+        "specifyInputSchema": true,
+        "schemaType": "manual",
+        "inputSchema": "{\n \"type\": \"object\",\n \"properties\": {\n  \"customer_phone\": {\n   \"type\": \"string\",\n   \"description\": \"Telefono de CLIENTE ACTUAL, solo digitos.\"\n  },\n  \"nombre\": {\n   \"type\": \"string\"\n  },\n  \"correo\": {\n   \"type\": \"string\",\n   \"description\": \"Vacio si no lo dio.\"\n  },\n  \"direccion\": {\n   \"type\": \"string\",\n   \"description\": \"Con referencias. Vacio si no la dio.\"\n  }\n },\n \"required\": [\n  \"customer_phone\",\n  \"nombre\"\n ]\n}"
+      }
+    },
+    {
+      "id": "tool_handoff_code",
+      "name": "avisar_al_equipo",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        1968,
+        560
+      ],
+      "parameters": {
+        "description": "Avisa al equipo por WhatsApp que este cliente necesita atencion humana (pidio hablar con alguien, reclamo, o algo que usted no puede resolver).",
+        "language": "javaScript",
+        "jsCode": "const helpers = this.helpers;\nconst cfg = $('Merge Config').first().json.cfg;\nconst url = 'https://graph.facebook.com/' + (cfg.WHATSAPP_API_VERSION || 'v18.0') + '/' + cfg.WHATSAPP_PHONE_ID + '/messages';\ntry {\n  await helpers.httpRequest({\n    method: 'POST',\n    url,\n    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + cfg.WHATSAPP_ACCESS_TOKEN },\n    body: {\n      messaging_product: 'whatsapp',\n      recipient_type: 'individual',\n      to: String(cfg.STAFF_WHATSAPP_NUMBER),\n      type: 'text',\n      text: { preview_url: false, body: '🚨 ATENCION — ' + String(query.motivo || '') },\n    },\n    json: true,\n  });\n  return 'Listo: el equipo ya recibio el aviso.';\n} catch (e) {\n  const d = (e && e.response && e.response.body) ? e.response.body : (e && e.message ? e.message : String(e));\n  return JSON.stringify({ error: true, detalle: d });\n}",
+        "specifyInputSchema": true,
+        "schemaType": "manual",
+        "inputSchema": "{\n \"type\": \"object\",\n \"properties\": {\n  \"motivo\": {\n   \"type\": \"string\",\n   \"description\": \"Resumen corto: nombre, telefono, que necesita y en que va el pedido.\"\n  }\n },\n \"required\": [\n  \"motivo\"\n ]\n}"
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// La respuesta del agente sale en $json.output. Si el agente falló, mandamos un fallback.\nconst phone = $('Extract Message').first().json.phone;\nlet text = ($json.output || '').toString().trim();\nif (!text) {\n  text = 'Uy, se me trabó el sistema un momento 😅 Volvé a escribirme porfa, o escribí \"operador\" para hablar con el equipo.';\n}\n// WhatsApp corta en 4096 caracteres\nconst chunks = [];\nwhile (text.length > 4000) {\n  let cut = text.lastIndexOf('\\n', 4000);\n  if (cut < 2000) cut = 4000;\n  chunks.push(text.slice(0, cut));\n  text = text.slice(cut).trim();\n}\nif (text) chunks.push(text);\nreturn chunks.map(c => ({ json: { to: phone, text: c } }));"
+      },
+      "id": "prep_v2",
+      "name": "Prep Sends",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/{{ $('Merge Config').first().json.cfg.WHATSAPP_API_VERSION }}/{{ $('Merge Config').first().json.cfg.WHATSAPP_PHONE_ID }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Merge Config').first().json.cfg.WHATSAPP_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: $json.to, type: 'text', text: { preview_url: false, body: $json.text } }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "send_v2",
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2192,
+        304
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "wh_verify_v2",
+      "name": "Webhook Verify (GET) v2",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        800
+      ],
+      "notes": "Handshake de verificacion de Meta (hub.challenge). Debe compartir la ruta con el webhook POST.",
+      "parameters": {
+        "path": "pollos-primos-whatsapp-v2",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "get_verify_config_v2",
+      "name": "Get Verify Config v2",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        800
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "Mq8RA5GKDrkPMtCY",
+          "cachedResultName": "pollos_primos_config"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "key",
+              "keyValue": "WHATSAPP_VERIFY_TOKEN"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "verify_token_v2",
+      "name": "Verify Token v2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        800
+      ],
+      "parameters": {
+        "jsCode": "const q = $('Webhook Verify (GET) v2').first().json.query || {};\nlet token = ($json && $json.key === 'WHATSAPP_VERIFY_TOKEN') ? $json.value : '';\ntry { if ($env.WHATSAPP_VERIFY_TOKEN) token = $env.WHATSAPP_VERIFY_TOKEN; } catch (e) {}\nconst ok = q['hub.mode'] === 'subscribe' && !!token && q['hub.verify_token'] === token;\nreturn [{ json: { challenge: ok ? q['hub.challenge'] : 'forbidden', ok } }];"
+      }
+    },
+    {
+      "id": "respond_challenge_v2",
+      "name": "Respond Challenge v2",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        800
+      ],
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.challenge }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wa_log",
+      "name": "Registrar Chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2416,
+        304
+      ],
+      "executeOnce": true,
+      "onError": "continueRegularOutput",
+      "notes": "Guarda el turno completo (mensaje del cliente + respuesta del bot) para /conversaciones en el POS. Va DESPUES de Send WhatsApp para no agregar latencia, y con onError continue para que un fallo de log jamas rompa la conversacion.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://xuhrenrsrmktfewfejkm.supabase.co/functions/v1/wa-log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $('Merge Config').first().json.cfg.WHATSAPP_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ phone: $('Extract Message').first().json.phone, name: $('Extract Message').first().json.name, ghl_contact_id: $('Buscar Contacto GHL').first().json?.contact_id || undefined, messages: [{ direction: 'in', text: $('Extract Message').first().json.text, wa_message_id: $('Extract Message').first().json.msgId }].concat($('Prep Sends').all().map(i => ({ direction: 'out', text: i.json.text }))) }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Webhook v2": {
+      "main": [
+        [
+          {
+            "node": "Extract Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Message": {
+      "main": [
+        [
+          {
+            "node": "Get Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Config": {
+      "main": [
+        [
+          {
+            "node": "Merge Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Config": {
+      "main": [
+        [
+          {
+            "node": "Buscar Contacto GHL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Contacto GHL": {
+      "main": [
+        [
+          {
+            "node": "Agente Pollos Primos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Pollos Primos": {
+      "main": [
+        [
+          {
+            "node": "Prep Sends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Sends": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Haiku 4.5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Pollos Primos",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria por Cliente": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente Pollos Primos",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "crear_orden": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Pollos Primos",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "estado_orden": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Pollos Primos",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "guardar_contacto": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Pollos Primos",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "avisar_al_equipo": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Pollos Primos",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Verify (GET) v2": {
+      "main": [
+        [
+          {
+            "node": "Get Verify Config v2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Verify Config v2": {
+      "main": [
+        [
+          {
+            "node": "Verify Token v2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Token v2": {
+      "main": [
+        [
+          {
+            "node": "Respond Challenge v2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Registrar Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

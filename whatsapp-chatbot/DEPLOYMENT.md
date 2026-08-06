@@ -1,13 +1,20 @@
 # Los Pollos Primos — WhatsApp Chatbot: Deployment Guide
 
-**Status: DEPLOYED AND ACTIVE** on `https://n8n.automateaiservices.com` (workflow ID `MmlbbbBghiKWttqP`), tested end-to-end on 2026-07-12. Only the Meta/WhatsApp credentials are pending (see "Go-live checklist").
+Hay **dos workflows** en n8n:
+
+| Workflow | ID | Ruta del webhook | Estado |
+|---|---|---|---|
+| **v2 — Agente IA** | `ESGEpo8Xky8m4uXu` | `pollos-primos-whatsapp` | 🟢 **ACTIVO — atiende a los clientes** desde el 2026-08-06. Claude Haiku 4.5 + 4 herramientas. |
+| v1 — máquina de estados | `MmlbbbBghiKWttqP` | *(liberada)* | ⚪ Desactivado, se queda como **rollback**. Flujo de 7 pasos, determinista. |
+
+**Rollback (1 minuto):** en v2 devolvé la ruta de los dos nodos webhook a `pollos-primos-whatsapp-v2`, y reactivá v1. En Meta no se toca nada.
 
 ## URLs
 
 | Purpose | URL |
 |---|---|
-| Incoming messages (Meta → n8n) | `https://n8n.automateaiservices.com/webhook/pollos-primos-whatsapp` (POST) |
-| Meta verification handshake | same URL (GET) — already tested, echoes `hub.challenge` |
+| Incoming messages (Meta → n8n) | `https://n8n.automateaiservices.com/webhook/pollos-primos-whatsapp` (POST) — hoy la sirve **v2** |
+| Meta verification handshake | same URL (GET) — verificado en v2: token correcto devuelve el `hub.challenge`, token malo devuelve `forbidden` |
 
 Register **that single URL** as the Callback URL in Meta App Dashboard → WhatsApp → Configuration → Webhooks, subscribe to the `messages` field, and use the verify token below.
 
@@ -63,13 +70,226 @@ Note: the project brief listed `graph.instagram.com` as the API host — that's 
 ### Actual API contract (bot updated 2026-07-16 to match the deployed edge functions)
 The original brief's contract was outdated. The bot now sends:
 
-- **create-order**: `{ source: 'whatsapp', location_code: 'C'|'M', order_type: 'pickup'|'delivery', customer_name, customer_phone, delivery_address?, delivery_zone_id? (UUID), payment_method: 'cash'|'payment_link', items: [{ sku, quantity }] }` → response `{ order_number, subtotal, delivery_fee, total, estimated_minutes, payment_url, items }`. Delivery-zone UUIDs are hardcoded in the Brain: Zona 1 `cccccccc-0000-0000-0000-000000000001` ($1.00), Zona 2 `…0002` ($1.50), Central only.
+- **create-order**: `{ source: 'whatsapp', location_code: 'C'|'M', order_type: 'pickup'|'delivery', customer_name, customer_email?, customer_phone, delivery_address?, delivery_zone_id? (UUID), payment_method: 'cash'|'payment_link', items: [{ sku, quantity }] }` → response `{ order_number, subtotal, delivery_fee, total, estimated_minutes, payment_url, items }`.
+- **ghl-contact** (nueva, 2026-08-01): POST con `x-webhook-secret`. `{action:'lookup', phone}` → `{found, first_name, contact_id}` para saludar por nombre; `{action:'upsert', phone, name, email, address}` → guarda el contacto en GoHighLevel. Usa los secretos `GHL_API_KEY` / `GHL_LOCATION_ID` que ya existían.
+
+### Zonas de delivery (actualizadas 2026-08-01, migración `0020_delivery_zones_chalchuapa.sql`)
+| Zona | UUID | Costo |
+|---|---|---|
+| Chalchuapa Centro | `cccccccc-0000-0000-0000-000000000001` | **$1.50** |
+| Chalchuapa Alrededores (hasta Ciudad Real y El Refugio) | `cccccccc-0000-0000-0000-000000000002` | **$2.00** |
+
+Delivery sale únicamente de Sucursal Central — el bot ya no pregunta de qué sucursal sale el envío. Mercado Chalchuapa es solo retiro.
 - **order-status**: **POST** (not GET) with JSON body `{ phone, order_number }` → returns `status`, Spanish `status_label` (Recibido/En preparación/Listo/En camino/Entregado/Cancelado), `estimated_minutes`, items, timeline.
 
 ### Prices (real SKUs from the products table, mirrored in the Brain)
 COMBO-ENT $12.95 · COMBO-MED $6.95 · COMBO-CTO $3.95 · POLLO-ENT $11.00 · POLLO-MED $6.00 · POLLO-CTO $3.50 · CHIMI-30 $0.75 · TORT-2 $0.50 · TORT-4 $0.75 · TORT-8 $1.00 · CEB-ENT $0.75 · CEB-MED $0.40. Display-only — the create-order response total is what's quoted to the customer. If POS prices change, update the Brain's `PRICES` map to match.
 
 > ⚠️ `los-pollos-primos-whatsapp-chatbot.workflow.json` in this folder predates the 2026-07-16 SKU/contract update — the live n8n workflow (`MmlbbbBghiKWttqP`) is the source of truth.
+
+---
+
+# v2 — Agente IA (`ESGEpo8Xky8m4uXu`)
+
+Respaldo en `los-pollos-primos-whatsapp-chatbot-v2-agente.workflow.json`.
+
+## Arquitectura
+
+```
+Meta POST ──> WhatsApp Webhook v2 ──> Extract Message ──> Get Config ──> Merge Config
+                                                                            │
+                                                                            ▼
+                                                              Buscar Contacto GHL  (lookup deterministico
+                                                                            │       para saludar por nombre)
+                                                                            ▼
+                                                              Agente Pollos Primos ──> Prep Sends ──> Send WhatsApp
+                                                                            │
+                                       ┌──────────────┬─────────┴────────┬──────────────────┐
+                              Claude Haiku 4.5   Memoria por      crear_orden        estado_orden
+                              (ai_languageModel)  Cliente         guardar_contacto   avisar_al_equipo
+                                                  (ai_memory)     ────── ai_tool ──────
+```
+
+Rama GET aparte (`Webhook Verify (GET) v2` → `Get Verify Config v2` → `Verify Token v2` → `Respond Challenge v2`) para el handshake de Meta. Verificada: token correcto devuelve el `hub.challenge`, token incorrecto devuelve `forbidden`.
+
+Sin tabla de estado: el hilo de conversación vive en **Memoria por Cliente** (`memoryBufferWindow`, sessionKey = teléfono, ventana 12). Se pierde si n8n reinicia; los pedidos duran minutos, es aceptable.
+
+## Las 4 herramientas
+
+| Herramienta | Llama a | Devuelve |
+|---|---|---|
+| `crear_orden` | `create-order` | número de orden, total real, minutos, `payment_url` |
+| `estado_orden` | `order-status` | estado en español + minutos + items |
+| `guardar_contacto` | `ghl-contact` (`upsert`) | contacto en GoHighLevel |
+| `avisar_al_equipo` | Graph API → `STAFF_WHATSAPP_NUMBER` | aviso de handoff al equipo |
+
+### ⚠️ Trampa de n8n: el HTTP Request Tool no sirve en este instance
+
+Los nodos `@n8n/n8n-nodes-langchain.toolHttpRequest` fallan siempre con:
+
+```
+The node "@n8n/n8n-nodes-langchain.toolHttpRequest" has a "supplyData" method but no "execute" method.
+```
+
+Descartado: el modelo, los esquemas, las conexiones, la versión del nodo, la caché del workflow. Un `toolCode` trivial en cambio **sí ejecuta**, o sea que el fallo es específico del nodo HTTP en esta versión de n8n.
+
+**La solución:** las 4 herramientas son **Code Tools** (`toolCode` v1.3) que hacen el HTTP en JS.
+
+Y dentro de ese sandbox:
+
+- ❌ **`fetch` NO existe** (`typeof fetch === 'undefined'`). Un `fetch()` falla en ~30 ms y el agente lo reporta como «se me traba el sistema».
+- ✅ `this.helpers.httpRequest({ method, url, headers, body, json: true })` — **esto es lo que hay que usar**.
+- ✅ `require` existe.
+- ✅ `$('Merge Config').first().json.cfg` funciona — así llegan los secretos a las herramientas sin hardcodearlos.
+
+Si alguna herramienta se cae, primero revisá que no se haya colado un `fetch`.
+
+## Preguntas frecuentes que el bot contesta solo
+
+Van **dentro del system prompt**, no en una herramienta: son datos fijos y cortos, y una llamada a herramienta costaría dos vueltas de modelo (más caro que los ~60 tokens que ocupan).
+
+| Dato | Valor | Fuente |
+|---|---|---|
+| Horario | Martes a domingo, 10:00 a.m. – 2:00 p.m. Lunes cerrado | `src/pages/site/siteInfo.ts` |
+| Dirección | 7a Av. Norte y 6a Calle Oriente #28, Barrio Las Ánimas — Plaza Las Palmeras, Local 5 | idem |
+| Preparación | 30–45 minutos | idem |
+| Pagos | Efectivo al recibir, o link de tarjeta | — |
+| Delivery | Chalchuapa y aledaños hasta Ciudad Real / El Refugio | migración 0020 |
+
+Solo se da la dirección de **Sucursal Central**; la del Mercado nunca. Si preguntan algo que no está en el prompt (promociones, facturación, empleo), lo dice con franqueza y ofrece pasarlo con el equipo.
+
+> ⚠️ Estos datos están **duplicados** entre `siteInfo.ts` y el system prompt del agente. Si cambia el horario o la dirección, hay que tocar los dos.
+
+## Tono y formato (actualizado 2026-08-06)
+
+- **Trato de usted**, cortesía salvadoreña («Buenas tardes», «con mucho gusto», «permítame», «¿me confirma?», «a sus órdenes»). Prohibidos explícitamente el voseo y la jerga («qué onda», «cabal», «va pues», «puchica», «chivo», «dale», «che»).
+- **Formato WhatsApp, no Markdown.** WhatsApp usa `*negrita*` con **un** asterisco; `**doble**` sale literal en pantalla. El prompt lo prohíbe junto con los `#` de título y las tablas. Viñetas con `•`, línea en blanco entre bloques, máximo 2 emojis.
+- El prompt trae **plantillas fijas** para el resumen antes de crear la orden y para la confirmación, así todos los pedidos se ven igual.
+
+## Horario de atención — se calcula en JS, no en el prompt
+
+El agente **no tiene reloj**: sin esto cotizaba «25 minutos» a las 7 de la mañana, tres horas antes de abrir. La aritmética de fechas es justo donde un LLM se equivoca, así que el nodo **`Merge Config`** la resuelve en JavaScript y le pasa el resultado ya masticado:
+
+```js
+horario = {
+  ahora:      'jueves 6:58 a.m.',
+  estado:     'CERRADO',            // o 'ABIERTO (cerramos a las 2:00 p.m.)'
+  inmediato:  false,                // ¿se puede preparar ya?
+  base:       'hoy a las 10:00 a.m.' // desde cuándo se empieza a preparar
+}
+```
+
+Reglas que aplica (`America/El_Salvador`, martes a domingo 10:00–14:00, lunes cerrado):
+
+- Antes de abrir en un día hábil → base = hoy a las 10:00 a.m.
+- Después de cerrar, o lunes → base = el siguiente día que abre, a las 10:00 a.m.
+- Abierto pero faltan menos de **45 min** para cerrar → no alcanza a salir, pasa al siguiente día.
+
+El agente solo hace una suma: `base + estimated_minutes` de `crear_orden`, y **da la hora en reloj**, nunca «en X minutos». El prompt le ordena reutilizar el mismo día que trae `base` (hoy / mañana / el día), porque al recapitular tendía a cambiarlo.
+
+> Si cambian los horarios hay que tocar `Merge Config` (`ABRE`, `CIERRA`, `abreEseDia`), el bloque DATOS FIJOS del prompt, y `siteInfo.ts`.
+
+## Solo Sucursal Central
+
+Todo pedido de WhatsApp sale de Central, sea retiro o domicilio. Está forzado en **dos** niveles:
+
+1. El prompt prohíbe preguntar de cuál sucursal y ofrecer el Mercado.
+2. `crear_orden` **hardcodea `location_code: 'C'`** y el campo ya no existe en el esquema de la herramienta — el modelo no tiene forma de mandar un pedido al Mercado aunque quisiera.
+
+## Link de pago con tarjeta
+
+Wompi funciona (`payment_url` sale como `https://s.wompi.sv/…` y redirige a `pagos.wompi.sv`). El fallo era del agente: la plantilla de confirmación no tenía renglón para el link, así que lo omitía — y después le decía al cliente «ya se lo envié», que era falso.
+
+Tres capas de arreglo:
+
+1. La plantilla de confirmación trae el renglón del link.
+2. Regla dura: pegar `payment_url` completo en el **mismo** mensaje; si el cliente dice que no lo ve, volver a pegarlo en vez de escalar; si viene vacío, decirlo y ofrecer efectivo.
+3. `crear_orden` inyecta un campo `INSTRUCCION` en la respuesta recordándoselo, para que la instrucción llegue junto al dato y no solo desde el prompt.
+
+Además hay una regla general **«no invente envíos»**: lo único que le llega al cliente es el texto de ese mensaje; queda prohibido decir «ya se lo mandé», «le llega en unos segundos» o «revise arriba».
+
+## Historial de conversaciones en el POS (`/conversaciones`)
+
+Antes del 2026-08-06 los mensajes **no se guardaban en ninguna parte**: vivían en la memoria RAM de n8n (últimos 10 intercambios, se pierden al reiniciar) y en los logs de ejecución, que se purgan solos y no se pueden consultar por cliente.
+
+Ahora hay un almacén propio:
+
+```
+Send WhatsApp ──> Registrar Chat ──> wa-log ──> whatsapp_conversations
+                  (executeOnce)                 whatsapp_messages
+                                                       │
+                                          POS /conversaciones (Realtime)
+```
+
+- **Migración `0021_whatsapp_conversations.sql`** — `whatsapp_conversations` (una fila por teléfono, con vista previa y contador) + `whatsapp_messages` (cada mensaje, con el `wamid` de Meta para deduplicar).
+- **Edge function `wa-log`** — POST protegido con `x-webhook-secret`. Recibe el turno completo (mensaje del cliente + respuesta del bot) en **una sola llamada**.
+- **Nodo `Registrar Chat`** — va **después** de `Send WhatsApp`, con `executeOnce: true` y `onError: continueRegularOutput`. Así no agrega ni un milisegundo antes de responderle al cliente, y si el log falla, la conversación sigue igual: se pierde una línea del historial, nunca una venta.
+
+**Acceso:** solo `admin` y `superadmin`. Las conversaciones traen datos personales (nombre, dirección, teléfono), así que RLS las cierra al resto de roles — verificado: un cajero ve 0 filas. El POS **solo lee**: no existen políticas de insert/update/delete para `authenticated`, así que el historial no se puede alterar desde el navegador.
+
+### Detalles que costaron
+
+- **No se puede usar `upsert` con `onConflict: 'wa_message_id'`.** El índice único es *parcial* (`where wa_message_id is not null`, porque los mensajes salientes no tienen wamid) y Postgres no infiere índices parciales en `ON CONFLICT`. Se consulta primero y se descarta el turno completo si el entrante ya estaba — descartarlo entero es importante: la respuesta del bot no tiene wamid propio y si no quedaría duplicada.
+- **La pantalla renderiza `*negrita*` de WhatsApp**, si no se verían los asteriscos crudos en vez de lo que realmente ve el cliente.
+
+### Lo que NO hace
+
+Es un visor de **solo lectura**: no se puede responder desde el POS. Responder implicaría además silenciar al bot para ese cliente mientras un humano atiende (el handoff pegajoso que v2 no tiene) y devolverle el control después.
+
+También arranca **desde cero**: lo conversado antes del 2026-08-06 no se puede recuperar.
+
+Marcar las conversaciones donde el bot llamó a `avisar_al_equipo` sería agregar una columna y una línea en esa herramienta.
+
+## Costo de tokens
+
+El nodo Anthropic de n8n (`lmChatAnthropic` v1.5) **no expone prompt caching** — no hay opción de `cache_control`, así que el system prompt y los esquemas de herramientas se pagan completos en cada mensaje. Por eso el ahorro tuvo que salir de acortarlos.
+
+| | Original | Ronda FAQ | Ahora (horario + link) |
+|---|---|---|---|
+| System prompt | ~1,709 tok | ~1,560 tok | ~1,717 tok |
+| Descripciones + esquemas de las 4 herramientas | ~1,262 tok | ~866 tok | ~866 tok |
+| **Fijo por mensaje** | **~2,971 tok** | **~2,426 tok** | **~2,583 tok (−13% vs. original)** |
+| Ventana de memoria | 12 intercambios | 10 | 10 |
+
+El prompt volvió a subir al meter el bloque de horario, la regla del link y la de «no invente envíos»; se recuperó comprimiendo lo demás (se deduplicó el horario, se acortaron las referencias de zona y la lista de jerga prohibida). Sigue **por debajo del original** aunque hace bastante más.
+
+Si algún día n8n expone caching, el fijo baja otro ~90% en los aciertos de caché — es la mejora grande que queda pendiente.
+
+## Diferencias con v1 que hay que tener en mente
+
+- **Sin deduplicación por `msgId`.** v1 la tenía. El webhook de v2 responde 200 al instante (`responseMode` por defecto), así que Meta no reintenta y el riesgo es bajo — pero si el cliente manda dos mensajes casi a la vez, las dos ejecuciones corren en paralelo sobre la misma memoria y en teoría podrían crear dos órdenes. v1 lo serializaba con la tabla de estado.
+- **Sin `HANDOFF` pegajoso.** En v1, tras un handoff el bot se callaba para ese cliente hasta que escribiera `menú`. En v2 el agente avisa al equipo y sigue conversando.
+- El total, el número de orden y los ítems siempre los da el servidor — el agente nunca los inventa (probado).
+
+## Pruebas hechas (2026-08-06, todas contra el sistema real)
+
+| Qué | Resultado |
+|---|---|
+| `estado_orden` con teléfono que **no** coincide | «no aparece en el sistema» ✅ (el endpoint valida teléfono + orden) |
+| `estado_orden` con el par correcto (79422273 / PP-C-0029) | «Recibida, ~25 minutos», con los ítems reales ✅ |
+| Pedido completo delivery | orden **PP-C-0033** creada de verdad: subtotal 16.45 + envío 2.00 = **18.45** ✅ |
+| Detección de zona («Colonia Ciudad Real») | Chalchuapa Alrededores, $2.00 ✅ |
+| No mencionar la sucursal en delivery | ✅ |
+| Teléfono correcto en la orden (no inventado) | ✅ |
+| `guardar_contacto` | contacto en GHL con nombre, teléfono, correo, dirección, ciudad y tags ✅ |
+| Saludo por nombre en la 2ª conversación | el lookup devolvió `found: true` ✅ |
+| `avisar_al_equipo` (reclamo) | aviso enviado al equipo ✅ |
+| Tono chalchuapaneco | «¡Qué onda!», «va pues», «cabal», «puchica», voseo; cero «che»/«dale» ✅ |
+| Handshake GET de Meta | challenge correcto / `forbidden` ✅ |
+
+La orden de prueba PP-C-0033 se borró y se le devolvió el stock al inventario.
+
+## Cutover a producción — HECHO el 2026-08-06
+
+1. ✅ v1 (`MmlbbbBghiKWttqP`) desactivado.
+2. ✅ Los dos nodos webhook de v2 (`WhatsApp Webhook v2` y `Webhook Verify (GET) v2`) movidos a la ruta `pollos-primos-whatsapp`.
+3. ✅ En Meta no se tocó nada — la Callback URL y el verify token siguen igual.
+4. ✅ Verificado después del cambio: el handshake GET devuelve el challenge, un POST de mensaje entra y el agente responde con el menú; la ruta vieja `-v2` ya da 404.
+
+> El respaldo `los-pollos-primos-whatsapp-chatbot-v2-agente.workflow.json` quedó con la ruta `pollos-primos-whatsapp-v2` en los dos nodos webhook. Si lo reimportás para restaurar producción, cambiá esa ruta a `pollos-primos-whatsapp`.
+
+### Rollback
+Devolverle a v2 la ruta `-v2` en los dos webhooks y reactivar v1.
 
 ## Go-live checklist (updated 2026-07-16)
 

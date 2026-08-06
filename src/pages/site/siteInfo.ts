@@ -69,9 +69,11 @@ export const site = {
   prepTime: '30–45 minutos',
   delivery: {
     note: 'Delivery solo desde Sucursal Central',
+    // Mismas zonas y precios que cobra el chatbot de WhatsApp y el POS
+    // (migración 0020_delivery_zones_chalchuapa.sql). Si cambian acá, cambian allá.
     zones: [
-      { name: 'Zona 1', fee: '$1.00' },
-      { name: 'Zona 2', fee: '$1.50' },
+      { name: 'Chalchuapa Centro', fee: '$1.50' },
+      { name: 'Chalchuapa Alrededores (hasta Ciudad Real y El Refugio)', fee: '$2.00' },
     ],
   },
 } as const;

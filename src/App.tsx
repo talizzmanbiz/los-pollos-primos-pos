@@ -12,6 +12,7 @@ import InventoryPage from './pages/inventory/InventoryPage';
 import TransfersPage from './pages/transfers/TransfersPage';
 import ReportsPage from './pages/reports/ReportsPage';
 import AccountingPage from './pages/accounting/AccountingPage';
+import ConversationsPage from './pages/conversations/ConversationsPage';
 import AdminPage from './pages/admin/AdminPage';
 import StorePage from './pages/store/StorePage';
 import CheckoutPage from './pages/store/CheckoutPage';
@@ -124,6 +125,14 @@ export default function App() {
             element={
               <RoleGuard roles={['admin', 'contador', 'auditor']}>
                 <AccountingPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/conversaciones"
+            element={
+              <RoleGuard roles={['admin']}>
+                <ConversationsPage />
               </RoleGuard>
             }
           />

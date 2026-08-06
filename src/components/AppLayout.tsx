@@ -9,6 +9,7 @@ import {
   ArrowLeftRight,
   BarChart3,
   Calculator,
+  MessageSquare,
   Settings,
   MapPin,
   UserRound,
@@ -41,6 +42,7 @@ const NAV: NavItem[] = [
   { to: '/transfers', label: 'Transferencias', icon: ArrowLeftRight, roles: ['admin'] },
   { to: '/reports', label: 'Reportes', icon: BarChart3, roles: ['admin'] },
   { to: '/contabilidad', label: 'Contabilidad', icon: Calculator, roles: ['admin', 'contador', 'auditor'] },
+  { to: '/conversaciones', label: 'Conversaciones', icon: MessageSquare, roles: ['admin'] },
   { to: '/admin', label: 'Administración', icon: Settings, roles: ['admin'] },
 ];
 

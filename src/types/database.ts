@@ -1153,6 +1153,77 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_conversations: {
+        Row: {
+          created_at: string
+          customer_name: string | null
+          ghl_contact_id: string | null
+          id: string
+          last_direction: string | null
+          last_message_at: string
+          last_message_preview: string | null
+          message_count: number
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name?: string | null
+          ghl_contact_id?: string | null
+          id?: string
+          last_direction?: string | null
+          last_message_at?: string
+          last_message_preview?: string | null
+          message_count?: number
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string | null
+          ghl_contact_id?: string | null
+          id?: string
+          last_direction?: string | null
+          last_message_at?: string
+          last_message_preview?: string | null
+          message_count?: number
+          phone?: string
+        }
+        Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          direction: string
+          id: string
+          wa_message_id: string | null
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          direction: string
+          id?: string
+          wa_message_id?: string | null
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          wa_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       accounting_iva_monthly: {
@@ -1298,3 +1369,5 @@ export type IvaMonthly = Database["public"]["Views"]["accounting_iva_monthly"]["
 export type LedgerRow = Database["public"]["Functions"]["accounting_ledger"]["Returns"][number]
 export type AccountingPeriod = Tables<"accounting_periods">
 export type AccountingPeriodStatus = Enums<"accounting_period_status">
+export type WhatsappConversation = Tables<"whatsapp_conversations">
+export type WhatsappMessage = Tables<"whatsapp_messages">
