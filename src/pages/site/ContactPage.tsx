@@ -54,11 +54,18 @@ export default function ContactPage() {
                   </li>
                 ))}
               </ul>
-              {site.mapsUrl && (
-                <a href={site.mapsUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center font-semibold text-brand-700 hover:underline">
-                  Ver en Google Maps →
-                </a>
-              )}
+              <div className="mt-2 flex flex-col items-start">
+                {site.mapsUrl && (
+                  <a href={site.mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center font-semibold text-brand-700 hover:underline">
+                    Ver en Google Maps →
+                  </a>
+                )}
+                {site.reviewUrl && (
+                  <a href={site.reviewUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center font-semibold text-brand-700 hover:underline">
+                    Dejanos tu reseña ⭐
+                  </a>
+                )}
+              </div>
             </InfoCard>
 
             <InfoCard title="Horarios" icon={Clock}>

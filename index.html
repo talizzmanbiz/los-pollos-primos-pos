@@ -2,7 +2,9 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
+    <link rel="apple-touch-icon" href="/favicon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#ee6206" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -27,6 +29,56 @@
     />
     <meta property="og:image" content="/images/hero.webp" />
     <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Datos estructurados del negocio (Google: ficha local / rich results).
+         Estático a propósito: los rastreadores lo leen sin ejecutar el bundle.
+         ⚠️ Dirección, horarios y teléfono están duplicados de
+         src/pages/site/siteInfo.ts — si cambian allá, cambian aquí. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Restaurant",
+        "@id": "https://los-pollosprimos.com/#restaurante",
+        "name": "Los Pollos Primos",
+        "description": "Pollo rostizado marinado en jugo de piña y naranja natural, con especias seleccionadas.",
+        "url": "https://los-pollosprimos.com",
+        "image": "https://los-pollosprimos.com/images/hero.webp",
+        "logo": "https://los-pollosprimos.com/logo-primos.png",
+        "servesCuisine": "Pollo rostizado",
+        "priceRange": "$",
+        "currenciesAccepted": "USD",
+        "telephone": "+50370476975",
+        "email": "admin@los-pollosprimos.com",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "7a Av. Norte y 6a Calle Oriente #28, Barrio Las Ánimas — Plaza Las Palmeras, Local 5",
+          "addressLocality": "Chalchuapa",
+          "addressRegion": "Santa Ana",
+          "addressCountry": "SV"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 13.9869433,
+          "longitude": -89.6757607
+        },
+        "hasMap": "https://www.google.com/maps/place/Los+Pollos+Primos/@13.9869433,-89.6757607,17z/data=!3m1!4b1!4m6!3m5!1s0x8f62ebf4f1aa0009:0xe38b22f627dcdc3b!8m2!3d13.9869433!4d-89.6757607!16s%2Fg%2F11zdf8719j",
+        "sameAs": [
+          "https://www.google.com/maps/place/Los+Pollos+Primos/@13.9869433,-89.6757607,17z/data=!3m1!4b1!4m6!3m5!1s0x8f62ebf4f1aa0009:0xe38b22f627dcdc3b!8m2!3d13.9869433!4d-89.6757607!16s%2Fg%2F11zdf8719j",
+          "https://www.facebook.com/profile.php?id=61581223217773",
+          "https://www.instagram.com/rosti_primos/"
+        ],
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+            "opens": "10:00",
+            "closes": "14:00"
+          }
+        ],
+        "hasMenu": "https://los-pollosprimos.com/tienda",
+        "acceptsReservations": "False"
+      }
+    </script>
 
     <!-- Fonts: Poppins (display) + Inter (body) + JetBrains Mono (prices/qty).
          All three load here, not from index.css: `@import "tailwindcss"` is

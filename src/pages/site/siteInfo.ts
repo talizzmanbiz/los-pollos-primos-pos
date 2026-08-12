@@ -38,10 +38,17 @@ export const site = {
   // Street / reference address of Sucursal Central for the "dirección física".
   addressLine:
     '7a Av. Norte y 6a Calle Oriente #28, Barrio Las Ánimas, Chalchuapa, Santa Ana — Plaza Las Palmeras, Local 5',
-  mapsUrl: '', // opcional: enlace de Google Maps de Sucursal Central
+  // Perfil de Google Business de Sucursal Central (sin los parámetros de sesión
+  // `entry`/`g_ep` que agrega Maps al copiar el enlace).
+  mapsUrl:
+    'https://www.google.com/maps/place/Los+Pollos+Primos/@13.9869433,-89.6757607,17z/data=!3m1!4b1!4m6!3m5!1s0x8f62ebf4f1aa0009:0xe38b22f627dcdc3b!8m2!3d13.9869433!4d-89.6757607!16s%2Fg%2F11zdf8719j',
+
+  // Formulario de "escribir reseña" de Google, derivado del Place ID de la ficha
+  // (ChIJCQCq8fTrYo8RO9zcJ_Yii-M = feature id 0x8f62ebf4f1aa0009:0xe38b22f627dcdc3b).
+  reviewUrl: 'https://search.google.com/local/writereview?placeid=ChIJCQCq8fTrYo8RO9zcJ_Yii-M',
 
   // Social (optional — leave '' to hide).
-  instagram: '', // TODO opcional, ej. 'https://instagram.com/lospollosprimos'
+  instagram: 'https://www.instagram.com/rosti_primos/',
   // Página de Facebook del negocio (misma que usan los enlaces de pago Wompi).
   facebook: 'https://www.facebook.com/profile.php?id=61581223217773',
 
