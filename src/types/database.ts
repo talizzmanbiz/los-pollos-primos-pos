@@ -1158,6 +1158,7 @@ export type Database = {
           created_at: string
           customer_name: string | null
           ghl_contact_id: string | null
+          human_until: string | null
           id: string
           last_direction: string | null
           last_message_at: string
@@ -1169,6 +1170,7 @@ export type Database = {
           created_at?: string
           customer_name?: string | null
           ghl_contact_id?: string | null
+          human_until?: string | null
           id?: string
           last_direction?: string | null
           last_message_at?: string
@@ -1180,6 +1182,7 @@ export type Database = {
           created_at?: string
           customer_name?: string | null
           ghl_contact_id?: string | null
+          human_until?: string | null
           id?: string
           last_direction?: string | null
           last_message_at?: string
@@ -1196,6 +1199,7 @@ export type Database = {
           created_at: string
           direction: string
           id: string
+          sent_by: string | null
           wa_message_id: string | null
         }
         Insert: {
@@ -1204,6 +1208,7 @@ export type Database = {
           created_at?: string
           direction: string
           id?: string
+          sent_by?: string | null
           wa_message_id?: string | null
         }
         Update: {
@@ -1212,6 +1217,7 @@ export type Database = {
           created_at?: string
           direction?: string
           id?: string
+          sent_by?: string | null
           wa_message_id?: string | null
         }
         Relationships: [

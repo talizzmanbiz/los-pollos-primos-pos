@@ -93,13 +93,17 @@ Deno.serve(async (req: Request) => {
         },
         { onConflict: 'phone' },
       )
-      .select('id, message_count')
+      .select('id, message_count, human_until')
       .single();
 
     if (convErr || !conv) {
       console.error('upsert conversación falló', convErr);
       return Response.json({ ok: false, error: 'no se pudo guardar' }, { headers: CORS });
     }
+
+    // El equipo contestó hace poco desde el POS: el bot se calla hasta que
+    // venza la ventana. n8n lo consulta ANTES de llamar al agente.
+    const pausado = !!conv.human_until && new Date(conv.human_until) > new Date();
 
     // Deduplicación de un reintento del webhook de Meta.
     //
@@ -123,7 +127,7 @@ Deno.serve(async (req: Request) => {
 
       if (previos && previos.length > 0) {
         return Response.json(
-          { ok: true, conversation_id: conv.id, inserted: 0, duplicado: true },
+          { ok: true, conversation_id: conv.id, inserted: 0, duplicado: true, pausado },
           { headers: CORS },
         );
       }
@@ -160,7 +164,7 @@ Deno.serve(async (req: Request) => {
       .eq('id', conv.id);
 
     return Response.json(
-      { ok: true, conversation_id: conv.id, inserted: insertados },
+      { ok: true, conversation_id: conv.id, inserted: insertados, pausado },
       { headers: CORS },
     );
   } catch (err) {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, MessageSquare, Search } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Search, Send } from 'lucide-react';
 import { useConversations, useCustomerOrders, useThread } from '../../hooks/useConversations';
+import { supabase, FUNCTIONS_URL } from '../../lib/supabase';
 import { fmtDateTime, fmtTime, money } from '../../lib/format';
 import type { WhatsappConversation, WhatsappMessage } from '../../types/database';
 
@@ -69,12 +70,17 @@ function ChatListItem({
 }
 
 function Bubble({ msg }: { msg: WhatsappMessage }) {
-  const fromBot = msg.direction === 'out';
+  const saliente = msg.direction === 'out';
+  const delEquipo = saliente && msg.sent_by !== null;
   return (
-    <div className={`mb-2 flex ${fromBot ? 'justify-end' : 'justify-start'}`}>
+    <div className={`mb-2 flex ${saliente ? 'justify-end' : 'justify-start'}`}>
       <div
         className={`max-w-[85%] rounded-2xl px-3 py-2 sm:max-w-[70%] ${
-          fromBot ? 'bg-brand-600 text-white' : 'bg-white text-gray-900 shadow-sm'
+          delEquipo
+            ? 'bg-green-700 text-white'
+            : saliente
+              ? 'bg-brand-600 text-white'
+              : 'bg-white text-gray-900 shadow-sm'
         }`}
       >
         <p className="whitespace-pre-wrap break-words text-[13px] leading-snug sm:text-sm">
@@ -82,9 +88,10 @@ function Bubble({ msg }: { msg: WhatsappMessage }) {
         </p>
         <p
           className={`mt-1 text-right text-[10px] tabular-nums ${
-            fromBot ? 'text-brand-100' : 'text-gray-400'
+            saliente ? 'text-white/70' : 'text-gray-400'
           }`}
         >
+          {delEquipo && <span className="mr-1 font-semibold">Equipo ·</span>}
           {fmtTime(msg.created_at)}
         </p>
       </div>
@@ -92,8 +99,71 @@ function Bubble({ msg }: { msg: WhatsappMessage }) {
   );
 }
 
+function Composer({ phone, onSent }: { phone: string; onSent: () => void }) {
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function send() {
+    const body = text.trim();
+    if (!body || busy) return;
+    setBusy(true);
+    setError(null);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const res = await fetch(`${FUNCTIONS_URL}/wa-send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionData.session?.access_token}`,
+      },
+      body: JSON.stringify({ phone, text: body }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) {
+      setError(data.error ?? 'No se pudo enviar');
+      return;
+    }
+    setText('');
+    onSent();
+  }
+
+  return (
+    <div className="border-t border-gray-200 bg-white p-2 sm:p-3">
+      {error && <p className="mb-2 text-[12px] text-red-600">{error}</p>}
+      <div className="flex items-end gap-2">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            // Enter envía; Shift+Enter hace salto de línea, como WhatsApp.
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          }}
+          rows={1}
+          placeholder="Escriba su respuesta…"
+          className="max-h-32 min-h-[2.75rem] flex-1 resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-500"
+        />
+        <button
+          onClick={send}
+          disabled={busy || !text.trim()}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white disabled:bg-gray-300"
+          aria-label="Enviar respuesta"
+        >
+          <Send size={18} />
+        </button>
+      </div>
+      <p className="mt-1 text-[11px] text-gray-400">
+        Al responder, el bot se calla 30 minutos con este cliente y luego vuelve solo.
+      </p>
+    </div>
+  );
+}
+
 function Thread({ conv, onBack }: { conv: WhatsappConversation; onBack: () => void }) {
-  const { messages, loading } = useThread(conv.id);
+  const { messages, loading, refetch } = useThread(conv.id);
   const orders = useCustomerOrders(conv.phone);
   const bottom = useRef<HTMLDivElement>(null);
 
@@ -154,6 +224,8 @@ function Thread({ conv, onBack }: { conv: WhatsappConversation; onBack: () => vo
         ))}
         <div ref={bottom} />
       </div>
+
+      <Composer phone={conv.phone} onSent={refetch} />
     </div>
   );
 }

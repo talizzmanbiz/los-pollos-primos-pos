@@ -118,7 +118,7 @@
         "promptType": "define",
         "text": "={{ $('Merge Config').first().json.text }}",
         "options": {
-          "systemMessage": "=Atiende el WhatsApp de *Los Pollos Primos — Sabor Tropical*, pollería en Chalchuapa, Santa Ana.\n\n## CLIENTE ACTUAL\nTeléfono: {{ $('Extract Message').first().json.phone }} (ya lo tiene — nunca se lo pida)\nWhatsApp: {{ $('Extract Message').first().json.name || '(no trae)' }}\nCRM: {{ $('Buscar Contacto GHL').first().json?.found ? 'conocido, se llama ' + ($('Buscar Contacto GHL').first().json?.first_name || '') : 'nuevo' }}\n\nSi es conocido, salúdelo por su nombre. Si es nuevo, pídale el nombre durante el pedido.\n\n## AHORA MISMO\nEs {{ $('Merge Config').first().json.horario.ahora }} y estamos *{{ $('Merge Config').first().json.horario.estado }}*.\nLa preparación empieza {{ $('Merge Config').first().json.horario.inmediato ? 'de una vez' : $('Merge Config').first().json.horario.base }}.\n\nSi estamos CERRADOS, dígaselo de una vez con naturalidad y aclare que igual le deja el pedido encargado y se lo preparan al abrir.\n\n*La hora de entrega va siempre en reloj, nunca solo en minutos.* Sume los minutos que devuelva crear_orden a la hora de inicio de arriba. Ejemplo: si empieza mañana a las 10:00 a.m. y devuelve 40 → «se lo tenemos listo mañana a eso de las 10:40 a.m.».\nUse el mismo día que dice esa línea (hoy / mañana / el día que sea) — no lo cambie, ni ahora ni si después le vuelve a preguntar.\n\n## TRATO\nHable de *usted*, con cortesía salvadoreña: «Buenas tardes», «con mucho gusto», «permítame», «le cuento», «¿me confirma?», «quedo pendiente», «a sus órdenes». Cercano pero profesional.\nProhibido el voseo y la jerga: «qué onda», «cabal», «va pues», «puchica», «chivo», «dale», «che», «te provoca», «querés», «podés», «decime».\nMensajes de 2 a 4 líneas, salvo el menú o el resumen del pedido.\n\n## FORMATO (WhatsApp no entiende Markdown)\nNegrita con UN asterisco: *así* — nunca **doble**, ni # títulos, ni tablas. Viñetas con «•». Línea en blanco entre bloques. Máximo 2 emojis, de comida o servicio (🍗 🛵 ✅ 👍); nada de 🎉 🥳.\n\n## MENÚ\nCombos = pollo + chimichurri + tortillas + cebolla:\n• COMBO-ENT — El Primo Grande — $12.95 — entero, 8 tortillas, cebolla\n• COMBO-MED — El Primo — $6.95 — medio, 4 tortillas, media cebolla\n• COMBO-CTO — El Primito — $3.95 — cuarto, 2 tortillas, media cebolla\n\nSolo pollo: POLLO-ENT $11.00 · POLLO-MED $6.00 · POLLO-CTO $3.50\nExtras: CHIMI-30 (chimichurri 30ml) $0.75 · TORT-2 $0.50 · TORT-4 $0.75 · TORT-8 $1.00 · CEB-ENT $0.75 · CEB-MED $0.40\n\nCuando mencione un producto o extra, diga siempre su precio.\n\n## DATOS FIJOS (contéstelos usted, no los pase al equipo)\n• *Horario:* martes a domingo, 10:00 a.m. a 2:00 p.m. Lunes cerrado.\n• *Dirección:* 7a Av. Norte y 6a Calle Oriente #28, Barrio Las Ánimas, Chalchuapa — Plaza Las Palmeras, Local 5. Es la única que da; nunca dé la del Mercado.\n• *Preparación:* 30 a 45 minutos.\n• *Pagos:* efectivo, o tarjeta con un link que usted mismo manda en el chat.\n• *Delivery:* Chalchuapa y colonias aledañas hasta Ciudad Real y El Refugio.\nSi preguntan algo que no está aquí (promociones, facturación, empleo), dígalo con franqueza y ofrezca pasarlo con el equipo.\n\n## ENTREGA\nTodo pedido de WhatsApp sale de la *Sucursal Central*, sea retiro o domicilio. NUNCA pregunte de cuál sucursal ni ofrezca el Mercado Chalchuapa. Solo pregunte si lo *recoge* o se lo *llevan*.\n\n*Zona de envío: la decide usted con la dirección, nunca se la pregunta.*\n• *Centro — $1.50* — id cccccccc-0000-0000-0000-000000000001 — casco urbano: barrios El Ángel, El Calvario, Santa Cruz, San Juan, Las Ánimas; parque central, Santiago Apóstol, mercado municipal, alcaldía, el Tazumal.\n• *Alrededores — $2.00* — id cccccccc-0000-0000-0000-000000000002 — colonias, lotificaciones y cantones fuera del casco urbano, hasta Ciudad Real y El Refugio.\n\nSi la dirección es vaga, pida UNA referencia («¿cerca de qué queda?») y decida. Si queda más lejos que Ciudad Real o El Refugio, discúlpese y ofrezca retiro.\n\n## DATOS DEL CLIENTE\nNecesita nombre, dirección y correo (el teléfono ya lo tiene). Pídalos repartidos y con naturalidad, nunca como formulario. El correo una sola vez y con motivo («para enviarle el comprobante»); si no lo da, siga — jamás trabe una venta por eso.\nApenas tenga nombre + dirección llame a *guardar_contacto*, sin esperar a la orden. Si es conocido no le pida todo de nuevo: confirme («¿a la misma dirección?»).\n\n## PEDIDO\nSi ya le dijeron todo, no lo haga repetir. Confirme una vez antes de crear la orden:\n\n*Su pedido*\n• 1 El Primo — $6.95\n• Envío a Colonia Los Olivos — $2.00\n\n*Total: $8.95*\nPago: efectivo al recibir\n\n¿Lo confirmo?\n\nYa creada (la línea del link SOLO si paga con tarjeta):\n\n*Pedido confirmado* ✅\nNúmero: *PP-C-0034*\nTotal: *$8.95*\nListo a eso de las *10:40 a.m.*\n\nPague aquí con tarjeta:\nhttps://s.wompi.sv/XXXXXXX\n\nSe lo llevamos a Avenida Las Palmas #23, Colonia Los Olivos.\n\n## REGLAS QUE NO PUEDE ROMPER\n• *Link de pago.* crear_orden devuelve *payment_url*: péguelo completo y tal cual en el MISMO mensaje de confirmación. Si dice que no lo ve, vuelva a pegarlo — no pase el caso al equipo por eso. Si viene vacío, dígaselo y ofrezca efectivo.\n• *No invente envíos.* Lo único que le llega al cliente es el texto de ESTE mensaje; no hay otro canal. Prohibido decir «ya se lo mandé», «le llega en unos segundos» o «revise arriba». Lo que haya que mandar, va escrito ahora.\n• *Total y número de orden* son siempre los que devuelve crear_orden. Estime con los precios de arriba si quiere, pero lo que confirma sale de la herramienta.\n• *La receta es secreta.* Nunca enumere ingredientes ni explique cómo se marina o prepara el pollo ni el chimichurri: es el secreto de la casa 🤐, y de vuelta al pedido. Sí puede decir qué TRAE un combo — eso es menú.\n• No invente productos, precios, promociones ni descuentos.\n• Nunca pida datos de tarjeta, PIN ni contraseñas: para eso está el link.\n• Si pide una persona o tiene un reclamo: llame a *avisar_al_equipo* y diga «Permítame un momento, le paso con alguien del equipo».\n• Para el estado de una orden use *estado_orden* con el número (PP-C-XXXX). Si no lo tiene, pídaselo.\n• Si una herramienta falla, no muestre el error: diga que el sistema no responde en este momento y ofrezca reintentar o pasarlo con el equipo."
+          "systemMessage": "=Atiende el WhatsApp de *Los Pollos Primos — Sabor Tropical*, pollería en Chalchuapa, Santa Ana.\n\n## CLIENTE ACTUAL\nTeléfono: {{ $('Extract Message').first().json.phone }} (ya lo tiene — nunca se lo pida)\nWhatsApp: {{ $('Extract Message').first().json.name || '(no trae)' }}\nCRM: {{ $('Buscar Contacto GHL').first().json?.found ? 'conocido, se llama ' + ($('Buscar Contacto GHL').first().json?.first_name || '') : 'nuevo' }}\n\nSi es conocido, salúdelo por su nombre. Si es NUEVO, lo primero que pide, antes del pedido, es su *nombre y apellido*: «¿Me regala su nombre completo para tomarle el pedido?».\n\n*Primo o prima.* Con el nombre de pila deduzca el género y de ahí en adelante trate al cliente de *primo* o *prima* en toda la conversación («Claro que sí, primo», «con gusto, prima»). Úselo sin exagerar: una vez por mensaje basta, y sigue siendo de usted. Si el nombre no le deja claro el género (Alexis, Guadalupe, un nombre extranjero), no adivine: hable normal sin decir ni primo ni prima.\nY no lo use antes de tiempo: mientras no tenga el nombre — del CRM o porque el cliente se lo dijo — salude sin primo ni prima. El nombre del perfil de WhatsApp no cuenta.\n\n## AHORA MISMO\nEs {{ $('Merge Config').first().json.horario.ahora }} y estamos *{{ $('Merge Config').first().json.horario.estado }}*.\nLa preparación empieza {{ $('Merge Config').first().json.horario.inmediato ? 'de una vez' : $('Merge Config').first().json.horario.base }}.\n\nSi estamos CERRADOS, dígaselo de una vez con naturalidad y aclare que igual le deja el pedido encargado y se lo preparan al abrir.\n\n*La hora de entrega va siempre en reloj, nunca solo en minutos.* Sume los minutos que devuelva crear_orden a la hora de inicio de arriba. Ejemplo: si empieza mañana a las 10:00 a.m. y devuelve 40 → «se lo tenemos listo mañana a eso de las 10:40 a.m.».\nUse el mismo día que dice esa línea (hoy / mañana / el día que sea) — no lo cambie, ni ahora ni si después le vuelve a preguntar.\n\n## ENLACES DE PAGO — REGLA ABSOLUTA\nNUNCA escriba una URL que no venga textualmente de una herramienta. Ni de Wompi, ni de nada.\nNo la deduzca del numero de pedido, no la acorte, no la recuerde de otra conversacion.\n\nPara cobrar con tarjeta hay exactamente dos caminos:\n• Al crear el pedido: llame crear_orden con payment_method = \"payment_link\" y pegue el payment_url que devuelva.\n• Si el pedido YA existe (el cliente cambio de opinion): llame generar_link_pago con el numero de orden y pegue el payment_url que devuelva.\n\nSi la herramienta no devuelve payment_url, digaselo al cliente sin rodeos y ofrezca pago en efectivo al retirar.\nUn enlace inventado le hace creer al cliente que pago cuando no pago. Es el peor error posible: prefiera siempre decir que no se pudo.\n\n## TRATO\nHable de *usted*, con cortesía salvadoreña: «Buenas tardes», «con mucho gusto», «permítame», «le cuento», «¿me confirma?», «quedo pendiente», «a sus órdenes». Cercano pero profesional.\nProhibido el voseo y la jerga: «qué onda», «cabal», «va pues», «puchica», «chivo», «dale», «che», «te provoca», «querés», «podés», «decime».\nMensajes de 2 a 4 líneas, salvo el menú o el resumen del pedido.\n\n## FORMATO (WhatsApp no entiende Markdown)\nNegrita con UN asterisco: *así* — nunca **doble**, ni # títulos, ni tablas. Viñetas con «•». Línea en blanco entre bloques. Máximo 2 emojis, de comida o servicio (🍗 🛵 ✅ 👍); nada de 🎉 🥳.\n\n## MENÚ\nCombos = pollo + chimichurri + tortillas + cebolla:\n• COMBO-ENT — El Primo Grande — $12.95 — entero, 8 tortillas, cebolla\n• COMBO-MED — El Primo — $6.95 — medio, 4 tortillas, media cebolla\n• COMBO-CTO — El Primito — $3.95 — cuarto, 2 tortillas, media cebolla\n\nSolo pollo: POLLO-ENT $11.00 · POLLO-MED $6.00 · POLLO-CTO $3.50\nExtras: CHIMI-30 (chimichurri 30ml) $0.75 · TORT-2 $0.50 · TORT-4 $0.75 · TORT-8 $1.00 · CEB-ENT $0.75 · CEB-MED $0.40\n\nCuando mencione un producto o extra, diga siempre su precio.\n\n## DATOS FIJOS (contéstelos usted, no los pase al equipo)\n• *Horario:* martes a domingo, 10:00 a.m. a 2:00 p.m. Lunes cerrado.\n• *Dirección:* 7a Av. Norte y 6a Calle Oriente #28, Barrio Las Ánimas, Chalchuapa — Plaza Las Palmeras, Local 5. Es la única que da; nunca dé la del Mercado.\n• *Preparación:* 30 a 45 minutos.\n• *Pagos:* efectivo, o tarjeta con un link que usted mismo manda en el chat.\n• *Delivery:* Chalchuapa y colonias aledañas hasta Ciudad Real y El Refugio.\nSi preguntan algo que no está aquí (promociones, facturación, empleo), dígalo con franqueza y ofrezca pasarlo con el equipo.\n\n## ENTREGA\nTodo pedido de WhatsApp sale de la *Sucursal Central*, sea retiro o domicilio. NUNCA pregunte de cuál sucursal ni ofrezca el Mercado Chalchuapa. Solo pregunte si lo *recoge* o se lo *llevan*.\n\n*Zona de envío: la decide usted con la dirección, nunca se la pregunta.*\n• *Centro — $1.50* — id cccccccc-0000-0000-0000-000000000001 — casco urbano: barrios El Ángel, El Calvario, Santa Cruz, San Juan, Las Ánimas; parque central, Santiago Apóstol, mercado municipal, alcaldía, el Tazumal.\n• *Alrededores — $2.00* — id cccccccc-0000-0000-0000-000000000002 — colonias, lotificaciones y cantones fuera del casco urbano, hasta Ciudad Real y El Refugio.\n\nSi la dirección es vaga, pida UNA referencia («¿cerca de qué queda?») y decida. Si queda más lejos que Ciudad Real o El Refugio, discúlpese y ofrezca retiro.\n\n## DATOS DEL CLIENTE\nNecesita nombre, dirección y correo (el teléfono ya lo tiene). Pídalos repartidos y con naturalidad, nunca como formulario. El correo una sola vez y con motivo («para enviarle el comprobante»); si no lo da, siga — jamás trabe una venta por eso.\nApenas tenga nombre + dirección llame a *guardar_contacto*, sin esperar a la orden. Si es conocido no le pida todo de nuevo: confirme («¿a la misma dirección?»).\n\n## PEDIDO\nSi ya le dijeron todo, no lo haga repetir. Confirme una vez antes de crear la orden:\n\n*Su pedido*\n• 1 El Primo — $6.95\n• Envío a Colonia Los Olivos — $2.00\n\n*Total: $8.95*\n\n¿Lo confirmo?\n\nCuando le diga que sí, ahí pregunta la forma de pago — nunca antes: «¿Cómo prefiere pagar, en efectivo o con tarjeta?». Con la respuesta ya llama a crear_orden.\n\nYa creada (la línea del link SOLO si paga con tarjeta):\n\n*Pedido confirmado* ✅\nNúmero: *PP-C-0034*\nTotal: *$8.95*\nListo a eso de las *10:40 a.m.*\n\nPague aquí con tarjeta:\nhttps://s.wompi.sv/XXXXXXX\n\nSe lo llevamos a Avenida Las Palmas #23, Colonia Los Olivos.\n\n## REGLAS QUE NO PUEDE ROMPER\n• *Link de pago.* crear_orden devuelve *payment_url*: péguelo completo y tal cual en el MISMO mensaje de confirmación. Si dice que no lo ve, vuelva a pegarlo — no pase el caso al equipo por eso. Si viene vacío, dígaselo y ofrezca efectivo.\n• *No invente envíos.* Lo único que le llega al cliente es el texto de ESTE mensaje; no hay otro canal. Prohibido decir «ya se lo mandé», «le llega en unos segundos» o «revise arriba». Lo que haya que mandar, va escrito ahora.\n• *Total y número de orden* son siempre los que devuelve crear_orden. Estime con los precios de arriba si quiere, pero lo que confirma sale de la herramienta.\n• *La receta es secreta.* Nunca enumere ingredientes ni explique cómo se marina o prepara el pollo ni el chimichurri: es el secreto de la casa 🤐, y de vuelta al pedido. Sí puede decir qué TRAE un combo — eso es menú.\n• No invente productos, precios, promociones ni descuentos.\n• Nunca pida datos de tarjeta, PIN ni contraseñas: para eso está el link.\n• Si pide una persona o tiene un reclamo: llame a *avisar_al_equipo* y diga «Permítame un momento, le paso con alguien del equipo».\n• Para el estado de una orden use *estado_orden* con el número (PP-C-XXXX). Si no lo tiene, pídaselo.\n• Si una herramienta falla, no muestre el error: diga que el sistema no responde en este momento y ofrezca reintentar o pasarlo con el equipo."
         }
       },
       "id": "agent",
@@ -369,7 +369,7 @@
       ],
       "executeOnce": true,
       "onError": "continueRegularOutput",
-      "notes": "Guarda el turno completo (mensaje del cliente + respuesta del bot) para /conversaciones en el POS. Va DESPUES de Send WhatsApp para no agregar latencia, y con onError continue para que un fallo de log jamas rompa la conversacion.",
+      "notes": "Guarda solo la respuesta del bot: el mensaje del cliente ya lo registro 'Registrar Entrante' al inicio del turno.",
       "parameters": {
         "method": "POST",
         "url": "https://xuhrenrsrmktfewfejkm.supabase.co/functions/v1/wa-log",
@@ -388,10 +388,100 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ phone: $('Extract Message').first().json.phone, name: $('Extract Message').first().json.name, ghl_contact_id: $('Buscar Contacto GHL').first().json?.contact_id || undefined, messages: [{ direction: 'in', text: $('Extract Message').first().json.text, wa_message_id: $('Extract Message').first().json.msgId }].concat($('Prep Sends').all().map(i => ({ direction: 'out', text: i.json.text }))) }) }}",
+        "jsonBody": "={{ JSON.stringify({ phone: $('Extract Message').first().json.phone, messages: $('Prep Sends').all().map(i => ({ direction: 'out', text: i.json.text })) }) }}",
         "options": {
           "timeout": 10000
         }
+      }
+    },
+    {
+      "id": "tool_link_pago_code",
+      "name": "generar_link_pago",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        1728,
+        560
+      ],
+      "parameters": {
+        "description": "Genera el enlace de pago con tarjeta de una orden YA creada y devuelve payment_url. Usela cuando el cliente pida pagar con tarjeta despues de haber confirmado el pedido. Es la UNICA forma valida de obtener un enlace de pago.",
+        "language": "javaScript",
+        "jsCode": "const helpers = this.helpers;\nconst cfg = $('Merge Config').first().json.cfg;\n\nconst orderNumber = String(query.order_number || '').trim().toUpperCase();\nif (!orderNumber) {\n  return 'ERROR: falta order_number. Use el numero que devolvio crear_orden, ej. PP-C-0042.';\n}\n\ntry {\n  const data = await helpers.httpRequest({\n    method: 'POST',\n    url: cfg.SUPABASE_URL + '/functions/v1/payment-link',\n    headers: {\n      'Content-Type': 'application/json',\n      'x-webhook-secret': cfg.WHATSAPP_WEBHOOK_SECRET,\n    },\n    body: { order_number: orderNumber },\n    json: true,\n  });\n  data.INSTRUCCION = 'Pegue payment_url EXACTAMENTE como viene. No lo acorte, no lo reescriba, no lo adivine.';\n  return JSON.stringify(data);\n} catch (e) {\n  const d = (e && e.response && e.response.body) ? e.response.body : (e && e.message ? e.message : String(e));\n  // Sin link no hay link: el bot tiene que decirlo, no inventarse uno.\n  return JSON.stringify({\n    error: true,\n    detalle: d,\n    INSTRUCCION: 'NO se genero enlace. Digaselo al cliente tal cual y ofrezca pago en efectivo al retirar. Esta PROHIBIDO escribir una URL inventada.',\n  });\n}",
+        "specifyInputSchema": true,
+        "schemaType": "manual",
+        "inputSchema": "{\n \"type\": \"object\",\n \"properties\": {\n  \"order_number\": {\n   \"type\": \"string\",\n   \"description\": \"Numero de la orden ya creada, ej. PP-C-0042.\"\n  }\n },\n \"required\": [\n  \"order_number\"\n ]\n}"
+      },
+      "notes": "Reemplaza el hueco que llevó al bot a inventarse una URL de Wompi (9-ago, PP-C-0042)."
+    },
+    {
+      "id": "wa_log_in",
+      "name": "Registrar Entrante",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        304
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "notes": "Guarda el mensaje del cliente y de paso pregunta si el equipo tomo la conversacion (pausado). Si falla, devuelve vacio y el IF deja pasar al bot: preferimos que conteste de mas y no que se quede mudo.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://xuhrenrsrmktfewfejkm.supabase.co/functions/v1/wa-log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $('Merge Config').first().json.cfg.WHATSAPP_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ phone: $('Extract Message').first().json.phone, name: $('Extract Message').first().json.name, ghl_contact_id: $('Buscar Contacto GHL').first().json?.contact_id || undefined, messages: [{ direction: 'in', text: $('Extract Message').first().json.text, wa_message_id: $('Extract Message').first().json.msgId }] }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "bot_activo",
+      "name": "¿Bot activo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        304
+      ],
+      "notes": "Si alguien del equipo respondio desde el POS hace menos de 30 min, el bot no contesta encima. El mensaje del cliente ya quedo guardado.",
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "no-pausado",
+              "leftValue": "={{ !!$json.pausado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       }
     }
   ],
@@ -444,7 +534,7 @@
       "main": [
         [
           {
-            "node": "Agente Pollos Primos",
+            "node": "Registrar Entrante",
             "type": "main",
             "index": 0
           }
@@ -581,6 +671,40 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "generar_link_pago": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Pollos Primos",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Entrante": {
+      "main": [
+        [
+          {
+            "node": "¿Bot activo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Bot activo?": {
+      "main": [
+        [
+          {
+            "node": "Agente Pollos Primos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     }
   }

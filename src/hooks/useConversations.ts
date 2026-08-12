@@ -79,7 +79,7 @@ export function useThread(conversationId: string | null) {
     };
   }, [conversationId, refetch]);
 
-  return { messages, loading };
+  return { messages, loading, refetch };
 }
 
 /**
