@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { site, whatsappLink } from './siteInfo';
+import { FUNCTIONS_URL } from '../../lib/supabase';
 import { useSeo } from './useSeo';
 import Reveal from './Reveal';
 import { MapPin, Clock, MessageCircle, type LucideIcon } from 'lucide-react';
@@ -8,11 +9,29 @@ export default function ContactPage() {
   useSeo('Contacto', `Contactá a ${site.name} en ${site.city}. WhatsApp, correo y horarios de atención.`);
 
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
   const hasChannel = Boolean(site.whatsappNumber || site.email);
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
+
+    // El lead entra al CRM aunque nunca llegue a pedir. Va sin await y con
+    // catch vacío a propósito: si el CRM está caído, el cliente igual tiene que
+    // poder abrir WhatsApp. El teléfono es la llave con la que GoHighLevel
+    // reconoce que es el mismo cliente que después compra.
+    void fetch(`${FUNCTIONS_URL}/ghl-contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'upsert',
+        source: 'website',
+        phone,
+        name,
+        email: '',
+      }),
+    }).catch(() => {});
+
     const body = `Hola, soy ${name || 'un cliente'}. ${message}`.trim();
     if (site.whatsappNumber) {
       window.open(whatsappLink(body), '_blank', 'noopener');
@@ -109,6 +128,11 @@ export default function ContactPage() {
                   <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" className={inputCls} />
                 </div>
                 <div>
+                  <label htmlFor="phone" className="mb-1 block text-sm font-medium text-charcoal-700">Teléfono (WhatsApp)</label>
+                  {/* inputMode="numeric" para que el teclado abra en números, igual que el checkout */}
+                  <input id="phone" type="tel" inputMode="numeric" autoComplete="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="7777-8888" className={inputCls} />
+                </div>
+                <div>
                   <label htmlFor="message" className="mb-1 block text-sm font-medium text-charcoal-700">Mensaje</label>
                   <textarea id="message" required value={message} onChange={(e) => setMessage(e.target.value)} rows={5} placeholder="¿En qué te ayudamos?" className={inputCls} />
                 </div>
@@ -119,7 +143,7 @@ export default function ContactPage() {
                   {site.whatsappNumber ? 'Enviar por WhatsApp' : 'Enviar por correo'}
                 </button>
                 <p className="text-center text-xs text-charcoal-700/60">
-                  Se abrirá {site.whatsappNumber ? 'WhatsApp' : 'tu correo'} con tu mensaje. No guardamos tus datos en este formulario.
+                  Se abrirá {site.whatsappNumber ? 'WhatsApp' : 'tu correo'} con tu mensaje. Guardamos tu nombre y teléfono para poder responderte.
                 </p>
               </form>
             ) : (

@@ -2,16 +2,16 @@ import { site } from './siteInfo';
 import { useSeo } from './useSeo';
 import LegalPage from './LegalPage';
 
-const UPDATED = '17 de julio de 2026';
+const UPDATED = '14 de agosto de 2026';
 
 export default function PrivacyPage() {
-  useSeo('Política de Privacidad', `Cómo ${site.name} recolecta y usa tus datos al hacer un pedido.`);
+  useSeo('Política de Privacidad', `Cómo ${site.name} recolecta y usa tus datos al hacer un pedido o escribirnos.`);
 
   return (
     <LegalPage title="Política de Privacidad" updated={UPDATED}>
         <p>
           En {site.name} ({site.domain}) respetamos tu privacidad. Esta política explica qué datos
-          recolectamos cuando hacés un pedido y cómo los usamos.
+          recolectamos cuando hacés un pedido o nos escribís, y cómo los usamos.
         </p>
 
         <section>
@@ -21,6 +21,10 @@ export default function PrivacyPage() {
             <li>Dirección de entrega, únicamente cuando elegís servicio a domicilio.</li>
             <li>Detalle de tu pedido (productos, cantidades, total).</li>
             <li>Correo electrónico, solo si nos lo proporcionás.</li>
+            <li>
+              Nombre y teléfono que dejás en el formulario de contacto, aunque no llegués a hacer un
+              pedido, para poder responderte.
+            </li>
           </ul>
         </section>
 
@@ -29,6 +33,7 @@ export default function PrivacyPage() {
           <ul className="mt-2 list-disc space-y-1 pl-6">
             <li>Preparar, cobrar y entregar tu pedido.</li>
             <li>Comunicarnos con vos sobre el estado del pedido, por teléfono o WhatsApp.</li>
+            <li>Responder las consultas que nos enviás por el formulario de contacto.</li>
             <li>Llevar un registro de clientes para mejorar nuestro servicio.</li>
           </ul>
         </section>

@@ -1,19 +1,26 @@
-// Búsqueda y captura de contactos en GoHighLevel para el chatbot de WhatsApp.
+// Búsqueda y captura de contactos en GoHighLevel.
 //
-// Dos acciones, ambas por POST y protegidas con el mismo x-webhook-secret que
-// usa create-order (WHATSAPP_WEBHOOK_SECRET):
+// Dos acciones, ambas por POST:
 //
 //   { "action": "lookup", "phone": "50370001111" }
 //     → { found: true, name: "María", first_name: "María", contact_id: "..." }
 //     → { found: false }
 //     Sirve para que el bot salude por nombre a un cliente que ya está en el CRM.
+//     Exige x-webhook-secret (WHATSAPP_WEBHOOK_SECRET).
 //
-//   { "action": "upsert", "phone": "...", "name": "...", "email": "...",
-//     "address": "...", "zone": "Chalchuapa Centro" }
+//   { "action": "upsert", "source": "whatsapp|website|pos", "phone": "...",
+//     "name": "...", "email": "...", "address": "..." }
 //     → { ok: true, contact_id: "..." }
 //     Guarda/actualiza el contacto apenas el cliente da sus datos, sin esperar a
-//     que la orden se pague. sync-ghl sigue corriendo aparte al pagarse el pedido
-//     y agrega las estadísticas de consumo.
+//     que la orden se pague (tag 'intento-pedido'). sync-ghl corre aparte al
+//     pagarse el pedido y agrega 'pedido-completado' + estadísticas de consumo.
+//     source='website' no exige secreto: el formulario del sitio corre en el
+//     navegador y no puede guardar uno, igual que los pedidos 'online' de
+//     create-order.
+//
+// El armado del contacto (teléfono E.164, firstName, tags) vive en _shared/ghl.ts
+// para que las tres fuentes manden exactamente el mismo formato y GHL no cree
+// contactos duplicados.
 //
 // Secrets (Dashboard → Edge Functions → Secrets):
 //   GHL_API_KEY, GHL_LOCATION_ID, WHATSAPP_WEBHOOK_SECRET
@@ -21,8 +28,14 @@
 // Si GHL no está configurado, responde 200 con { skipped } para no romper nunca
 // la conversación del bot.
 
-const GHL_BASE = 'https://services.leadconnectorhq.com';
-const GHL_VERSION = '2021-07-28';
+import {
+  armarContacto,
+  type Canal,
+  GHL_BASE,
+  headersGhl,
+  origenPermitido,
+  toE164,
+} from '../_shared/ghl.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -37,26 +50,17 @@ interface Body {
   email?: string;
   address?: string;
   zone?: string;
+  /** Canal de origen. Por defecto 'whatsapp': es quien más llama esta función. */
+  source?: Canal;
 }
 
 function bad(message: string, status = 400): Response {
   return Response.json({ error: message }, { status, headers: CORS });
 }
 
-// El bot manda el número tal como llega de WhatsApp (50370001111). GHL guarda E.164.
-function toE164(raw: string): string {
-  const digits = raw.replace(/\D/g, '');
-  return digits.startsWith('503') ? `+${digits}` : `+503${digits}`;
-}
-
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
   if (req.method !== 'POST') return bad('Método no permitido', 405);
-
-  const secret = Deno.env.get('WHATSAPP_WEBHOOK_SECRET');
-  if (!secret || req.headers.get('x-webhook-secret') !== secret) {
-    return bad('No autorizado', 401);
-  }
 
   let body: Body;
   try {
@@ -65,9 +69,34 @@ Deno.serve(async (req: Request) => {
     return bad('JSON inválido');
   }
 
+  const canal: Canal = body.source ?? 'whatsapp';
+  if (!['whatsapp', 'website', 'pos'].includes(canal)) return bad('source inválido');
+
+  // El formulario del sitio corre en el navegador y no puede guardar un secreto,
+  // igual que los pedidos 'online' de create-order. Solo puede dar de alta un
+  // lead (upsert); consultar el CRM sí exige el secreto del bot.
+  //
+  // ponytail: el chequeo de Origin para en seco el scraper que encuentra la URL,
+  // pero un Origin se falsifica fuera del navegador. Es el 80% barato y sin
+  // estado; si algún día entra spam de verdad, ahí sí toca rate-limit por IP
+  // con tabla, que hoy no se justifica para el tráfico que tiene el formulario.
+  if (canal === 'website') {
+    if ((body.action ?? 'lookup') !== 'upsert') return bad('No autorizado', 401);
+    if (!origenPermitido(req.headers.get('origin'))) return bad('No autorizado', 401);
+  } else {
+    const secret = Deno.env.get('WHATSAPP_WEBHOOK_SECRET');
+    if (!secret || req.headers.get('x-webhook-secret') !== secret) {
+      return bad('No autorizado', 401);
+    }
+  }
+
   if (!body.phone?.trim()) return bad('Falta phone');
   const action = body.action ?? 'lookup';
   if (!['lookup', 'upsert'].includes(action)) return bad('action inválida');
+  // Un teléfono salvadoreño son 8 dígitos; con país, 11. Filtra basura del
+  // formulario público antes de que llegue al CRM.
+  const soloDigitos = body.phone.replace(/\D/g, '');
+  if (soloDigitos.length < 8 || soloDigitos.length > 13) return bad('Teléfono inválido');
 
   const apiKey = Deno.env.get('GHL_API_KEY');
   const locationId = Deno.env.get('GHL_LOCATION_ID');
@@ -77,11 +106,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const phone = toE164(body.phone);
-  const headers = {
-    Authorization: `Bearer ${apiKey}`,
-    Version: GHL_VERSION,
-    'Content-Type': 'application/json',
-  };
+  const headers = headersGhl(apiKey);
 
   if (action === 'lookup') {
     try {
@@ -119,20 +144,18 @@ Deno.serve(async (req: Request) => {
   }
 
   // ---- upsert ----
-  const upsertBody: Record<string, unknown> = {
+  // Acá el cliente ya dio sus datos pero todavía no hay orden pagada: es
+  // 'intento-pedido'. Cuando pague, sync-ghl vuelve a hacer upsert sobre el
+  // mismo teléfono y le agrega 'pedido-completado'.
+  const upsertBody = armarContacto({
     locationId,
-    phone,
-    tags: ['los-pollos-primos', 'whatsapp'],
-    source: 'WhatsApp Bot',
-  };
-  if (body.name?.trim()) upsertBody.name = body.name.trim();
-  if (body.email?.trim()) upsertBody.email = body.email.trim();
-  if (body.address?.trim()) {
-    upsertBody.address1 = body.address.trim();
-    upsertBody.city = 'Chalchuapa';
-    upsertBody.state = 'Santa Ana';
-    upsertBody.country = 'SV';
-  }
+    canal,
+    estado: 'intento-pedido',
+    phone: body.phone,
+    name: body.name,
+    email: body.email,
+    address: body.address,
+  });
 
   try {
     const res = await fetch(`${GHL_BASE}/contacts/upsert`, {

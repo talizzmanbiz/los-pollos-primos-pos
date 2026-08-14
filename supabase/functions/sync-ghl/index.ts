@@ -4,6 +4,10 @@
 // field IDs are configured. Never enrolls contacts into campaigns/workflows —
 // that stays a manual step inside GoHighLevel.
 //
+// El canal (whatsapp / website / pos) sale de orders.source, no de esta
+// función: antes todo pedido se etiquetaba como POS. El armado del contacto
+// vive en _shared/ghl.ts para que las tres fuentes manden el mismo formato.
+//
 // Secrets (Dashboard → Edge Functions → Secrets):
 //   GHL_API_KEY       Private integration token (Bearer)
 //   GHL_LOCATION_ID   GoHighLevel sub-account/location id
@@ -13,8 +17,7 @@
 // Called by a pg_net database trigger with { order_id }. Idempotent: safe to
 // re-run for the same order.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-
-const GHL_BASE = 'https://services.leadconnectorhq.com';
+import { armarContacto, canalDesdeOrden, GHL_BASE, headersGhl, toE164 } from '../_shared/ghl.ts';
 
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') {
@@ -43,7 +46,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: order } = await admin
     .from('orders')
-    .select('id, status, payment_status, customer_name, customer_phone, customer_email')
+    .select('id, source, status, payment_status, customer_name, customer_phone, customer_email')
     .eq('id', body.order_id)
     .maybeSingle();
 
@@ -58,8 +61,8 @@ Deno.serve(async (req: Request) => {
   // POS walk-ins without contact info: best-effort capture, never blocks the sale
   if (!order.customer_phone) return Response.json({ skipped: 'sin teléfono' });
 
-  const digits = order.customer_phone.replace(/\D/g, '');
-  const phoneE164 = digits.startsWith('503') ? `+${digits}` : `+503${digits}`;
+  const phoneE164 = toE164(order.customer_phone);
+  const digits = phoneE164.replace(/\D/g, '');
 
   // Order history across every source for this phone (last 8 digits match).
   // Revenue counts an order once it is paid OR completed, never when cancelled —
@@ -98,23 +101,22 @@ Deno.serve(async (req: Request) => {
   cf('GHL_CF_ORDER_COUNT', String(mine.length));
   cf('GHL_CF_FAVORITE_ITEM', favoriteItem);
 
-  const upsertBody: Record<string, unknown> = {
+  // El canal sale de la orden, no de esta función: antes todo pedido — de
+  // WhatsApp o del sitio web — se etiquetaba como POS.
+  const canal = canalDesdeOrden(order.source);
+  const upsertBody = armarContacto({
     locationId,
-    name: order.customer_name ?? undefined,
-    phone: phoneE164,
-    email: order.customer_email ?? undefined,
-    tags: ['los-pollos-primos'],
-    source: 'Los Pollos Primos POS',
-  };
-  if (customFields.length > 0) upsertBody.customFields = customFields;
+    canal,
+    estado: 'pedido-completado',
+    phone: order.customer_phone,
+    name: order.customer_name,
+    email: order.customer_email,
+    customFields,
+  });
 
   const ghlRes = await fetch(`${GHL_BASE}/contacts/upsert`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      Version: '2021-07-28',
-      'Content-Type': 'application/json',
-    },
+    headers: headersGhl(apiKey),
     body: JSON.stringify(upsertBody),
   });
 
@@ -128,6 +130,7 @@ Deno.serve(async (req: Request) => {
 
   return Response.json({
     synced: true,
+    canal,
     phone: phoneE164,
     total_spent: totalSpent,
     order_count: mine.length,
