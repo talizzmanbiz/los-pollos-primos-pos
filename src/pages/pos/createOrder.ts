@@ -12,6 +12,8 @@ export interface CustomerInfo {
   name: string;
   phone: string;
   email: string;
+  /** Con NIT se emite CCF; sin NIT, factura de consumidor final. */
+  nit: string;
 }
 
 interface CreateOrderArgs {
@@ -58,6 +60,7 @@ export async function createOrder(args: CreateOrderArgs): Promise<CreateOrderRes
     customer_name: customer.name.trim() || null,
     customer_phone: customer.phone.trim() || null,
     customer_email: customer.email.trim() || null,
+    customer_nit: customer.nit.trim() || null,
   };
   const itemRows = cart.map((l) => ({
     product_id: l.product.id,

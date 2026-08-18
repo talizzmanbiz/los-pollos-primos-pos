@@ -1,0 +1,88 @@
+{
+  "name": "Los Pollos Primos — Conciliación Wompi",
+  "meta": {
+    "description": "Cada 15 minutos cruza los cobros aprobados de Wompi contra las órdenes del POS. Cierra el hueco de los cobros hechos a mano (panel de Wompi, Wompi POS físico, QR): esos no llevan idExterno, así que el webhook los descarta y la venta se quedaría pendiente. Lo que no calza sin ambigüedad se avisa por correo en vez de adivinarse."
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/El_Salvador",
+    "saveDataErrorExecution": "all"
+  },
+  "nodes": [
+    {
+      "id": "cron_15",
+      "name": "Cada 15 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300],
+      "parameters": {
+        "rule": { "interval": [{ "field": "minutes", "minutesInterval": 15 }] }
+      },
+      "notes": "15 min es suficiente: el cliente ya se fue con el pedido, esto es para que la contabilidad no quede coja."
+    },
+    {
+      "id": "conciliar",
+      "name": "POST wompi-reconcile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://xuhrenrsrmktfewfejkm.supabase.co/functions/v1/wompi-reconcile",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-webhook-secret", "value": "={{ $env.WHATSAPP_WEBHOOK_SECRET }}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"horas\": 48 }",
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "notes": "Ventana de 48 h: cubre un fin de semana con la instancia caída sin reprocesar de más. Es idempotente — una transacción ya registrada nunca se aplica dos veces."
+    },
+    {
+      "id": "hay_revisar",
+      "name": "¿Algo que revisar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [480, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "version": 2 },
+          "combinator": "and",
+          "conditions": [
+            {
+              "operator": { "type": "number", "operation": "gt" },
+              "leftValue": "={{ ($json.revisar ?? []).length }}",
+              "rightValue": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "avisar",
+      "name": "Avisar al admin",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [720, 220],
+      "parameters": {
+        "fromEmail": "admin@los-pollosprimos.com",
+        "toEmail": "admin@los-pollosprimos.com",
+        "subject": "=Wompi: {{ $json.revisar.length }} cobro(s) sin orden que calce",
+        "emailFormat": "text",
+        "text": "=Conciliadas automáticamente: {{ $json.conciliadas.length }}\nYa estaban registradas: {{ $json.ya_registradas }}\nTransacciones aprobadas en el período: {{ $json.transacciones_aprobadas }}\n\nEstas necesitan revisión manual:\n\n{{ $json.revisar.map(r => `• $${r.monto}  ${r.fecha}  (${r.id_transaccion})\\n  → ${r.motivo}`).join('\\n\\n') }}\n\nRevisá en el POS si falta registrar la venta, o si el cobro corresponde a algo que no pasó por el sistema."
+      },
+      "credentials": { "smtp": { "id": "REEMPLAZAR", "name": "admin@los-pollosprimos.com SMTP" } }
+    }
+  ],
+  "connections": {
+    "Cada 15 minutos": { "main": [[{ "node": "POST wompi-reconcile", "type": "main", "index": 0 }]] },
+    "POST wompi-reconcile": { "main": [[{ "node": "¿Algo que revisar?", "type": "main", "index": 0 }]] },
+    "¿Algo que revisar?": { "main": [[{ "node": "Avisar al admin", "type": "main", "index": 0 }], []] }
+  },
+  "pinData": {}
+}

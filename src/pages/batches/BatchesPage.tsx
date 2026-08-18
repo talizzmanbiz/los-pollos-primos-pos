@@ -3,11 +3,13 @@ import { useAuth } from '../../context/AuthContext';
 import PurchaseBatchesTab from './PurchaseBatchesTab';
 import ProductionBatchesTab from './ProductionBatchesTab';
 import TraceabilityTab from './TraceabilityTab';
+import PurchasesTab from './PurchasesTab';
 
 const TABS = [
   { id: 'purchase', label: 'Lotes de compra' },
   { id: 'production', label: 'Lotes de producción' },
   { id: 'trace', label: 'Trazabilidad' },
+  { id: 'compras', label: 'Compras (F-07)' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -25,7 +27,7 @@ export default function BatchesPage() {
 
   return (
     <div className="mx-auto max-w-6xl p-4 sm:p-6">
-      <h1 className="page-title mb-4">Lotes de Pollo</h1>
+      <h1 className="page-title mb-4">Lotes y Compras</h1>
       <div className="no-scrollbar mb-6 flex gap-2 overflow-x-auto">
         {TABS.map((t) => (
           <button
@@ -42,6 +44,7 @@ export default function BatchesPage() {
       {tab === 'purchase' && <PurchaseBatchesTab />}
       {tab === 'production' && <ProductionBatchesTab />}
       {tab === 'trace' && <TraceabilityTab />}
+      {tab === 'compras' && <PurchasesTab />}
     </div>
   );
 }

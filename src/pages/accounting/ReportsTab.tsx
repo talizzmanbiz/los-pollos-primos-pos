@@ -2,8 +2,15 @@
 import { supabase } from '../../lib/supabase';
 import { money, fmtDate } from '../../lib/format';
 import { toCsv, downloadCsv } from '../../lib/csv';
-import type { AccountingIncome, AccountingExpense } from '../../types/database';
-import { monthOptions, EXPENSE_TYPE_LABELS } from './month';
+import {
+  anexoComprasCsv, anexoConsumidorFinalCsv, anexoContribuyentesCsv, downloadAnexo,
+  libroCompras, libroCompraCells, LIBRO_COMPRAS_HEADERS,
+} from '../../lib/hacienda';
+import { VENTA_DEFAULTS } from '../../lib/mhCodes';
+import type {
+  AccountingIncome, AccountingExpense, DteDocument, FiscalSettings,
+} from '../../types/database';
+import { monthOptions } from './month';
 
 const d2 = (n: number) => n.toFixed(2);
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -24,20 +31,24 @@ interface SalesRow {
   total: number;
 }
 
-interface PurchaseRow extends SalesRow {
-  categoria: string;
-}
 
 export default function ReportsTab() {
   const months = useMemo(() => monthOptions(), []);
   const [month, setMonth] = useState(months[0]);
   const [income, setIncome] = useState<AccountingIncome[]>([]);
   const [expense, setExpense] = useState<AccountingExpense[]>([]);
+  const [dtes, setDtes] = useState<DteDocument[]>([]);
+  const [fiscal, setFiscal] = useState<FiscalSettings | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from('fiscal_settings').select('*').maybeSingle()
+      .then(({ data }) => setFiscal(data));
+  }, []);
 
   const refetch = useCallback(async () => {
     setLoading(true);
-    const [inc, exp] = await Promise.all([
+    const [inc, exp, dte] = await Promise.all([
       supabase
         .from('accounting_transactions_income')
         .select('*')
@@ -50,9 +61,17 @@ export default function ReportsTab() {
         .gte('transaction_date', month.start)
         .lt('transaction_date', month.endExclusive)
         .order('transaction_date', { ascending: true }),
+      supabase
+        .from('dte_documents')
+        .select('*')
+        .gte('fecha_emision', month.start)
+        .lt('fecha_emision', month.endExclusive)
+        .eq('estado', 'procesado')
+        .order('numero_control', { ascending: true }),
     ]);
     setIncome(inc.data ?? []);
     setExpense(exp.data ?? []);
+    setDtes(dte.data ?? []);
     setLoading(false);
   }, [month]);
 
@@ -105,23 +124,55 @@ export default function ReportsTab() {
     return rows.map((r, i) => ({ correlativo: i + 1, ...r }));
   }, [income]);
 
-  // ---- Registro de Compras: only creditable purchases (CCF/DTE support) ----
-  const purchaseRows = useMemo<PurchaseRow[]>(() => {
-    return expense
-      .filter((r) => r.iva_creditable)
-      .map((r, i) => ({
-        correlativo: i + 1,
-        fecha: r.transaction_date,
-        tipoDoc: r.document_type.toUpperCase(),
-        numDoc: r.document_number ?? '',
-        nit: r.supplier_nit ?? '',
-        nombre: r.supplier_name ?? '',
-        categoria: EXPENSE_TYPE_LABELS[r.expense_type] ?? r.expense_type,
-        base: Number(r.base_amount_usd),
-        iva: Number(r.iva_amount_usd),
-        total: Number(r.total_amount_usd),
-      }));
-  }, [expense]);
+  // ---- Libro de Compras (Art. 141 CT): TODAS las compras con documento, no
+  // sólo las que dan crédito fiscal. El libro es el registro completo; el
+  // crédito fiscal es una columna dentro de él.
+  const purchaseRows = useMemo(
+    () => libroCompras(
+      expense
+        .filter((r) => r.document_type !== 'ninguno')
+        .map((r) => ({
+          fecha: r.transaction_date,
+          numeroDocumento: r.document_number ?? '',
+          tipoDocumento: r.tipo_documento_mh,
+          // El formulario pide "NIT o NRC" en un solo campo; si el proveedor es
+          // persona natural sin NRC queda el DUI.
+          nrcProveedor: r.supplier_nit ?? r.supplier_dui ?? '',
+          nombreProveedor: r.supplier_name ?? '',
+          exentasInternas: Number(r.compras_exentas),
+          exentasImportadas: Number(r.internaciones_exentas) + Number(r.importaciones_exentas),
+          gravadasInternas: Number(r.base_amount_usd),
+          gravadasImportadas: Number(r.internaciones_gravadas) +
+            Number(r.importaciones_gravadas_bienes) + Number(r.importaciones_gravadas_servicios),
+          creditoFiscal: Number(r.iva_amount_usd),
+          // El sistema guarda un solo campo de 1% por compra. En una compra a
+          // Gran Contribuyente ese 1% es percepción, que para nosotros es
+          // anticipo a cuenta. Si se usó para registrar retenciones hechas a
+          // proveedores, va en el registro de retenciones, no acá.
+          anticipoIvaPercibido: Number(r.retention_amount),
+          totalCompras: Number(r.total_amount_usd),
+        })),
+    ),
+    [expense],
+  );
+
+  // Un total por columna: el libro debe sumar en vertical igual que la hoja.
+  const purchaseTotals = useMemo(
+    () => purchaseRows.reduce((a, r) => ({
+      exentasInternas: a.exentasInternas + r.exentasInternas,
+      exentasImportadas: a.exentasImportadas + r.exentasImportadas,
+      gravadasInternas: a.gravadasInternas + r.gravadasInternas,
+      gravadasImportadas: a.gravadasImportadas + r.gravadasImportadas,
+      creditoFiscal: a.creditoFiscal + r.creditoFiscal,
+      anticipoIvaPercibido: a.anticipoIvaPercibido + r.anticipoIvaPercibido,
+      totalCompras: a.totalCompras + r.totalCompras,
+      sujetosExcluidos: a.sujetosExcluidos + r.sujetosExcluidos,
+    }), {
+      exentasInternas: 0, exentasImportadas: 0, gravadasInternas: 0, gravadasImportadas: 0,
+      creditoFiscal: 0, anticipoIvaPercibido: 0, totalCompras: 0, sujetosExcluidos: 0,
+    }),
+    [purchaseRows],
+  );
 
   // ---- F-07 figures ----
   const f07 = useMemo(() => {
@@ -165,13 +216,121 @@ export default function ReportsTab() {
     downloadCsv(`registro-ventas-${month.value}.csv`, csv);
   }
 
-  function exportCompras() {
-    const csv = toCsv(
-      ['Correlativo', 'Fecha', 'Tipo Doc', 'N° Documento', 'NIT Proveedor', 'Proveedor', 'Clasificación', 'Compras Gravadas', 'Crédito Fiscal', 'Total'],
-      purchaseRows.map((r) => [r.correlativo, r.fecha, r.tipoDoc, r.numDoc, r.nit, r.nombre, r.categoria, d2(r.base), d2(r.iva), d2(r.total)]),
-    );
-    downloadCsv(`registro-compras-${month.value}.csv`, csv);
+  function exportLibroCompras() {
+    const csv = toCsv([...LIBRO_COMPRAS_HEADERS], purchaseRows.map(libroCompraCells));
+    downloadCsv(`libro-compras-${month.value}.csv`, csv);
   }
+
+  // ============================================================
+  // Anexos oficiales del F-07 (formato exacto del MH: ; sin encabezados)
+  // ============================================================
+
+  /** Anexo 3 — compras. Incluye exentas: el anexo no es sólo del crédito fiscal. */
+  function exportAnexoCompras() {
+    const rows = expense.filter((r) => r.document_type !== 'ninguno');
+    downloadAnexo(
+      `ANEXO-COMPRAS-${month.value}.csv`,
+      anexoComprasCsv(rows.map((r) => ({
+        fecha: r.transaction_date,
+        claseDocumento: r.clase_documento,
+        tipoDocumento: r.tipo_documento_mh,
+        numeroDocumento: r.document_number ?? '',
+        nitProveedor: r.supplier_nit ?? '',
+        nombreProveedor: r.supplier_name ?? '',
+        comprasExentas: Number(r.compras_exentas),
+        internacionesExentas: Number(r.internaciones_exentas),
+        importacionesExentas: Number(r.importaciones_exentas),
+        comprasGravadas: Number(r.base_amount_usd),
+        internacionesGravadas: Number(r.internaciones_gravadas),
+        importacionesGravadasBienes: Number(r.importaciones_gravadas_bienes),
+        importacionesGravadasServicios: Number(r.importaciones_gravadas_servicios),
+        creditoFiscal: Number(r.iva_amount_usd),
+        totalCompras: Number(r.total_amount_usd),
+        duiProveedor: r.supplier_dui ?? '',
+        tipoOperacion: r.renta_tipo_operacion,
+        clasificacion: r.renta_clasificacion,
+        sector: r.renta_sector,
+        tipoCostoGasto: r.renta_tipo_costo_gasto,
+      }))),
+    );
+  }
+
+  /** Anexo 2 — consumidor final: un renglón por día con el rango de documentos. */
+  function exportAnexoConsumidorFinal() {
+    const porDia = new Map<string, DteDocument[]>();
+    for (const d of dtes.filter((x) => x.tipo_dte === '01')) {
+      const lista = porDia.get(d.fecha_emision) ?? [];
+      lista.push(d);
+      porDia.set(d.fecha_emision, lista);
+    }
+    const rows = [...porDia.entries()]
+      .sort(([a], [b]) => (a < b ? -1 : 1))
+      .map(([fecha, docs]) => {
+        // Los números de control llevan 15 dígitos con ceros a la izquierda,
+        // así que ordenarlos como texto es ordenarlos numéricamente.
+        const nums = docs.map((d) => d.numero_control).sort();
+        const sum = (k: 'total_gravado' | 'total_exento' | 'total_iva' | 'total_pagar') =>
+          docs.reduce((s, d) => s + Number(d[k]), 0);
+        return {
+          fecha,
+          claseDocumento: '4',            // DTE
+          tipoDocumento: '01',            // factura
+          numeroResolucion: fiscal?.num_resolucion ?? '',
+          serieDocumento: fiscal?.serie_documento ?? '',
+          controlInternoDel: nums[0],
+          controlInternoAl: nums[nums.length - 1],
+          numeroDocumentoDel: nums[0],
+          numeroDocumentoAl: nums[nums.length - 1],
+          maquinaRegistradora: '',
+          ventasExentas: sum('total_exento'),
+          ventasExentasNoProporcionalidad: 0,
+          ventasNoSujetas: 0,
+          // En la factura de consumidor final el IVA va incluido en el precio, así
+          // que el anexo reporta la venta gravada CON IVA (por eso en la plantilla
+          // oficial la columna de gravadas y la de total coinciden).
+          ventasGravadas: sum('total_gravado') + sum('total_iva'),
+          exportacionesCentroamerica: 0,
+          exportacionesFueraCentroamerica: 0,
+          exportacionesServicio: 0,
+          ventasZonasFrancas: 0,
+          ventasTerceros: 0,
+          totalVentas: sum('total_pagar'),
+          tipoOperacion: VENTA_DEFAULTS.tipoOperacion,
+          tipoIngreso: VENTA_DEFAULTS.tipoIngreso,
+        };
+      });
+    downloadAnexo(`ANEXO-CONSUMIDOR-FINAL-${month.value}.csv`, anexoConsumidorFinalCsv(rows));
+  }
+
+  /** Anexo 1 — contribuyentes: un renglón por CCF emitido. */
+  function exportAnexoContribuyentes() {
+    const rows = dtes.filter((d) => d.tipo_dte === '03').map((d) => ({
+      fecha: d.fecha_emision,
+      claseDocumento: '4',
+      tipoDocumento: '03',
+      numeroResolucion: fiscal?.num_resolucion ?? '',
+      serieDocumento: fiscal?.serie_documento ?? '',
+      numeroDocumento: d.numero_control,
+      controlInterno: d.numero_control,
+      nitCliente: d.receptor_nit ?? d.receptor_nrc ?? '',
+      nombreCliente: d.receptor_nombre ?? '',
+      ventasExentas: Number(d.total_exento),
+      ventasNoSujetas: 0,
+      ventasGravadas: Number(d.total_gravado),
+      debitoFiscal: Number(d.total_iva),
+      ventasTerceros: 0,
+      debitoTerceros: 0,
+      totalVentas: Number(d.total_pagar),
+      duiCliente: '',
+      tipoOperacion: VENTA_DEFAULTS.tipoOperacion,
+      tipoIngreso: VENTA_DEFAULTS.tipoIngreso,
+    }));
+    downloadAnexo(`ANEXO-CONTRIBUYENTES-${month.value}.csv`, anexoContribuyentesCsv(rows));
+  }
+
+  const cfCount = dtes.filter((d) => d.tipo_dte === '01').length;
+  const ccfCount = dtes.filter((d) => d.tipo_dte === '03').length;
+  const comprasCount = expense.filter((r) => r.document_type !== 'ninguno').length;
 
   function exportF07() {
     const csv = toCsv(
@@ -217,6 +376,35 @@ export default function ReportsTab() {
           ))}
         </select>
         {loading && <span className="text-sm text-charcoal-300">Cargando…</span>}
+      </div>
+
+      {/* Anexos oficiales — lo que realmente se sube al portal del MH */}
+      <div className="rounded-2xl bg-white p-4 shadow sm:p-6">
+        <h3 className="section-title mb-1">Anexos del F-07 (archivos para el MH)</h3>
+        <p className="mb-3 text-xs text-charcoal-300">
+          Formato oficial: separado por punto y coma, sin encabezados, códigos puros.
+          Se cargan tal cual en el portal de Hacienda.
+        </p>
+        {!fiscal && (
+          <p className="mb-3 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">
+            Falta configurar la identidad fiscal (NIT, NRC, resolución y serie) antes de
+            generar los anexos de ventas.
+          </p>
+        )}
+        <div className="grid gap-2 sm:grid-cols-3">
+          <AnexoButton
+            n={1} title="Contribuyentes" count={ccfCount} unit="CCF"
+            onClick={exportAnexoContribuyentes}
+          />
+          <AnexoButton
+            n={2} title="Consumidor final" count={cfCount} unit="facturas"
+            onClick={exportAnexoConsumidorFinal}
+          />
+          <AnexoButton
+            n={3} title="Compras" count={comprasCount} unit="documentos"
+            onClick={exportAnexoCompras}
+          />
+        </div>
       </div>
 
       {/* F-07 */}
@@ -295,18 +483,31 @@ export default function ReportsTab() {
         totals={['', '', '', '', '', 'Totales', money(sum(salesRows, 'base')), money(sum(salesRows, 'iva')), money(sum(salesRows, 'total'))]}
       />
 
-      {/* Registro de Compras */}
+      {/* Libro de Compras — libro legal (Art. 141 CT), todas las compras */}
       <Register
-        title="Registro de Compras"
-        subtitle="Solo compras con crédito fiscal recuperable (CCF / DTE)"
-        onExport={exportCompras}
+        title="Libro de Compras"
+        subtitle="Todas las compras con documento · 13 columnas del formato legal"
+        onExport={exportLibroCompras}
         disabled={purchaseRows.length === 0}
-        headers={['#', 'Fecha', 'Doc', 'N°', 'NIT', 'Proveedor', 'Base', 'Crédito', 'Total']}
+        numericFrom={5}
+        headers={[
+          'N°', 'Fecha', 'N° documento', 'NRC/NIT', 'Proveedor', 'Exentas internas',
+          'Exentas import.', 'Gravadas internas', 'Gravadas import.', 'Crédito fiscal',
+          'Anticipo IVA 1%', 'Total', 'Sujetos excluidos',
+        ]}
         rows={purchaseRows.map((r) => [
-          r.correlativo, fmtDate(r.fecha), r.tipoDoc, r.numDoc, r.nit || '—', r.nombre,
-          money(r.base), money(r.iva), money(r.total),
+          r.numero, fmtDate(r.fecha), r.numeroDocumento || '—', r.nrcProveedor || '—',
+          r.nombreProveedor || '—', money(r.exentasInternas), money(r.exentasImportadas),
+          money(r.gravadasInternas), money(r.gravadasImportadas), money(r.creditoFiscal),
+          money(r.anticipoIvaPercibido), money(r.totalCompras), money(r.sujetosExcluidos),
         ])}
-        totals={['', '', '', '', '', 'Totales', money(sum(purchaseRows, 'base')), money(sum(purchaseRows, 'iva')), money(sum(purchaseRows, 'total'))]}
+        totals={[
+          '', '', '', '', 'Totales',
+          money(purchaseTotals.exentasInternas), money(purchaseTotals.exentasImportadas),
+          money(purchaseTotals.gravadasInternas), money(purchaseTotals.gravadasImportadas),
+          money(purchaseTotals.creditoFiscal), money(purchaseTotals.anticipoIvaPercibido),
+          money(purchaseTotals.totalCompras), money(purchaseTotals.sujetosExcluidos),
+        ]}
       />
 
       <p className="rounded-lg bg-accent-50 px-4 py-3 text-xs text-charcoal-400">
@@ -315,6 +516,26 @@ export default function ReportsTab() {
         no reemplaza a un contador público.
       </p>
     </div>
+  );
+}
+
+function AnexoButton({ n, title, count, unit, onClick }: {
+  n: number;
+  title: string;
+  count: number;
+  unit: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={count === 0}
+      className="rounded-xl border border-cream-300 px-3 py-3 text-left transition hover:border-brand-400 disabled:opacity-40"
+    >
+      <span className="block text-xs text-charcoal-300">Anexo {n}</span>
+      <span className="block font-semibold text-charcoal-600">{title}</span>
+      <span className="block text-xs text-charcoal-400">{count} {unit}</span>
+    </button>
   );
 }
 
@@ -328,7 +549,7 @@ function SummaryRow({ label, value, strong }: { label: string; value: string; st
 }
 
 function Register({
-  title, subtitle, onExport, disabled, headers, rows, totals,
+  title, subtitle, onExport, disabled, headers, rows, totals, numericFrom = 6,
 }: {
   title: string;
   subtitle: string;
@@ -337,6 +558,8 @@ function Register({
   headers: string[];
   rows: (string | number)[][];
   totals: (string | number)[];
+  /** Índice de la primera columna de montos: se alinean a la derecha. */
+  numericFrom?: number;
 }) {
   return (
     <div className="rounded-2xl bg-white shadow">
@@ -357,13 +580,13 @@ function Register({
         <table className="w-full min-w-max text-left text-[13px] sm:text-sm">
           <thead className="bg-cream-100 text-charcoal-400">
             <tr>{headers.map((h, i) => (
-              <th key={i} className={`px-3 py-2 ${i >= 6 ? 'text-right' : ''}`}>{h}</th>
+              <th key={i} className={`px-3 py-2 ${i >= numericFrom ? 'text-right' : ''}`}>{h}</th>
             ))}</tr>
           </thead>
           <tbody className="divide-y divide-cream-200">
             {rows.map((r, ri) => (
               <tr key={ri}>{r.map((c, ci) => (
-                <td key={ci} className={`px-3 py-2 ${ci >= 6 ? 'text-right' : ''}`}>{c}</td>
+                <td key={ci} className={`px-3 py-2 ${ci >= numericFrom ? 'text-right' : ''}`}>{c}</td>
               ))}</tr>
             ))}
             {rows.length === 0 && (
@@ -373,7 +596,7 @@ function Register({
           {rows.length > 0 && (
             <tfoot className="border-t-2 border-cream-300 bg-cream-50 font-semibold">
               <tr>{totals.map((c, i) => (
-                <td key={i} className={`px-3 py-2 ${i >= 6 ? 'text-right' : ''}`}>{c}</td>
+                <td key={i} className={`px-3 py-2 ${i >= numericFrom ? 'text-right' : ''}`}>{c}</td>
               ))}</tr>
             </tfoot>
           )}

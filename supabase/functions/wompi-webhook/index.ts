@@ -97,11 +97,48 @@ Deno.serve(async (req: Request) => {
     })
     .eq('order_number', orderNumber)
     .neq('payment_status', 'paid')
-    .select('id');
+    .select('id, source, customer_phone, total');
 
   if (error) {
     console.error('wompi webhook update falló', orderNumber, error);
     return Response.json({ error: 'update falló' }, { status: 500 });
+  }
+
+  // Confirmarle el pago al cliente del chatbot. Va acá y no en n8n porque el
+  // bot solo habla cuando le escriben: este webhook es el único momento en que
+  // sabemos que el pago entró. `updated` viene vacío si ya estaba pagada, así
+  // que un reintento de Wompi no manda el mensaje dos veces.
+  //
+  // Solo pedidos de WhatsApp: Meta únicamente deja mandar texto libre a quien
+  // te escribió en las últimas 24h, y quien compró en la tienda web puede no
+  // haberlo hecho nunca.
+  const order = updated?.[0];
+  const waToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
+  const waPhoneId = Deno.env.get('WHATSAPP_PHONE_ID');
+  if (order?.source === 'whatsapp' && order.customer_phone && waToken && waPhoneId) {
+    const texto =
+      `*Pago recibido* ✅\n\nSu pedido *${orderNumber}* ya quedó pagado ` +
+      `($${Number(order.total).toFixed(2)}). Se lo estamos preparando.\n\n¡Gracias! 🍗`;
+    try {
+      const res = await fetch(
+        `https://graph.facebook.com/v18.0/${waPhoneId}/messages`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${waToken}` },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: order.customer_phone,
+            type: 'text',
+            text: { preview_url: false, body: texto },
+          }),
+        },
+      );
+      if (!res.ok) console.error('aviso de pago falló', orderNumber, await res.text());
+    } catch (err) {
+      // Nunca romper el webhook por esto: la orden ya quedó pagada.
+      console.error('WhatsApp inalcanzable', err);
+    }
   }
 
   return Response.json({

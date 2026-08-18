@@ -55,6 +55,62 @@ async function getAccessToken(clientId: string, clientSecret: string): Promise<s
   return cachedToken.value;
 }
 
+/** Una transacción tal como la devuelve `GET /TransaccionCompra`. */
+export interface WompiTransaccion {
+  idTransaccion: string;
+  fechaTransaccion: string;
+  monto: number;
+  montoOriginal: number;
+  esAprobada: boolean;
+  esReal: boolean;
+  codigoAutorizacion: string | null;
+  formaPago: number | string | null;
+  /** Lo que el comercio fijó como `identificadorEnlaceComercio`. Va VACÍO en los
+   *  cobros hechos a mano desde el panel o con el Wompi POS físico. */
+  idExterno: string | null;
+  mensaje: string | null;
+}
+
+/**
+ * Lista las transacciones aprobadas de un rango de fechas, paginando hasta
+ * agotarlas. Se filtra por `esAprobada`/`esReal` y no por el enum
+ * `ResultadoTransaccion`, cuyos valores (0|1|2) el swagger no documenta.
+ */
+export async function listWompiTransactions(
+  desde: Date,
+  hasta: Date,
+): Promise<WompiTransaccion[] | null> {
+  const clientId = Deno.env.get('WOMPI_MERCHANT_ID');
+  const clientSecret = Deno.env.get('WOMPI_API_SECRET');
+  if (!clientId || !clientSecret) return null;
+
+  const token = await getAccessToken(clientId, clientSecret);
+  if (!token) return null;
+
+  const todas: WompiTransaccion[] = [];
+  const porPagina = 100;
+
+  for (let pagina = 1; pagina <= 50; pagina++) {
+    const qs = new URLSearchParams({
+      FechaInicio: desde.toISOString(),
+      FechaFin: hasta.toISOString(),
+      CantidadPorPagina: String(porPagina),
+      PaginaActual: String(pagina),
+    });
+    const res = await fetch(`${WOMPI_API_URL}/TransaccionCompra?${qs}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      console.error('wompi listado error', res.status, await res.text());
+      return todas.length ? todas : null;
+    }
+    const data = await res.json();
+    todas.push(...(data.resultado ?? []));
+    if (pagina >= (data.totalPaginas ?? 1)) break;
+  }
+  return todas;
+}
+
 export async function createPaymentLink(req: PaymentLinkRequest): Promise<string | null> {
   const clientId = Deno.env.get('WOMPI_MERCHANT_ID');
   const clientSecret = Deno.env.get('WOMPI_API_SECRET');

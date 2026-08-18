@@ -152,6 +152,198 @@ export type Database = {
         }
         Relationships: []
       }
+      accounting_suppliers: {
+        Row: {
+          id: string
+          nit: string | null
+          nrc: string | null
+          dui: string | null
+          name: string
+          renta_clasificacion: string
+          renta_sector: string
+          renta_tipo_costo_gasto: string
+          expense_type: Database["public"]["Enums"]["accounting_expense_type"]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          nit?: string | null
+          nrc?: string | null
+          dui?: string | null
+          name: string
+          renta_clasificacion?: string
+          renta_sector?: string
+          renta_tipo_costo_gasto?: string
+          expense_type?: Database["public"]["Enums"]["accounting_expense_type"]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          nit?: string | null
+          nrc?: string | null
+          dui?: string | null
+          name?: string
+          renta_clasificacion?: string
+          renta_sector?: string
+          renta_tipo_costo_gasto?: string
+          expense_type?: Database["public"]["Enums"]["accounting_expense_type"]
+          created_at?: string
+        }
+        Relationships: []
+      }
+      fiscal_settings: {
+        Row: {
+          id: boolean
+          ambiente: string
+          nit: string
+          nrc: string
+          nombre: string
+          nombre_comercial: string | null
+          cod_actividad: string
+          desc_actividad: string
+          tipo_establecimiento: string
+          departamento: string
+          municipio: string
+          complemento: string
+          telefono: string | null
+          correo: string
+          cod_estable_mh: string | null
+          cod_estable: string | null
+          cod_punto_venta_mh: string | null
+          cod_punto_venta: string | null
+          num_resolucion: string | null
+          serie_documento: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          ambiente?: string
+          nit: string
+          nrc: string
+          nombre: string
+          nombre_comercial?: string | null
+          cod_actividad: string
+          desc_actividad: string
+          tipo_establecimiento?: string
+          departamento: string
+          municipio: string
+          complemento: string
+          telefono?: string | null
+          correo: string
+          cod_estable_mh?: string | null
+          cod_estable?: string | null
+          cod_punto_venta_mh?: string | null
+          cod_punto_venta?: string | null
+          num_resolucion?: string | null
+          serie_documento?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          ambiente?: string
+          nit?: string
+          nrc?: string
+          nombre?: string
+          nombre_comercial?: string | null
+          cod_actividad?: string
+          desc_actividad?: string
+          tipo_establecimiento?: string
+          departamento?: string
+          municipio?: string
+          complemento?: string
+          telefono?: string | null
+          correo?: string
+          cod_estable_mh?: string | null
+          cod_estable?: string | null
+          cod_punto_venta_mh?: string | null
+          cod_punto_venta?: string | null
+          num_resolucion?: string | null
+          serie_documento?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dte_documents: {
+        Row: {
+          id: string
+          order_id: string | null
+          tipo_dte: string
+          codigo_generacion: string
+          numero_control: string
+          fecha_emision: string
+          hora_emision: string
+          receptor_nombre: string | null
+          receptor_nit: string | null
+          receptor_nrc: string | null
+          receptor_correo: string | null
+          total_gravado: number
+          total_exento: number
+          total_iva: number
+          total_pagar: number
+          estado: Database["public"]["Enums"]["dte_estado"]
+          sello_recibido: string | null
+          json_dte: Json | null
+          json_respuesta: Json | null
+          intentos: number
+          ultimo_error: string | null
+          email_enviado_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id?: string | null
+          tipo_dte?: string
+          codigo_generacion?: string
+          numero_control: string
+          fecha_emision: string
+          hora_emision: string
+          receptor_nombre?: string | null
+          receptor_nit?: string | null
+          receptor_nrc?: string | null
+          receptor_correo?: string | null
+          total_gravado?: number
+          total_exento?: number
+          total_iva?: number
+          total_pagar?: number
+          estado?: Database["public"]["Enums"]["dte_estado"]
+          sello_recibido?: string | null
+          json_dte?: Json | null
+          json_respuesta?: Json | null
+          intentos?: number
+          ultimo_error?: string | null
+          email_enviado_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string | null
+          tipo_dte?: string
+          codigo_generacion?: string
+          numero_control?: string
+          fecha_emision?: string
+          hora_emision?: string
+          receptor_nombre?: string | null
+          receptor_nit?: string | null
+          receptor_nrc?: string | null
+          receptor_correo?: string | null
+          total_gravado?: number
+          total_exento?: number
+          total_iva?: number
+          total_pagar?: number
+          estado?: Database["public"]["Enums"]["dte_estado"]
+          sello_recibido?: string | null
+          json_dte?: Json | null
+          json_respuesta?: Json | null
+          intentos?: number
+          ultimo_error?: string | null
+          email_enviado_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       accounting_transactions_expense: {
         Row: {
           account_code: string | null
@@ -173,6 +365,23 @@ export type Database = {
           supplier_nit: string | null
           total_amount_usd: number
           transaction_date: string
+          clase_documento: string
+          tipo_documento_mh: string
+          compras_exentas: number
+          internaciones_exentas: number
+          importaciones_exentas: number
+          internaciones_gravadas: number
+          importaciones_gravadas_bienes: number
+          importaciones_gravadas_servicios: number
+          supplier_dui: string | null
+          renta_tipo_operacion: string
+          renta_clasificacion: string
+          renta_sector: string
+          renta_tipo_costo_gasto: string
+          codigo_generacion: string | null
+          sello_recibido: string | null
+          source: string
+          raw_dte: Json | null
         }
         Insert: {
           account_code?: string | null
@@ -194,6 +403,23 @@ export type Database = {
           supplier_nit?: string | null
           total_amount_usd: number
           transaction_date?: string
+          clase_documento?: string
+          tipo_documento_mh?: string
+          compras_exentas?: number
+          internaciones_exentas?: number
+          importaciones_exentas?: number
+          internaciones_gravadas?: number
+          importaciones_gravadas_bienes?: number
+          importaciones_gravadas_servicios?: number
+          supplier_dui?: string | null
+          renta_tipo_operacion?: string
+          renta_clasificacion?: string
+          renta_sector?: string
+          renta_tipo_costo_gasto?: string
+          codigo_generacion?: string | null
+          sello_recibido?: string | null
+          source?: string
+          raw_dte?: Json | null
         }
         Update: {
           account_code?: string | null
@@ -691,6 +917,9 @@ export type Database = {
           customer_email: string | null
           customer_name: string | null
           customer_phone: string | null
+          customer_nit: string | null
+          payment_reference: string | null
+          payment_url: string | null
           delivery_address: string | null
           delivery_fee: number
           delivery_zone_id: string | null
@@ -716,6 +945,9 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          customer_nit?: string | null
+          payment_reference?: string | null
+          payment_url?: string | null
           delivery_address?: string | null
           delivery_fee?: number
           delivery_zone_id?: string | null
@@ -741,6 +973,9 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          customer_nit?: string | null
+          payment_reference?: string | null
+          payment_url?: string | null
           delivery_address?: string | null
           delivery_fee?: number
           delivery_zone_id?: string | null
@@ -1338,6 +1573,7 @@ export type Database = {
       purchase_unit: "unidades" | "libras"
       transfer_status: "in_transit" | "received" | "cancelled"
       user_role: "superadmin" | "admin" | "cajero" | "cocina" | "repartidor" | "contador" | "auditor"
+      dte_estado: "pendiente" | "firmado" | "procesado" | "rechazado" | "contingencia" | "anulado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1375,5 +1611,9 @@ export type IvaMonthly = Database["public"]["Views"]["accounting_iva_monthly"]["
 export type LedgerRow = Database["public"]["Functions"]["accounting_ledger"]["Returns"][number]
 export type AccountingPeriod = Tables<"accounting_periods">
 export type AccountingPeriodStatus = Enums<"accounting_period_status">
+export type AccountingSupplier = Tables<"accounting_suppliers">
+export type FiscalSettings = Tables<"fiscal_settings">
+export type DteDocument = Tables<"dte_documents">
+export type DteEstado = Enums<"dte_estado">
 export type WhatsappConversation = Tables<"whatsapp_conversations">
 export type WhatsappMessage = Tables<"whatsapp_messages">

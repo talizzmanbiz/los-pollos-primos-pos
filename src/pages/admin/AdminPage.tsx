@@ -2,6 +2,7 @@
 import { supabase, FUNCTIONS_URL } from '../../lib/supabase';
 import { money } from '../../lib/format';
 import type { Tables, UserRole, Review } from '../../types/database';
+import FiscalSettingsTab from './FiscalSettingsTab';
 
 type Profile = Tables<'profiles'> & { location: { name: string } | null };
 type Product = Tables<'products'>;
@@ -22,7 +23,7 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [tab, setTab] = useState<'staff' | 'products' | 'reviews'>('staff');
+  const [tab, setTab] = useState<'staff' | 'products' | 'reviews' | 'fiscal'>('staff');
 
   // new staff form
   const [showForm, setShowForm] = useState(false);
@@ -138,7 +139,13 @@ export default function AdminPage() {
             </span>
           )}
         </button>
+        <button onClick={() => setTab('fiscal')}
+          className={`tab ${tab === 'fiscal' ? 'tab-on' : 'tab-off'}`}>
+          Datos fiscales
+        </button>
       </div>
+
+      {tab === 'fiscal' && <FiscalSettingsTab />}
 
       {createdCreds && (
         <div className="mb-6 rounded-2xl border-2 border-green-300 bg-green-50 p-6">
