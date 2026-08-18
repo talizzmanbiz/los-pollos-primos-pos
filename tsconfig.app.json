@@ -22,5 +22,8 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  /* *.check.ts corre en Node (`node --experimental-strip-types`), no en el
+     bundle del navegador: usa node:assert y no tiene por qué tipar con DOM. */
+  "exclude": ["src/**/*.check.ts"]
 }

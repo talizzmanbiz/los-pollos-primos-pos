@@ -25,3 +25,6 @@ dist-ssr
 .env
 
 .vercel
+
+# respaldos de datos (contienen datos de clientes)
+backups/

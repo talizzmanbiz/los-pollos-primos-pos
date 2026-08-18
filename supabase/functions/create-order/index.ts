@@ -173,7 +173,11 @@ Deno.serve(async (req: Request) => {
       customerName: body.customer_name,
       customerPhone: body.customer_phone,
     });
-    if (!paymentUrl) {
+    if (paymentUrl) {
+      // Persistido para poder reenviarlo sin crear un segundo enlace (que el
+      // cliente podría pagar además del primero).
+      await admin.from('orders').update({ payment_url: paymentUrl }).eq('id', order.id);
+    } else {
       if (body.source === 'online') {
         // Online payment is mandatory — cancel rather than leave an unpaid order.
         await admin.from('orders').update({ status: 'cancelled' }).eq('id', order.id);

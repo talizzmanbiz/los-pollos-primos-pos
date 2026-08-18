@@ -12,7 +12,7 @@ export default defineConfig({
     // live prices and availability.
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon-192.png', 'favicon-512.png'],
       manifest: {
         name: 'Los Pollos Primos POS',
         short_name: 'Primos POS',
@@ -25,7 +25,8 @@ export default defineConfig({
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          // maskable = logo con margen extra: Android recorta a círculo/squircle
+          { src: 'pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {

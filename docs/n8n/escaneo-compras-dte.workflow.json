@@ -1,0 +1,141 @@
+{
+  "name": "Los Pollos Primos — Escaneo de compras DTE (admin@)",
+  "meta": {
+    "description": "Lee admin@los-pollosprimos.com todos los días a las 7:00 (SV), saca el JSON del DTE que mandan los proveedores y lo registra como compra en el POS. El código de generación evita duplicados, así que reprocesar un correo no pasa nada."
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/El_Salvador",
+    "saveDataErrorExecution": "all"
+  },
+  "nodes": [
+    {
+      "id": "cron_diario",
+      "name": "Cada día 7:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300],
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 7 * * *" }] }
+      },
+      "notes": "Antes de abrir. Correr a diario mantiene el libro de compras al día sin depender de que alguien reenvíe correos."
+    },
+    {
+      "id": "imap",
+      "name": "IMAP — correos sin leer",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [220, 300],
+      "parameters": {
+        "mailbox": "INBOX",
+        "postProcessAction": "read",
+        "format": "resolved",
+        "options": {
+          "customEmailConfig": "[\"UNSEEN\"]",
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "credentials": { "imap": { "id": "REEMPLAZAR", "name": "admin@los-pollosprimos.com" } },
+      "notes": "Credencial IMAP genérica (cPanel/Zoho/Hostinger): host, puerto 993, SSL. 'format: resolved' entrega los adjuntos como binarios."
+    },
+    {
+      "id": "extraer_json",
+      "name": "Sacar el JSON del DTE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Los emisores mandan el DTE como adjunto .json (obligatorio) junto al PDF.\n// Se ignora todo lo demás: publicidad, estados de cuenta, respuestas.\nconst salida = [];\n\nfor (const item of $input.all()) {\n  const binarios = item.binary ?? {};\n  for (const clave of Object.keys(binarios)) {\n    const b = binarios[clave];\n    const nombre = (b.fileName ?? '').toLowerCase();\n    const esJson = nombre.endsWith('.json') || b.mimeType === 'application/json';\n    if (!esJson) continue;\n\n    let texto;\n    try {\n      texto = Buffer.from(b.data, 'base64').toString('utf8');\n    } catch { continue; }\n\n    let dte;\n    try { dte = JSON.parse(texto); } catch { continue; }\n\n    // Un DTE siempre trae identificacion.codigoGeneracion. Si no lo tiene,\n    // es otro JSON cualquiera y no nos sirve.\n    if (!dte?.identificacion?.codigoGeneracion) continue;\n\n    salida.push({ json: { dte, archivo: b.fileName, asunto: item.json.subject ?? null } });\n  }\n}\n\nreturn salida;"
+      },
+      "notes": "Si un proveedor manda sólo PDF, no se importa: se revisa a mano en Lotes → Compras."
+    },
+    {
+      "id": "hay_algo",
+      "name": "¿Hubo DTE?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [660, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "version": 2 },
+          "combinator": "and",
+          "conditions": [
+            {
+              "operator": { "type": "number", "operation": "gt" },
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "importar",
+      "name": "POST import-purchase-dte",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 240],
+      "parameters": {
+        "method": "POST",
+        "url": "https://xuhrenrsrmktfewfejkm.supabase.co/functions/v1/import-purchase-dte",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-webhook-secret", "value": "={{ $env.DTE_WEBHOOK_SECRET }}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ dtes: $input.all().map(i => i.json.dte) }) }}",
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "notes": "Se manda el lote completo en una sola llamada. La función responde { importados, duplicados, errores }."
+    },
+    {
+      "id": "avisar_errores",
+      "name": "¿Hubo errores?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1120, 240],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "version": 2 },
+          "combinator": "and",
+          "conditions": [
+            {
+              "operator": { "type": "number", "operation": "gt" },
+              "leftValue": "={{ ($json.errores ?? []).length }}",
+              "rightValue": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "correo_error",
+      "name": "Avisar al admin",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1340, 180],
+      "parameters": {
+        "fromEmail": "admin@los-pollosprimos.com",
+        "toEmail": "admin@los-pollosprimos.com",
+        "subject": "=Compras DTE: {{ $json.errores.length }} documento(s) no se pudieron importar",
+        "emailFormat": "text",
+        "text": "=Importados: {{ $json.importados }}\nDuplicados (ya estaban): {{ $json.duplicados }}\n\nNo importados:\n{{ $json.errores.join('\\n') }}\n\nRevisalos a mano en el POS → Lotes → Compras (F-07)."
+      },
+      "credentials": { "smtp": { "id": "REEMPLAZAR", "name": "admin@los-pollosprimos.com SMTP" } }
+    }
+  ],
+  "connections": {
+    "Cada día 7:00": { "main": [[{ "node": "IMAP — correos sin leer", "type": "main", "index": 0 }]] },
+    "IMAP — correos sin leer": { "main": [[{ "node": "Sacar el JSON del DTE", "type": "main", "index": 0 }]] },
+    "Sacar el JSON del DTE": { "main": [[{ "node": "¿Hubo DTE?", "type": "main", "index": 0 }]] },
+    "¿Hubo DTE?": { "main": [[{ "node": "POST import-purchase-dte", "type": "main", "index": 0 }], []] },
+    "POST import-purchase-dte": { "main": [[{ "node": "¿Hubo errores?", "type": "main", "index": 0 }]] },
+    "¿Hubo errores?": { "main": [[{ "node": "Avisar al admin", "type": "main", "index": 0 }], []] }
+  },
+  "pinData": {}
+}

@@ -192,7 +192,13 @@ La pestaña para lo que se presenta a Hacienda. Todo se puede **descargar en CSV
 - **Anexo F-14** — aparece solo si registraste retenciones: total del 1% de IVA retenido a proveedores.
 - **Registro de Ventas:** las ventas a contribuyentes (con NIT) se detallan una por una como **CCF**; las
   ventas a consumidor final se **resumen por día** (así lo pide la ley). Botón **Descargar CSV**.
-- **Registro de Compras:** las compras con **crédito fiscal** (CCF/DTE), una por una. Botón **Descargar CSV**.
+- **Libro de Compras:** **todas** las compras con documento (no sólo las que dan crédito fiscal), con las
+  13 columnas del libro legal del Art. 141 del Código Tributario: exentas internas, exentas por
+  importación/internación, gravadas internas, gravadas por importación/internación, crédito fiscal,
+  anticipo a cuenta de IVA, total y compras a **sujetos excluidos**. Botón **Descargar CSV**.
+- **Anexos del F-07** (los archivos que se suben al portal del MH, formato oficial con punto y coma y sin
+  encabezados): anexo 1 **Contribuyentes**, anexo 2 **Consumidor final** y anexo 3 **Compras**. Las compras
+  salen de lo que se registra en **Lotes y Compras → Compras (F-07)**.
 
 > **Fecha límite F-07:** antes del **día 20** del mes siguiente. Validá el formato exacto de columnas con tu
 > contador según la versión vigente de la DGII antes de presentar.

@@ -50,6 +50,53 @@ Respuesta: `{ order_number, subtotal, delivery_fee, total, estimated_minutes, pa
 `{ "phone": "77778888", "order_number": "PP-C-0042" }` → estado + timeline.
 El teléfono se compara solo por dígitos (con o sin +503).
 
+### 4. `POST /payment-link`  (cliente que cambia a tarjeta después de confirmar)
+Header obligatorio: `x-webhook-secret: <WHATSAPP_WEBHOOK_SECRET>`
+
+`{ "order_number": "PP-C-0042" }` → `{ order_number, total, payment_url, ya_existia }`
+
+- Es la **única** forma válida de obtener un enlace de pago para una orden que ya
+  existe. La herramienta del agente es `generar_link_pago`.
+- Idempotente: si la orden ya tiene `payment_url`, devuelve el mismo. Crear un
+  segundo enlace permitiría que el cliente pague dos veces.
+- El enlace se crea por la API con `urlWebhook` apuntando a `wompi-webhook`, así
+  que al pagarse la orden se marca `paid` sola. **Un enlace creado a mano en el
+  panel de Wompi no avisa al POS** y la venta queda como pendiente.
+- Rechaza órdenes canceladas, ya pagadas o de monto cero.
+- Si Wompi falla devuelve **502**: el bot tiene que decirlo y ofrecer efectivo.
+
+> **Por qué existe.** El 9-ago un cliente confirmó en efectivo y 30 segundos
+> después pidió tarjeta. El agente no tenía herramienta para eso y se inventó
+> una URL con pinta de enlace de Wompi (`s.wompi.sv/PP-C-0042`). Regla en el
+> prompt: nunca escribir una URL que no venga textualmente de una herramienta.
+
+### 5. `POST /wompi-reconcile`  (cron, no lo llama el bot)
+Header obligatorio: `x-webhook-secret: <WHATSAPP_WEBHOOK_SECRET>`
+
+`{ "horas": 48, "aplicar": true }` → `{ conciliadas, revisar, ya_registradas, … }`
+
+Cruza los cobros aprobados de Wompi (`GET /TransaccionCompra`) contra las órdenes
+pendientes. Empareja en dos pasos:
+
+1. Por **`idExterno`**, que es el `identificadorEnlaceComercio` que ponemos al
+   crear el enlace por API.
+2. Si el cobro no lo trae —**panel de Wompi, Wompi POS físico, QR hecho a
+   mano**— por **monto exacto + ventana de tiempo** (24 h antes, 15 min después
+   de crearse la orden).
+
+Si dos órdenes calzan igual de bien, **no toca ninguna** y las devuelve en
+`revisar`. Marcar como pagada la orden equivocada es peor que dejarla pendiente.
+
+- Idempotente: una transacción ya usada como `payment_reference` nunca se
+  reaplica.
+- `{"aplicar": false}` simula sin escribir — conviene para la primera corrida.
+- Lo corre `docs/n8n/conciliacion-wompi.workflow.json` cada 15 minutos.
+
+> **Por qué existe.** El pago de David (PP-C-0042) se cobró con un enlace creado
+> a mano: `idExterno` vacío ⇒ `wompi-webhook` lo descartó con "sin identificador
+> de enlace" y la venta quedó pendiente dos días. Cualquier cobro que no salga de
+> la API tiene ese mismo punto ciego.
+
 ## Secreto del webhook
 
 Configurar en Supabase (Dashboard → Edge Functions → Secrets, o CLI):

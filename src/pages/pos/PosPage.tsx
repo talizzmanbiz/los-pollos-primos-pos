@@ -8,6 +8,7 @@ import { createOrder, type CartLine, type CustomerInfo } from './createOrder';
 import { startOfflineSync, pendingCount } from '../../lib/offlineQueue';
 import { buildReceipt, sendToPrinter, getPrinterUrl, setPrinterUrl, type ReceiptData } from '../../lib/webprnt';
 import { fmtDateTime } from '../../lib/format';
+import { emitirDte } from '../../lib/dte';
 import PaymentModal from './PaymentModal';
 
 const TYPE_LABELS: Record<string, string> = {
@@ -22,7 +23,7 @@ export default function PosPage() {
   const { location, loading: locationLoading } = useWorkingLocation();
   const { products, loading, error } = useCatalog();
   const [cart, setCart] = useState<CartLine[]>([]);
-  const [customer, setCustomer] = useState<CustomerInfo>({ name: '', phone: '', email: '' });
+  const [customer, setCustomer] = useState<CustomerInfo>({ name: '', phone: '', email: '', nit: '' });
   const [showCustomer, setShowCustomer] = useState(false);
   const [paying, setPaying] = useState(false);
   const [lastOrder, setLastOrder] = useState<{
@@ -84,7 +85,7 @@ export default function PosPage() {
 
   function clearSale() {
     setCart([]);
-    setCustomer({ name: '', phone: '', email: '' });
+    setCustomer({ name: '', phone: '', email: '', nit: '' });
     setShowCustomer(false);
   }
 
@@ -135,6 +136,23 @@ export default function PosPage() {
       receipt,
     });
     clearSale();
+
+    // Toda venta lleva DTE. Se emite después de cerrar la venta para no
+    // bloquear la caja; si no alcanza a volver, la cola de emit-dte lo recoge.
+    if (!('queued' in result)) {
+      const dte = await emitirDte(result.orderId);
+      if (dte) {
+        setLastOrder((prev) => prev && {
+          ...prev,
+          receipt: {
+            ...prev.receipt,
+            numeroControl: dte.numero_control,
+            codigoGeneracion: dte.codigo_generacion,
+            selloRecibido: dte.sello_recibido ?? undefined,
+          },
+        });
+      }
+    }
   }
 
   if (loading || locationLoading) return <p className="p-6 text-lg">Cargando catálogo…</p>;
@@ -275,6 +293,17 @@ export default function PosPage() {
                 className="w-full glass-sm px-2 lg:px-3 py-2 lg:py-3 text-xs lg:text-sm text-charcoal-800 placeholder:text-gray-500 border border-brand-200 focus:border-brand-500 transition-colors"
                 aria-label="Correo del cliente"
               />
+              <input
+                placeholder="NIT (para crédito fiscal)"
+                value={customer.nit}
+                onChange={(e) => setCustomer({ ...customer, nit: e.target.value })}
+                className="w-full glass-sm px-2 lg:px-3 py-2 lg:py-3 text-xs lg:text-sm text-charcoal-800 placeholder:text-gray-500 border border-brand-200 focus:border-brand-500 transition-colors"
+                aria-label="NIT del cliente para crédito fiscal"
+              />
+              <p className="px-1 text-[11px] leading-snug text-charcoal-400">
+                Con NIT se emite <strong>CCF</strong>; sin NIT, factura de consumidor final.
+                Con correo, el DTE se le envía automáticamente.
+              </p>
             </div>
           )}
         </div>

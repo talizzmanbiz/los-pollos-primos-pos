@@ -105,6 +105,12 @@ export interface ReceiptData {
   total: number;
   cashReceived?: number;
   change?: number;
+  // Datos del DTE. Hacienda exige que la representación impresa muestre el
+  // código de generación y el número de control; el sello sólo existe una vez
+  // que el MH acusa recibo (en contingencia se imprime sin él).
+  numeroControl?: string;
+  codigoGeneracion?: string;
+  selloRecibido?: string;
 }
 
 export function buildReceipt(data: ReceiptData): string {
@@ -136,6 +142,22 @@ export function buildReceipt(data: ReceiptData): string {
   if (data.cashReceived != null) {
     b.row('Efectivo', money(data.cashReceived));
     b.row('Cambio', money(data.change ?? 0));
+  }
+
+  // Desglose del IVA: los precios del menú ya lo llevan incluido.
+  const gravado = Math.round((data.total / 1.13) * 100) / 100;
+  b.row('Gravado', money(gravado));
+  b.row('IVA 13% incluido', money(Math.round((data.total - gravado) * 100) / 100));
+
+  if (data.codigoGeneracion || data.numeroControl) {
+    b.divider().align('center')
+      .line('DOCUMENTO TRIBUTARIO ELECTRONICO')
+      .align('left');
+    if (data.numeroControl) b.line(`N° control: ${data.numeroControl}`);
+    if (data.codigoGeneracion) b.line(`Cod. gen.: ${data.codigoGeneracion}`);
+    b.line(data.selloRecibido
+      ? `Sello: ${data.selloRecibido}`
+      : 'Pendiente de sello (contingencia)');
   }
 
   b.divider()
