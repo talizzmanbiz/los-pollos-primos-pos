@@ -59,3 +59,21 @@ export function useOrdersQueue(locationId: string | undefined, statuses: OrderSt
 export async function setOrderStatus(orderId: string, status: OrderStatus) {
   return supabase.from('orders').update({ status }).eq('id', orderId);
 }
+
+/**
+ * Cancela una orden y revierte lo que haya que revertir. Va por RPC y no por
+ * un update directo porque cancelar toca inventario, lotes de producción y la
+ * caja del turno: eso tiene que pasar en una sola transacción del servidor.
+ *
+ * El efectivo ya cobrado sale solo de la sesión abierta. La tarjeta no: Wompi
+ * no expone reembolso por API, así que la orden queda en la cola de pendientes
+ * hasta que alguien la anule en el panel de Wompi.
+ */
+export async function cancelOrder(orderId: string, reason: string) {
+  return supabase.rpc('cancel_order', { p_order: orderId, p_reason: reason });
+}
+
+/** Deja constancia de que el reembolso ya se hizo en Wompi. Sólo caja. */
+export async function markOrderRefunded(orderId: string) {
+  return supabase.rpc('mark_order_refunded', { p_order: orderId });
+}

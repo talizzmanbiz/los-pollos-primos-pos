@@ -3,10 +3,17 @@ import { supabase } from '../../lib/supabase';
 import { money, fmtDateTime, fmtTime } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkingLocation } from '../../hooks/useWorkingLocation';
+import { markOrderRefunded } from '../../hooks/useOrdersQueue';
 import type { Tables } from '../../types/database';
 
 type Session = Tables<'cash_sessions'>;
 type Movement = Tables<'cash_movements'>;
+
+/** Orden cancelada cuyo dinero todavía no se le devolvió al cliente. */
+type PendingRefund = Pick<
+  Tables<'orders'>,
+  'id' | 'order_number' | 'total' | 'payment_method' | 'cancellation_reason' | 'created_at'
+>;
 
 export default function CashPage() {
   const { profile } = useAuth();
@@ -14,6 +21,7 @@ export default function CashPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [movements, setMovements] = useState<Movement[]>([]);
   const [history, setHistory] = useState<Session[]>([]);
+  const [refunds, setRefunds] = useState<PendingRefund[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [openingAmount, setOpeningAmount] = useState('');
@@ -54,12 +62,36 @@ export default function CashPage() {
       .order('closed_at', { ascending: false })
       .limit(10);
     setHistory(past ?? []);
+
+    // Cola de reembolsos: órdenes canceladas cuyo dinero todavía no volvió.
+    // El efectivo con turno abierto ya se revirtió solo al cancelar, así que
+    // lo que queda acá es sobre todo tarjeta — Wompi no reembolsa por API y
+    // hay que anularlo a mano en su panel.
+    const { data: pend } = await supabase
+      .from('orders')
+      .select('id, order_number, total, payment_method, cancellation_reason, created_at')
+      .eq('location_id', locationId)
+      .eq('status', 'cancelled')
+      .eq('payment_status', 'paid')
+      .gt('total', 0)
+      .order('created_at', { ascending: false });
+    setRefunds(pend ?? []);
+
     setLoading(false);
   }, [locationId]);
 
   useEffect(() => {
     refetch();
   }, [refetch]);
+
+  async function markRefunded(orderId: string) {
+    const { error } = await markOrderRefunded(orderId);
+    if (error) {
+      alert('No se pudo marcar el reembolso: ' + error.message);
+      return;
+    }
+    refetch();
+  }
 
   if (!profile) return null;
   if (!locationId) {
@@ -278,6 +310,45 @@ export default function CashPage() {
               </div>
             </form>
           )}
+        </div>
+      )}
+
+      {refunds.length > 0 && (
+        <div className="mt-8 rounded-2xl border-2 border-amber-300 bg-white p-4 shadow sm:p-6">
+          <h2 className="section-title mb-1">
+            Reembolsos pendientes <span className="text-amber-600">({refunds.length})</span>
+          </h2>
+          <p className="mb-3 text-sm text-gray-500">
+            Pedidos cancelados cuyo dinero todavía no se devolvió. Los de tarjeta se anulan
+            en el panel de Wompi y después se marcan acá.
+          </p>
+          <ul className="divide-y divide-gray-100">
+            {refunds.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-gray-900">
+                    {r.order_number}
+                    <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                      {r.payment_method === 'payment_link' ? 'Tarjeta' : 'Efectivo'}
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {fmtDateTime(r.created_at)}
+                    {r.cancellation_reason ? ` — ${r.cancellation_reason}` : ''}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-lg font-semibold text-red-600">−{money(r.total)}</span>
+                  <button
+                    onClick={() => markRefunded(r.id)}
+                    className="btn btn-dark whitespace-nowrap"
+                  >
+                    Marcar reembolsado
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

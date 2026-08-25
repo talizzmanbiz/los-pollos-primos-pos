@@ -1,5 +1,11 @@
 // Generated from the Supabase schema (mcp generate_typescript_types).
-// Regenerate after schema changes.
+// Regenerate after schema changes — y despues volve a aplicar DOS parches a mano:
+//   1. Columnas que llena un trigger, no un default, quedan como obligatorias en
+//      Insert porque el generador no ve el trigger. Marcalas opcionales:
+//      orders.order_number, purchase_batches.quantity_received/_remaining/total_cost.
+//      Ojo con order_number: si el cliente lo manda, el trigger NO lo asigna y se
+//      rompe el correlativo (ver 0027_correlativo_a_prueba_de_desfase.sql).
+//   2. El bloque de alias de dominio del final.
 export type Json =
   | string
   | number
@@ -9,6 +15,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.4"
   }
@@ -117,7 +125,15 @@ export type Database = {
           source_id?: string | null
           source_type?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "accounting_journal_account_code_fkey"
+            columns: ["account_code"]
+            isOneToOne: false
+            referencedRelation: "accounting_chart_of_accounts"
+            referencedColumns: ["account_code"]
+          },
+        ]
       }
       accounting_periods: {
         Row: {
@@ -150,197 +166,59 @@ export type Database = {
           status?: Database["public"]["Enums"]["accounting_period_status"]
           year_month?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "accounting_periods_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_periods_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       accounting_suppliers: {
         Row: {
+          created_at: string
+          dui: string | null
+          expense_type: Database["public"]["Enums"]["accounting_expense_type"]
           id: string
+          name: string
           nit: string | null
           nrc: string | null
-          dui: string | null
-          name: string
           renta_clasificacion: string
           renta_sector: string
           renta_tipo_costo_gasto: string
-          expense_type: Database["public"]["Enums"]["accounting_expense_type"]
-          created_at: string
         }
         Insert: {
-          id?: string
-          nit?: string | null
-          nrc?: string | null
+          created_at?: string
           dui?: string | null
+          expense_type?: Database["public"]["Enums"]["accounting_expense_type"]
+          id?: string
           name: string
-          renta_clasificacion?: string
-          renta_sector?: string
-          renta_tipo_costo_gasto?: string
-          expense_type?: Database["public"]["Enums"]["accounting_expense_type"]
-          created_at?: string
-        }
-        Update: {
-          id?: string
           nit?: string | null
           nrc?: string | null
-          dui?: string | null
-          name?: string
           renta_clasificacion?: string
           renta_sector?: string
           renta_tipo_costo_gasto?: string
+        }
+        Update: {
+          created_at?: string
+          dui?: string | null
           expense_type?: Database["public"]["Enums"]["accounting_expense_type"]
-          created_at?: string
-        }
-        Relationships: []
-      }
-      fiscal_settings: {
-        Row: {
-          id: boolean
-          ambiente: string
-          nit: string
-          nrc: string
-          nombre: string
-          nombre_comercial: string | null
-          cod_actividad: string
-          desc_actividad: string
-          tipo_establecimiento: string
-          departamento: string
-          municipio: string
-          complemento: string
-          telefono: string | null
-          correo: string
-          cod_estable_mh: string | null
-          cod_estable: string | null
-          cod_punto_venta_mh: string | null
-          cod_punto_venta: string | null
-          num_resolucion: string | null
-          serie_documento: string | null
-          updated_at: string
-        }
-        Insert: {
-          id?: boolean
-          ambiente?: string
-          nit: string
-          nrc: string
-          nombre: string
-          nombre_comercial?: string | null
-          cod_actividad: string
-          desc_actividad: string
-          tipo_establecimiento?: string
-          departamento: string
-          municipio: string
-          complemento: string
-          telefono?: string | null
-          correo: string
-          cod_estable_mh?: string | null
-          cod_estable?: string | null
-          cod_punto_venta_mh?: string | null
-          cod_punto_venta?: string | null
-          num_resolucion?: string | null
-          serie_documento?: string | null
-          updated_at?: string
-        }
-        Update: {
-          id?: boolean
-          ambiente?: string
-          nit?: string
-          nrc?: string
-          nombre?: string
-          nombre_comercial?: string | null
-          cod_actividad?: string
-          desc_actividad?: string
-          tipo_establecimiento?: string
-          departamento?: string
-          municipio?: string
-          complemento?: string
-          telefono?: string | null
-          correo?: string
-          cod_estable_mh?: string | null
-          cod_estable?: string | null
-          cod_punto_venta_mh?: string | null
-          cod_punto_venta?: string | null
-          num_resolucion?: string | null
-          serie_documento?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      dte_documents: {
-        Row: {
-          id: string
-          order_id: string | null
-          tipo_dte: string
-          codigo_generacion: string
-          numero_control: string
-          fecha_emision: string
-          hora_emision: string
-          receptor_nombre: string | null
-          receptor_nit: string | null
-          receptor_nrc: string | null
-          receptor_correo: string | null
-          total_gravado: number
-          total_exento: number
-          total_iva: number
-          total_pagar: number
-          estado: Database["public"]["Enums"]["dte_estado"]
-          sello_recibido: string | null
-          json_dte: Json | null
-          json_respuesta: Json | null
-          intentos: number
-          ultimo_error: string | null
-          email_enviado_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
           id?: string
-          order_id?: string | null
-          tipo_dte?: string
-          codigo_generacion?: string
-          numero_control: string
-          fecha_emision: string
-          hora_emision: string
-          receptor_nombre?: string | null
-          receptor_nit?: string | null
-          receptor_nrc?: string | null
-          receptor_correo?: string | null
-          total_gravado?: number
-          total_exento?: number
-          total_iva?: number
-          total_pagar?: number
-          estado?: Database["public"]["Enums"]["dte_estado"]
-          sello_recibido?: string | null
-          json_dte?: Json | null
-          json_respuesta?: Json | null
-          intentos?: number
-          ultimo_error?: string | null
-          email_enviado_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          order_id?: string | null
-          tipo_dte?: string
-          codigo_generacion?: string
-          numero_control?: string
-          fecha_emision?: string
-          hora_emision?: string
-          receptor_nombre?: string | null
-          receptor_nit?: string | null
-          receptor_nrc?: string | null
-          receptor_correo?: string | null
-          total_gravado?: number
-          total_exento?: number
-          total_iva?: number
-          total_pagar?: number
-          estado?: Database["public"]["Enums"]["dte_estado"]
-          sello_recibido?: string | null
-          json_dte?: Json | null
-          json_respuesta?: Json | null
-          intentos?: number
-          ultimo_error?: string | null
-          email_enviado_at?: string | null
-          created_at?: string
-          updated_at?: string
+          name?: string
+          nit?: string | null
+          nrc?: string | null
+          renta_clasificacion?: string
+          renta_sector?: string
+          renta_tipo_costo_gasto?: string
         }
         Relationships: []
       }
@@ -348,6 +226,9 @@ export type Database = {
         Row: {
           account_code: string | null
           base_amount_usd: number
+          clase_documento: string
+          codigo_generacion: string | null
+          compras_exentas: number
           created_at: string
           created_by: string | null
           description: string | null
@@ -355,37 +236,37 @@ export type Database = {
           document_type: Database["public"]["Enums"]["accounting_doc_type"]
           expense_type: Database["public"]["Enums"]["accounting_expense_type"]
           id: string
+          importaciones_exentas: number
+          importaciones_gravadas_bienes: number
+          importaciones_gravadas_servicios: number
+          internaciones_exentas: number
+          internaciones_gravadas: number
           is_deductible: boolean
           iva_amount_usd: number
           iva_creditable: boolean
           iva_rate: number | null
           location_id: string | null
-          retention_amount: number
-          supplier_name: string | null
-          supplier_nit: string | null
-          total_amount_usd: number
-          transaction_date: string
-          clase_documento: string
-          tipo_documento_mh: string
-          compras_exentas: number
-          internaciones_exentas: number
-          importaciones_exentas: number
-          internaciones_gravadas: number
-          importaciones_gravadas_bienes: number
-          importaciones_gravadas_servicios: number
-          supplier_dui: string | null
-          renta_tipo_operacion: string
+          raw_dte: Json | null
           renta_clasificacion: string
           renta_sector: string
           renta_tipo_costo_gasto: string
-          codigo_generacion: string | null
+          renta_tipo_operacion: string
+          retention_amount: number
           sello_recibido: string | null
           source: string
-          raw_dte: Json | null
+          supplier_dui: string | null
+          supplier_name: string | null
+          supplier_nit: string | null
+          tipo_documento_mh: string
+          total_amount_usd: number
+          transaction_date: string
         }
         Insert: {
           account_code?: string | null
           base_amount_usd: number
+          clase_documento?: string
+          codigo_generacion?: string | null
+          compras_exentas?: number
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -393,37 +274,37 @@ export type Database = {
           document_type?: Database["public"]["Enums"]["accounting_doc_type"]
           expense_type: Database["public"]["Enums"]["accounting_expense_type"]
           id?: string
+          importaciones_exentas?: number
+          importaciones_gravadas_bienes?: number
+          importaciones_gravadas_servicios?: number
+          internaciones_exentas?: number
+          internaciones_gravadas?: number
           is_deductible?: boolean
           iva_amount_usd?: number
           iva_creditable?: boolean
           iva_rate?: number | null
           location_id?: string | null
-          retention_amount?: number
-          supplier_name?: string | null
-          supplier_nit?: string | null
-          total_amount_usd: number
-          transaction_date?: string
-          clase_documento?: string
-          tipo_documento_mh?: string
-          compras_exentas?: number
-          internaciones_exentas?: number
-          importaciones_exentas?: number
-          internaciones_gravadas?: number
-          importaciones_gravadas_bienes?: number
-          importaciones_gravadas_servicios?: number
-          supplier_dui?: string | null
-          renta_tipo_operacion?: string
+          raw_dte?: Json | null
           renta_clasificacion?: string
           renta_sector?: string
           renta_tipo_costo_gasto?: string
-          codigo_generacion?: string | null
+          renta_tipo_operacion?: string
+          retention_amount?: number
           sello_recibido?: string | null
           source?: string
-          raw_dte?: Json | null
+          supplier_dui?: string | null
+          supplier_name?: string | null
+          supplier_nit?: string | null
+          tipo_documento_mh?: string
+          total_amount_usd: number
+          transaction_date?: string
         }
         Update: {
           account_code?: string | null
           base_amount_usd?: number
+          clase_documento?: string
+          codigo_generacion?: string | null
+          compras_exentas?: number
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -431,18 +312,54 @@ export type Database = {
           document_type?: Database["public"]["Enums"]["accounting_doc_type"]
           expense_type?: Database["public"]["Enums"]["accounting_expense_type"]
           id?: string
+          importaciones_exentas?: number
+          importaciones_gravadas_bienes?: number
+          importaciones_gravadas_servicios?: number
+          internaciones_exentas?: number
+          internaciones_gravadas?: number
           is_deductible?: boolean
           iva_amount_usd?: number
           iva_creditable?: boolean
           iva_rate?: number | null
           location_id?: string | null
+          raw_dte?: Json | null
+          renta_clasificacion?: string
+          renta_sector?: string
+          renta_tipo_costo_gasto?: string
+          renta_tipo_operacion?: string
           retention_amount?: number
+          sello_recibido?: string | null
+          source?: string
+          supplier_dui?: string | null
           supplier_name?: string | null
           supplier_nit?: string | null
+          tipo_documento_mh?: string
           total_amount_usd?: number
           transaction_date?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "accounting_transactions_expense_account_code_fkey"
+            columns: ["account_code"]
+            isOneToOne: false
+            referencedRelation: "accounting_chart_of_accounts"
+            referencedColumns: ["account_code"]
+          },
+          {
+            foreignKeyName: "accounting_transactions_expense_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_transactions_expense_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       accounting_transactions_income: {
         Row: {
@@ -499,7 +416,29 @@ export type Database = {
           transaction_date?: string
           transaction_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "accounting_transactions_income_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_transactions_income_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_transactions_income_source_order_id_fkey"
+            columns: ["source_order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cash_movements: {
         Row: {
@@ -532,7 +471,22 @@ export type Database = {
           ref_type?: string | null
           session_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cash_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_movements_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "cash_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cash_sessions: {
         Row: {
@@ -574,7 +528,29 @@ export type Database = {
           opening_amount?: number
           status?: Database["public"]["Enums"]["cash_session_status"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cash_sessions_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_sessions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_sessions_opened_by_fkey"
+            columns: ["opened_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       combo_components: {
         Row: {
@@ -634,6 +610,190 @@ export type Database = {
           location_id?: string
           name?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_zones_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dte_correlativos: {
+        Row: {
+          tipo_dte: string
+          ultimo: number
+        }
+        Insert: {
+          tipo_dte: string
+          ultimo?: number
+        }
+        Update: {
+          tipo_dte?: string
+          ultimo?: number
+        }
+        Relationships: []
+      }
+      dte_documents: {
+        Row: {
+          codigo_generacion: string
+          created_at: string
+          email_enviado_at: string | null
+          estado: Database["public"]["Enums"]["dte_estado"]
+          fecha_emision: string
+          hora_emision: string
+          id: string
+          intentos: number
+          json_dte: Json | null
+          json_respuesta: Json | null
+          numero_control: string
+          order_id: string | null
+          receptor_correo: string | null
+          receptor_nit: string | null
+          receptor_nombre: string | null
+          receptor_nrc: string | null
+          sello_recibido: string | null
+          tipo_dte: string
+          total_exento: number
+          total_gravado: number
+          total_iva: number
+          total_pagar: number
+          ultimo_error: string | null
+          updated_at: string
+        }
+        Insert: {
+          codigo_generacion?: string
+          created_at?: string
+          email_enviado_at?: string | null
+          estado?: Database["public"]["Enums"]["dte_estado"]
+          fecha_emision: string
+          hora_emision: string
+          id?: string
+          intentos?: number
+          json_dte?: Json | null
+          json_respuesta?: Json | null
+          numero_control: string
+          order_id?: string | null
+          receptor_correo?: string | null
+          receptor_nit?: string | null
+          receptor_nombre?: string | null
+          receptor_nrc?: string | null
+          sello_recibido?: string | null
+          tipo_dte?: string
+          total_exento?: number
+          total_gravado?: number
+          total_iva?: number
+          total_pagar?: number
+          ultimo_error?: string | null
+          updated_at?: string
+        }
+        Update: {
+          codigo_generacion?: string
+          created_at?: string
+          email_enviado_at?: string | null
+          estado?: Database["public"]["Enums"]["dte_estado"]
+          fecha_emision?: string
+          hora_emision?: string
+          id?: string
+          intentos?: number
+          json_dte?: Json | null
+          json_respuesta?: Json | null
+          numero_control?: string
+          order_id?: string | null
+          receptor_correo?: string | null
+          receptor_nit?: string | null
+          receptor_nombre?: string | null
+          receptor_nrc?: string | null
+          sello_recibido?: string | null
+          tipo_dte?: string
+          total_exento?: number
+          total_gravado?: number
+          total_iva?: number
+          total_pagar?: number
+          ultimo_error?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dte_documents_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fiscal_settings: {
+        Row: {
+          ambiente: string
+          cod_actividad: string
+          cod_estable: string | null
+          cod_estable_mh: string | null
+          cod_punto_venta: string | null
+          cod_punto_venta_mh: string | null
+          complemento: string
+          correo: string
+          departamento: string
+          desc_actividad: string
+          id: boolean
+          municipio: string
+          nit: string
+          nombre: string
+          nombre_comercial: string | null
+          nrc: string
+          num_resolucion: string | null
+          serie_documento: string | null
+          telefono: string | null
+          tipo_establecimiento: string
+          updated_at: string
+        }
+        Insert: {
+          ambiente?: string
+          cod_actividad: string
+          cod_estable?: string | null
+          cod_estable_mh?: string | null
+          cod_punto_venta?: string | null
+          cod_punto_venta_mh?: string | null
+          complemento: string
+          correo: string
+          departamento: string
+          desc_actividad: string
+          id?: boolean
+          municipio: string
+          nit: string
+          nombre: string
+          nombre_comercial?: string | null
+          nrc: string
+          num_resolucion?: string | null
+          serie_documento?: string | null
+          telefono?: string | null
+          tipo_establecimiento?: string
+          updated_at?: string
+        }
+        Update: {
+          ambiente?: string
+          cod_actividad?: string
+          cod_estable?: string | null
+          cod_estable_mh?: string | null
+          cod_punto_venta?: string | null
+          cod_punto_venta_mh?: string | null
+          complemento?: string
+          correo?: string
+          departamento?: string
+          desc_actividad?: string
+          id?: boolean
+          municipio?: string
+          nit?: string
+          nombre?: string
+          nombre_comercial?: string | null
+          nrc?: string
+          num_resolucion?: string | null
+          serie_documento?: string | null
+          telefono?: string | null
+          tipo_establecimiento?: string
+          updated_at?: string
+        }
         Relationships: []
       }
       inventory_items: {
@@ -690,6 +850,13 @@ export type Database = {
             referencedRelation: "inventory_items"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "inventory_levels_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       inventory_movements: {
@@ -731,10 +898,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "inventory_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "inventory_movements_inventory_item_id_fkey"
             columns: ["inventory_item_id"]
             isOneToOne: false
             referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -782,7 +963,15 @@ export type Database = {
           last_number?: number
           location_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "order_counters_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: true
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_item_batch_consumption: {
         Row: {
@@ -902,6 +1091,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "order_status_events_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "order_status_events_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
@@ -912,14 +1108,13 @@ export type Database = {
       }
       orders: {
         Row: {
+          cancellation_reason: string | null
           cashier_id: string | null
           created_at: string
           customer_email: string | null
           customer_name: string | null
-          customer_phone: string | null
           customer_nit: string | null
-          payment_reference: string | null
-          payment_url: string | null
+          customer_phone: string | null
           delivery_address: string | null
           delivery_fee: number
           delivery_zone_id: string | null
@@ -932,7 +1127,9 @@ export type Database = {
           order_type: Database["public"]["Enums"]["order_type"]
           paid_at: string | null
           payment_method: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
+          payment_url: string | null
           source: Database["public"]["Enums"]["order_source"]
           status: Database["public"]["Enums"]["order_status"]
           subtotal: number
@@ -940,14 +1137,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancellation_reason?: string | null
           cashier_id?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string | null
-          customer_phone?: string | null
           customer_nit?: string | null
-          payment_reference?: string | null
-          payment_url?: string | null
+          customer_phone?: string | null
           delivery_address?: string | null
           delivery_fee?: number
           delivery_zone_id?: string | null
@@ -960,7 +1156,9 @@ export type Database = {
           order_type?: Database["public"]["Enums"]["order_type"]
           paid_at?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          payment_url?: string | null
           source: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
           subtotal: number
@@ -968,14 +1166,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancellation_reason?: string | null
           cashier_id?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string | null
-          customer_phone?: string | null
           customer_nit?: string | null
-          payment_reference?: string | null
-          payment_url?: string | null
+          customer_phone?: string | null
           delivery_address?: string | null
           delivery_fee?: number
           delivery_zone_id?: string | null
@@ -988,7 +1185,9 @@ export type Database = {
           order_type?: Database["public"]["Enums"]["order_type"]
           paid_at?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          payment_url?: string | null
           source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
@@ -996,6 +1195,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_cashier_id_fkey"
+            columns: ["cashier_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_delivery_zone_id_fkey"
             columns: ["delivery_zone_id"]
@@ -1105,6 +1311,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "production_batch_stock_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "production_batch_stock_production_batch_id_fkey"
             columns: ["production_batch_id"]
             isOneToOne: false
@@ -1156,7 +1369,22 @@ export type Database = {
           status?: Database["public"]["Enums"]["batch_status"]
           yield_percentage?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "production_batches_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_batches_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -1222,7 +1450,15 @@ export type Database = {
           location_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       purchase_batches: {
         Row: {
@@ -1273,7 +1509,22 @@ export type Database = {
           unit?: Database["public"]["Enums"]["purchase_unit"]
           unit_cost?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "purchase_batches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_batches_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {
@@ -1344,6 +1595,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "transfer_items_production_batch_id_fkey"
+            columns: ["production_batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "transfer_items_transfer_id_fkey"
             columns: ["transfer_id"]
             isOneToOne: false
@@ -1386,7 +1644,36 @@ export type Database = {
           status?: Database["public"]["Enums"]["transfer_status"]
           to_location_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transfers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfers_from_location_id_fkey"
+            columns: ["from_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfers_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfers_to_location_id_fkey"
+            columns: ["to_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_conversations: {
         Row: {
@@ -1463,79 +1750,258 @@ export type Database = {
             referencedRelation: "whatsapp_conversations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "whatsapp_messages_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
       accounting_iva_monthly: {
         Row: {
-          year_month: string | null
-          total_sales_base: number | null
-          iva_debito: number | null
-          total_purchases_base: number | null
           iva_credito: number | null
+          iva_debito: number | null
           iva_neto: number | null
+          total_purchases_base: number | null
+          total_sales_base: number | null
+          year_month: string | null
         }
         Relationships: []
       }
     }
     Functions: {
       accounting_ledger: {
-        Args: { p_start: string; p_end: string }
+        Args: { p_end: string; p_start: string }
         Returns: {
           account_code: string
           account_name: string
           account_type: Database["public"]["Enums"]["accounting_account_type"]
-          opening_balance: number
-          period_debits: number
-          period_credits: number
           closing_balance: number
+          opening_balance: number
+          period_credits: number
+          period_debits: number
         }[]
       }
       accounting_set_period: {
-        Args: { p_month: string; p_status: Database["public"]["Enums"]["accounting_period_status"]; p_notes?: string }
-        Returns: Database["public"]["Tables"]["accounting_periods"]["Row"]
+        Args: {
+          p_month: string
+          p_notes?: string
+          p_status: Database["public"]["Enums"]["accounting_period_status"]
+        }
+        Returns: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["accounting_period_status"]
+          year_month: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "accounting_periods"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      accounting_sync_from_pos: {
-        Args: { p_since?: string }
-        Returns: number
-      }
-      close_cash_session: {
-        Args: { p_session: string; p_counted: number; p_notes?: string }
-        Returns: Database["public"]["Tables"]["cash_sessions"]["Row"]
-      }
+      accounting_sync_from_pos: { Args: { p_since?: string }; Returns: number }
       adjust_inventory: {
-        Args: { p_location: string; p_item: string; p_new_quantity: number; p_notes: string }
+        Args: {
+          p_item: string
+          p_location: string
+          p_new_quantity: number
+          p_notes: string
+        }
         Returns: undefined
       }
-      create_transfer: {
-        Args: {
-          p_from: string
-          p_to: string
-          p_items: { inventory_item_id: string; quantity: number }[]
-          p_notes?: string
+      cancel_order: {
+        Args: { p_order: string; p_reason: string }
+        Returns: {
+          cancellation_reason: string | null
+          cashier_id: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_nit: string | null
+          customer_phone: string | null
+          delivery_address: string | null
+          delivery_fee: number
+          delivery_zone_id: string | null
+          estimated_minutes: number | null
+          ghl_synced_at: string | null
+          id: string
+          location_id: string
+          notes: string | null
+          order_number: string
+          order_type: Database["public"]["Enums"]["order_type"]
+          paid_at: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          payment_url: string | null
+          source: Database["public"]["Enums"]["order_source"]
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          total: number
+          updated_at: string
         }
-        Returns: Database["public"]["Tables"]["transfers"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      receive_transfer: {
-        Args: { p_transfer: string }
-        Returns: Database["public"]["Tables"]["transfers"]["Row"]
+      close_cash_session: {
+        Args: { p_counted: number; p_notes?: string; p_session: string }
+        Returns: {
+          closed_at: string | null
+          closed_by: string | null
+          counted_amount: number | null
+          expected_amount: number | null
+          id: string
+          location_id: string
+          notes: string | null
+          opened_at: string
+          opened_by: string
+          opening_amount: number
+          status: Database["public"]["Enums"]["cash_session_status"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cash_sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       close_production_batch: {
         Args: {
           p_batch: string
+          p_inputs?: Json
           p_quantity_produced: number
           p_quantity_wasted?: number
           p_raw_consumed?: number
-          p_inputs?: { purchase_batch_id: string; quantity: number }[]
         }
-        Returns: Database["public"]["Tables"]["production_batches"]["Row"]
+        Returns: {
+          created_at: string
+          id: string
+          location_id: string
+          marination_start_at: string | null
+          notes: string | null
+          quantity_produced: number
+          quantity_wasted: number
+          roast_end_at: string | null
+          roast_start_at: string | null
+          staff_id: string | null
+          status: Database["public"]["Enums"]["batch_status"]
+          yield_percentage: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "production_batches"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
+      create_transfer: {
+        Args: { p_from: string; p_items: Json; p_notes?: string; p_to: string }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          from_location_id: string
+          id: string
+          notes: string | null
+          received_at: string | null
+          received_by: string | null
+          status: Database["public"]["Enums"]["transfer_status"]
+          to_location_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "transfers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      mark_order_refunded: {
+        Args: { p_order: string }
+        Returns: {
+          cancellation_reason: string | null
+          cashier_id: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_nit: string | null
+          customer_phone: string | null
+          delivery_address: string | null
+          delivery_fee: number
+          delivery_zone_id: string | null
+          estimated_minutes: number | null
+          ghl_synced_at: string | null
+          id: string
+          location_id: string
+          notes: string | null
+          order_number: string
+          order_type: Database["public"]["Enums"]["order_type"]
+          paid_at: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          payment_url: string | null
+          source: Database["public"]["Enums"]["order_source"]
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      receive_transfer: {
+        Args: { p_transfer: string }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          from_location_id: string
+          id: string
+          notes: string | null
+          received_at: string | null
+          received_by: string | null
+          status: Database["public"]["Enums"]["transfer_status"]
+          to_location_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "transfers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      siguiente_numero_control: { Args: { p_tipo: string }; Returns: string }
     }
     Enums: {
-      accounting_account_type: "activo" | "pasivo" | "capital" | "ingreso" | "gasto"
-      accounting_doc_type: "ccf" | "dte" | "factura" | "recibo" | "ticket" | "ninguno"
-      accounting_period_status: "abierto" | "revisado" | "cerrado"
+      accounting_account_type:
+        | "activo"
+        | "pasivo"
+        | "capital"
+        | "ingreso"
+        | "gasto"
+      accounting_doc_type:
+        | "ccf"
+        | "dte"
+        | "factura"
+        | "recibo"
+        | "ticket"
+        | "ninguno"
       accounting_expense_type:
         | "ingredientes"
         | "gas"
@@ -1546,8 +2012,16 @@ export type Database = {
         | "empaques"
         | "servicios"
         | "otros"
+      accounting_period_status: "abierto" | "revisado" | "cerrado"
       batch_status: "open" | "closed"
       cash_session_status: "open" | "closed"
+      dte_estado:
+        | "pendiente"
+        | "firmado"
+        | "procesado"
+        | "rechazado"
+        | "contingencia"
+        | "anulado"
       inventory_reason:
         | "sale"
         | "cancellation"
@@ -1572,8 +2046,14 @@ export type Database = {
       product_type: "combo" | "chicken" | "extra" | "beverage"
       purchase_unit: "unidades" | "libras"
       transfer_status: "in_transit" | "received" | "cancelled"
-      user_role: "superadmin" | "admin" | "cajero" | "cocina" | "repartidor" | "contador" | "auditor"
-      dte_estado: "pendiente" | "firmado" | "procesado" | "rechazado" | "contingencia" | "anulado"
+      user_role:
+        | "superadmin"
+        | "admin"
+        | "cajero"
+        | "cocina"
+        | "repartidor"
+        | "contador"
+        | "auditor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1581,17 +2061,204 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database["public"]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-export type Tables<T extends keyof DefaultSchema["Tables"]> =
-  DefaultSchema["Tables"][T]["Row"]
-export type TablesInsert<T extends keyof DefaultSchema["Tables"]> =
-  DefaultSchema["Tables"][T]["Insert"]
-export type TablesUpdate<T extends keyof DefaultSchema["Tables"]> =
-  DefaultSchema["Tables"][T]["Update"]
-export type Enums<T extends keyof DefaultSchema["Enums"]> =
-  DefaultSchema["Enums"][T]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      accounting_account_type: [
+        "activo",
+        "pasivo",
+        "capital",
+        "ingreso",
+        "gasto",
+      ],
+      accounting_doc_type: [
+        "ccf",
+        "dte",
+        "factura",
+        "recibo",
+        "ticket",
+        "ninguno",
+      ],
+      accounting_expense_type: [
+        "ingredientes",
+        "gas",
+        "luz",
+        "agua",
+        "mod",
+        "alquiler",
+        "empaques",
+        "servicios",
+        "otros",
+      ],
+      accounting_period_status: ["abierto", "revisado", "cerrado"],
+      batch_status: ["open", "closed"],
+      cash_session_status: ["open", "closed"],
+      dte_estado: [
+        "pendiente",
+        "firmado",
+        "procesado",
+        "rechazado",
+        "contingencia",
+        "anulado",
+      ],
+      inventory_reason: [
+        "sale",
+        "cancellation",
+        "production",
+        "purchase",
+        "transfer_out",
+        "transfer_in",
+        "adjustment",
+        "waste",
+        "initial",
+      ],
+      order_source: ["pos", "online", "whatsapp"],
+      order_status: [
+        "received",
+        "in_progress",
+        "ready",
+        "out_for_delivery",
+        "completed",
+        "cancelled",
+      ],
+      order_type: ["walk_in", "pickup", "delivery"],
+      payment_method: ["cash", "payment_link"],
+      payment_status: ["pending", "paid", "refunded"],
+      product_type: ["combo", "chicken", "extra", "beverage"],
+      purchase_unit: ["unidades", "libras"],
+      transfer_status: ["in_transit", "received", "cancelled"],
+      user_role: [
+        "superadmin",
+        "admin",
+        "cajero",
+        "cocina",
+        "repartidor",
+        "contador",
+        "auditor",
+      ],
+    },
+  },
+} as const
+
+// Alias de dominio — escritos a mano, el generador no los produce.
+// Si regenerás el archivo, volvé a pegar este bloque.
 export type UserRole = Enums<"user_role">
 export type OrderStatus = Enums<"order_status">
 export type OrderSource = Enums<"order_source">
