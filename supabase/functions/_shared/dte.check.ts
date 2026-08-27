@@ -11,6 +11,7 @@ import { dirname, join } from 'node:path';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { construirDte, numeroALetras, type Emisor } from './dte.ts';
+import { construirInvalidacion, TIPO_ANULACION } from './invalidacion.ts';
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const schema = (n: string) => JSON.parse(readFileSync(join(aqui, 'schemas', n), 'utf8'));
@@ -22,6 +23,7 @@ const ajv = new Ajv({ allErrors: true, strict: false, multipleOfPrecision: 6 });
 addFormats(ajv);
 const validarFactura = ajv.compile(schema('fe-f-v2.json'));
 const validarCcf = ajv.compile(schema('fe-ccf-v4.json'));
+const validarInvalidacion = ajv.compile(schema('invalidacion-schema-v3.json'));
 
 const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
@@ -135,8 +137,84 @@ ok(numeroALetras(21.5) === 'VEINTIUNO 50/100', 'letras 21.5: ' + numeroALetras(2
 // El CCF exige totalLetras de 8 caracteres mínimo.
 ok(numeroALetras(0).length >= 8, 'totalLetras debe tener 8 caracteres o más');
 
+// ---------- Evento de Invalidación (invalidacion-schema-v3) ----------
+
+const EMISOR_INV = {
+  nit: '02032001831034',
+  nombre: 'MORAN MELGAR, GERSON OBED',
+  cod_estable_mh: 'M001',
+  cod_punto_venta_mh: 'P001',
+  cod_estable: 'M001',
+  cod_punto_venta: 'P001',
+  telefono: '72830282',
+  correo: 'admin@los-pollosprimos.com',
+};
+
+// El sello del MH son 40 caracteres exactos; se usa el de un DTE real recibido
+// para no inventar un largo que el esquema rechazaría.
+const SELLO = '202675BD9489338C4DD9B840EE5B8F4389DDU6FG';
+ok(SELLO.length === 40, 'el sello de prueba debe tener 40 caracteres');
+
+const CAJERO = { nombre: 'GERSON MORAN', tipoDocumento: '13', numDocumento: '012345678' };
+
+const invalidacion = construirInvalidacion({
+  ambiente: '00',
+  codigoGeneracion: 'B2C3D4E5-F6A7-4B8C-9D0E-1F2A3B4C5D6E',
+  fecEmi: '2026-08-27',
+  horEmi: '14:10:00',
+  emisor: EMISOR_INV,
+  documento: {
+    tipoDte: '01',
+    codigoGeneracion: 'A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D',
+    selloRecibido: SELLO,
+    numeroControl: 'DTE-01-M001P001-000000000000001',
+    fecEmi: '2026-08-27',
+  },
+  tipoAnulacion: TIPO_ANULACION.RESCINDIR_OPERACION,
+  motivoAnulacion: 'El cliente canceló el pedido antes de la entrega',
+  responsable: CAJERO,
+  solicita: CAJERO,
+});
+validar(validarInvalidacion, invalidacion, 'invalidacion v3');
+
+// Reglas de negocio que el esquema NO puede expresar y el MH sí exige:
+let rechazoSinReemplazo = false;
+try {
+  construirInvalidacion({
+    ambiente: '00',
+    codigoGeneracion: 'B2C3D4E5-F6A7-4B8C-9D0E-1F2A3B4C5D6E',
+    fecEmi: '2026-08-27', horEmi: '14:10:00',
+    emisor: EMISOR_INV,
+    documento: {
+      tipoDte: '01', codigoGeneracion: 'A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D',
+      selloRecibido: SELLO, numeroControl: null, fecEmi: '2026-08-27',
+    },
+    // tipo 1 sin codigoGeneracionR: el MH lo rechaza
+    tipoAnulacion: TIPO_ANULACION.ERROR_EN_INFORMACION,
+    responsable: CAJERO, solicita: CAJERO,
+  });
+} catch { rechazoSinReemplazo = true; }
+ok(rechazoSinReemplazo, 'tipoAnulacion 1 sin documento de reemplazo debe fallar');
+
+let rechazoSinSello = false;
+try {
+  construirInvalidacion({
+    ambiente: '00',
+    codigoGeneracion: 'B2C3D4E5-F6A7-4B8C-9D0E-1F2A3B4C5D6E',
+    fecEmi: '2026-08-27', horEmi: '14:10:00',
+    emisor: EMISOR_INV,
+    documento: {
+      tipoDte: '01', codigoGeneracion: 'A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D',
+      selloRecibido: '', numeroControl: null, fecEmi: '2026-08-27',
+    },
+    tipoAnulacion: TIPO_ANULACION.OTRO,
+    responsable: CAJERO, solicita: CAJERO,
+  });
+} catch { rechazoSinSello = true; }
+ok(rechazoSinSello, 'no se puede invalidar un DTE que el MH nunca selló');
+
 if (fallos > 0) {
   console.error('\n' + fallos + ' falla(s)');
   process.exit(1);
 }
-console.log('OK — factura y CCF validan contra los esquemas oficiales del MH');
+console.log('OK — factura, CCF e invalidación validan contra los esquemas oficiales del MH');

@@ -13,6 +13,10 @@
 // Uso:
 //   POST { "order_id": "..." }        emite el DTE de una orden
 //   POST { "procesar_pendientes": N } reintenta la cola (para el cron de n8n)
+//   POST { "invalidar": { dte_id, tipo_anulacion, motivo, responsable } }
+//                                     anula un DTE ya sellado por el MH
+//
+//   MH_ANULAR_PATH     ruta del evento de invalidacion (def. /fesv/anulardte)
 //
 // Secretos (Dashboard → Edge Functions → Secrets):
 //   MH_API_URL         https://apitest.dtes.mh.gob.sv | https://api.dtes.mh.gob.sv
@@ -23,6 +27,11 @@
 //   DTE_WEBHOOK_SECRET secreto compartido con n8n para la cola
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import { construirDte, type Emisor, type ItemVenta } from '../_shared/dte.ts';
+import {
+  construirInvalidacion,
+  type Responsable,
+  type TipoAnulacion,
+} from '../_shared/invalidacion.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -126,6 +135,140 @@ async function transmitir(
   const data = await res.json().catch(() => ({}));
   // Un 4xx del MH sigue trayendo el motivo del rechazo: se guarda tal cual.
   return data as RespuestaMh;
+}
+
+// ---------- invalidación de un DTE ya sellado ----------
+
+interface ParamsInvalidacion {
+  dte_id: string;
+  tipo_anulacion: TipoAnulacion;
+  motivo?: string | null;
+  codigo_generacion_reemplazo?: string | null;
+  responsable: Responsable;
+  solicita?: Responsable;
+}
+
+async function invalidarDte(db: SupabaseClient, p: ParamsInvalidacion) {
+  const { data: fiscal } = await db.from('fiscal_settings').select('*').maybeSingle();
+  if (!fiscal) throw new Error('fiscal_settings sin configurar');
+
+  const { data: dte } = await db
+    .from('dte_documents').select('*').eq('id', p.dte_id).single();
+  if (!dte) throw new Error('DTE no encontrado');
+
+  // Sólo se invalida lo que el MH selló: un documento en contingencia o
+  // rechazado nunca existió ante Hacienda, así que no hay nada que anular.
+  if (dte.estado !== 'procesado' || !dte.sello_recibido) {
+    throw new Error(
+      'Sólo se puede invalidar un DTE procesado y sellado por el MH ' +
+      '(estado actual: ' + dte.estado + ')',
+    );
+  }
+
+  // Idempotente: si ya se invalidó, se devuelve el evento existente en vez de
+  // transmitir otro. El índice parcial de la tabla lo respalda.
+  const { data: previa } = await db
+    .from('dte_invalidaciones').select('*')
+    .eq('dte_document_id', p.dte_id)
+    .in('estado', ['pendiente', 'contingencia', 'procesado'])
+    .maybeSingle();
+
+  let fila = previa;
+  if (!fila) {
+    const { data: creada, error } = await db.from('dte_invalidaciones').insert({
+      dte_document_id: p.dte_id,
+      tipo_anulacion: p.tipo_anulacion,
+      motivo: p.motivo ?? null,
+      codigo_generacion_reemplazo: p.codigo_generacion_reemplazo ?? null,
+    }).select().single();
+    if (error) throw new Error(error.message);
+    fila = creada;
+  }
+  if (fila.estado === 'procesado') return fila;
+
+  const ahora = new Date();
+  const evento = construirInvalidacion({
+    ambiente: fiscal.ambiente,
+    codigoGeneracion: fila.codigo_generacion,
+    fecEmi: new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/El_Salvador', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(ahora),
+    horEmi: new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'America/El_Salvador', hour: '2-digit', minute: '2-digit', second: '2-digit',
+    }).format(ahora),
+    emisor: fiscal,
+    documento: {
+      tipoDte: dte.tipo_dte,
+      codigoGeneracion: dte.codigo_generacion,
+      selloRecibido: dte.sello_recibido,
+      numeroControl: dte.numero_control,
+      fecEmi: dte.fecha_emision,
+      tipoDocumento: dte.receptor_nit ? '36' : null,
+      numDocumento: dte.receptor_nit,
+      nombre: dte.receptor_nombre,
+      correo: dte.receptor_correo,
+    },
+    tipoAnulacion: p.tipo_anulacion,
+    motivoAnulacion: p.motivo ?? null,
+    codigoGeneracionR: p.codigo_generacion_reemplazo ?? null,
+    responsable: p.responsable,
+    // Si nadie más lo pidió, quien lo ejecuta es también quien lo solicita.
+    solicita: p.solicita ?? p.responsable,
+  });
+
+  const patch: Record<string, unknown> = {
+    json_evento: evento,
+    intentos: (fila.intentos ?? 0) + 1,
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    const firmado = await firmar(evento, fiscal.nit);
+    const apiUrl = Deno.env.get('MH_API_URL') ?? 'https://apitest.dtes.mh.gob.sv';
+    // Los eventos NO van al mismo endpoint que los DTE. Configurable porque el
+    // path sale del Manual Técnico y conviene poder corregirlo sin desplegar.
+    const ruta = Deno.env.get('MH_ANULAR_PATH') ?? '/fesv/anulardte';
+    const token = await tokenMh(apiUrl);
+
+    const res = await fetch(apiUrl + ruta, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token.startsWith('Bearer ') ? token : 'Bearer ' + token,
+        'User-Agent': 'LosPollosPrimos-POS/1.0',
+      },
+      body: JSON.stringify({
+        ambiente: fiscal.ambiente,
+        idEnvio: Date.now() % 2_147_483_647,
+        version: 3,
+        documento: firmado,
+      }),
+    });
+    const rta = await res.json().catch(() => ({}));
+
+    patch.json_respuesta = rta;
+    if (rta.estado === 'PROCESADO' && rta.selloRecibido) {
+      patch.estado = 'procesado';
+      patch.sello_recibido = rta.selloRecibido;
+      patch.ultimo_error = null;
+      // El DTE original queda marcado: ya no es un documento vigente.
+      // 'anulado' es el valor del enum dte_estado (no 'invalidado').
+      await db.from('dte_documents')
+        .update({ estado: 'anulado', updated_at: new Date().toISOString() })
+        .eq('id', p.dte_id);
+    } else {
+      patch.estado = rta.estado === 'RECHAZADO' ? 'rechazado' : 'contingencia';
+      patch.ultimo_error = [rta.descripcionMsg, ...(rta.observaciones ?? [])]
+        .filter(Boolean).join(' · ') || 'Respuesta desconocida del MH';
+    }
+  } catch (e) {
+    patch.estado = 'contingencia';
+    patch.ultimo_error = e instanceof Error ? e.message : String(e);
+  }
+
+  const { data: actualizada } = await db
+    .from('dte_invalidaciones').update(patch).eq('id', fila.id).select().single();
+  return actualizada;
 }
 
 // ---------- emisión de una orden ----------
@@ -270,7 +413,11 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
   if (req.method !== 'POST') return bad('Método no permitido', 405);
 
-  let body: { order_id?: string; procesar_pendientes?: number };
+  let body: {
+    order_id?: string;
+    procesar_pendientes?: number;
+    invalidar?: ParamsInvalidacion;
+  };
   try {
     body = await req.json();
   } catch {
@@ -334,6 +481,18 @@ Deno.serve(async (req: Request) => {
         }
       }
       return Response.json({ procesados: resultados.length, resultados }, { headers: CORS });
+    }
+
+    // Invalidación de un DTE ya sellado. Va acá y no en su propia función para
+    // reutilizar el firmador y el token del MH, que son los mismos.
+    if (body.invalidar) {
+      const inv = await invalidarDte(db, body.invalidar);
+      return Response.json({
+        estado: inv?.estado,
+        codigo_generacion: inv?.codigo_generacion,
+        sello_recibido: inv?.sello_recibido,
+        error: inv?.ultimo_error,
+      }, { headers: CORS });
     }
 
     if (!body.order_id) return bad('Falta order_id');
