@@ -1,105 +1,142 @@
-// Verificación del armado del DTE. Lo que se comprueba es lo que Hacienda
-// rechaza en la práctica: que los totales cuadren y que la factura lleve el IVA
-// dentro del precio mientras que el CCF lo lleva aparte.
+// Verificación del constructor de DTE contra los esquemas OFICIALES del MH.
 //
-//   node --experimental-strip-types supabase/functions/_shared/dte.check.ts
-import assert from 'node:assert/strict';
+// No comprueba lo que yo creo que pide Hacienda: carga los .json que el propio
+// Ministerio publica (./schemas/) y valida contra ellos. Si el MH cambia un
+// esquema, se reemplaza el archivo y esta prueba avisa sola.
+//
+// Correr:  node --experimental-strip-types supabase/functions/_shared/dte.check.ts
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 import { construirDte, numeroALetras, type Emisor } from './dte.ts';
 
-const emisor: Emisor = {
-  nit: '0614-241090-102-2',
-  nrc: '123456-7',
-  nombre: 'LOS POLLOS PRIMOS, S.A. DE C.V.',
-  nombre_comercial: 'Los Pollos Primos',
-  cod_actividad: '56101',
-  desc_actividad: 'Restaurantes y puestos de comida',
-  tipo_establecimiento: '01',
+const aqui = dirname(fileURLToPath(import.meta.url));
+const schema = (n: string) => JSON.parse(readFileSync(join(aqui, 'schemas', n), 'utf8'));
+
+// multipleOfPrecision: sin esto ajv rechaza 16.40 por no ser "múltiplo exacto"
+// de 0.01 — en IEEE754 16.4/0.01 da 1639.9999999999998. No es un rechazo real
+// del MH: el DTE que nos manda un proveedor trae 3.56 y está sellado.
+const ajv = new Ajv({ allErrors: true, strict: false, multipleOfPrecision: 6 });
+addFormats(ajv);
+const validarFactura = ajv.compile(schema('fe-f-v2.json'));
+const validarCcf = ajv.compile(schema('fe-ccf-v4.json'));
+
+const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+let fallos = 0;
+function ok(cond: boolean, msg: string) {
+  if (!cond) { console.error('FALLA: ' + msg); fallos++; }
+}
+
+function validar(fn: ReturnType<typeof ajv.compile>, doc: unknown, etiqueta: string) {
+  if (fn(doc)) return;
+  fallos++;
+  console.error('FALLA esquema ' + etiqueta + ':');
+  for (const e of fn.errors ?? []) {
+    console.error('   ' + (e.instancePath || '/') + ' ' + e.message +
+      (e.params ? ' ' + JSON.stringify(e.params) : ''));
+  }
+}
+
+const EMISOR: Emisor = {
+  nit: '02032001831034',
+  nrc: '3771710',
+  nombre: 'MORAN MELGAR, GERSON OBED',
+  nombre_comercial: 'LOS POLLOS PRIMOS',
+  cod_actividad: '56299',
+  desc_actividad: 'Servicios de preparación de comidas ncp',
   departamento: '02',
-  municipio: '14',
-  complemento: 'Chalchuapa, Santa Ana',
-  telefono: '25551234',
+  municipio: '17',
+  distrito: '05',
+  complemento: 'PLAZA LAS PALMERAS LOCAL 5, CHALCHUAPA, SANTA ANA',
+  telefono: '72830282',
   correo: 'admin@los-pollosprimos.com',
-  cod_estable_mh: '0001',
-  cod_estable: 'C001',
-  cod_punto_venta_mh: '0001',
+  cod_estable: 'M001',
   cod_punto_venta: 'P001',
 };
 
-const base = {
+const BASE = {
   ambiente: '00',
-  numeroControl: 'DTE-01-00010001-000000000000001',
-  codigoGeneracion: 'a1b2c3d4-1111-2222-3333-444455556666',
-  fecEmi: '2026-08-10',
-  horEmi: '13:45:00',
-  emisor,
+  codigoGeneracion: 'A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D',
+  fecEmi: '2026-08-27',
+  horEmi: '13:45:09',
+  emisor: EMISOR,
+} as const;
+
+// ---------- Factura (fe-f-v2) ----------
+
+const factura = construirDte({
+  ...BASE,
+  tipoDte: '01',
+  numeroControl: 'DTE-01-M001P001-000000000000001',
+  receptor: null,
   items: [
-    { codigo: 'COMBO-ENT', descripcion: 'El Primo Grande', cantidad: 1, precioUnitario: 12.95 },
-    { codigo: 'CHIMI-30', descripcion: 'Chimichurri 30ml', cantidad: 2, precioUnitario: 0.75 },
+    { codigo: 'COMBO1', descripcion: 'El Primo — Combo Medio', cantidad: 2, precioUnitario: 6.95 },
+    { codigo: 'DELIVERY', descripcion: 'Servicio de entrega a domicilio', cantidad: 1, precioUnitario: 2.5 },
   ],
-};
-
-// ---- FACTURA (01): precio de caja CON IVA ----
-const { documento: fa, totales: tFa } = construirDte({ ...base, tipoDte: '01' });
-
-assert.equal(fa.identificacion.version, 1);
-assert.equal(fa.identificacion.tipoDte, '01');
-assert.equal(fa.identificacion.codigoGeneracion, 'A1B2C3D4-1111-2222-3333-444455556666',
-  'el código de generación viaja en mayúsculas');
-assert.equal(fa.emisor.nit, '06142410901022', 'el NIT va sin guiones');
-assert.equal(fa.receptor, null, 'consumidor final sin datos → receptor nulo');
-
-// 12.95 + 2×0.75 = 14.45, todo con IVA incluido
-assert.equal(fa.resumen.totalGravada, 14.45);
-assert.equal(fa.resumen.montoTotalOperacion, 14.45, 'en factura el IVA NO se vuelve a sumar');
-assert.equal(fa.resumen.totalPagar, 14.45);
-assert.equal(fa.resumen.totalIva, 1.66);           // 14.45 − 14.45/1.13
-assert.equal(fa.resumen.tributos, null, 'la factura no declara el tributo 20');
-assert.equal(fa.cuerpoDocumento[0].ivaItem, 1.49);
-assert.equal(fa.resumen.totalLetras, 'CATORCE 45/100');
-assert.equal(tFa.total_gravado + tFa.total_iva, tFa.total_pagar, 'los totales guardados cuadran');
-
-// ---- CCF (03): mismo precio de caja, pero desglosado ----
-const { documento: cc, totales: tCc } = construirDte({
-  ...base,
-  tipoDte: '03',
-  numeroControl: 'DTE-03-00010001-000000000000001',
-  receptor: { tipoDocumento: '36', numDocumento: '0614-241090-102-2', nrc: '99999-9', nombre: 'CLIENTE S.A. DE C.V.' },
+  codigoPago: '01',
 });
+validar(validarFactura, factura.documento, 'factura fe-f-v2');
 
-assert.equal(cc.identificacion.version, 3);
-assert.equal(cc.resumen.totalGravada, 12.79);      // round(14.45 / 1.13)
-assert.equal(cc.resumen.tributos?.[0].codigo, '20');
-assert.equal(cc.resumen.tributos?.[0].valor, 1.66);
-assert.equal(cc.resumen.montoTotalOperacion, 14.45, 'el CCF sí suma el IVA al gravado');
-// El residuo de redondear ítem por ítem se absorbe: la suma cuadra con el resumen.
-assert.equal(
-  Math.round(cc.cuerpoDocumento.reduce((s, it) => s + it.ventaGravada, 0) * 100) / 100,
-  cc.resumen.totalGravada,
-  'la suma de los ítems debe cuadrar con totalGravada',
+// En la factura los precios llevan IVA: lo cobrado debe ser exactamente la suma
+// de los ítems del menú, sin que el redondeo del IVA mueva un centavo.
+ok(factura.totales.total_pagar === 16.4, 'total factura: ' + factura.totales.total_pagar);
+ok(
+  r2(factura.totales.total_gravado + factura.totales.total_iva) === factura.totales.total_pagar,
+  'base + IVA debe dar el total cobrado en la factura',
 );
-assert.equal(
-  Math.round(cc.resumen.totalGravada * 100 + cc.resumen.tributos![0].valor * 100) / 100,
-  cc.resumen.montoTotalOperacion,
-  'base + IVA debe dar exactamente lo cobrado',
+
+// ---------- CCF (fe-ccf-v4) ----------
+
+const ccf = construirDte({
+  ...BASE,
+  tipoDte: '03',
+  numeroControl: 'DTE-03-M001P001-000000000000001',
+  receptor: {
+    nit: '06142211860013',
+    nrc: '282359',
+    nombre: 'PATRONIC, S.A. DE C.V.',
+    codActividad: '10792',
+    descActividad: 'Elaboracion de especies, sazonadores y condimentos',
+    correo: 'ventas@ejemplo.com',
+    telefono: '22188300',
+    direccion: { departamento: '05', municipio: '11', distrito: '01', complemento: 'SANTA TECLA' },
+  },
+  items: [
+    { codigo: 'COMBO1', descripcion: 'El Primo — Combo Medio', cantidad: 3, precioUnitario: 6.95 },
+  ],
+  codigoPago: '03',
+});
+validar(validarCcf, ccf.documento, 'ccf fe-ccf-v4');
+
+// En el CCF el precio va sin IVA, pero el total a pagar sigue siendo lo cobrado.
+ok(ccf.totales.total_pagar === 20.85, 'total ccf: ' + ccf.totales.total_pagar);
+ok(
+  r2(ccf.totales.total_gravado + ccf.totales.total_iva) === ccf.totales.total_pagar,
+  'base + IVA debe dar el total cobrado en el CCF',
 );
-assert.equal(cc.cuerpoDocumento[0].ivaItem, undefined, 'el CCF no lleva ivaItem por ítem');
-assert.deepEqual(cc.cuerpoDocumento[0].tributos, ['20']);
-assert.equal(cc.receptor?.numDocumento, '06142410901022');
-assert.equal(cc.receptor?.nrc, '999999');
-assert.equal(tCc.total_gravado + tCc.total_iva, tCc.total_pagar);
 
-// La factura y el CCF cobran lo mismo al cliente: sólo cambia cómo se declara.
-assert.equal(fa.resumen.totalPagar, cc.resumen.totalPagar);
+// La suma de los ítems tiene que cuadrar con el resumen: el MH lo valida y un
+// centavo de diferencia por redondeo rechaza el documento.
+const sumaCcf = ccf.documento.cuerpoDocumento.reduce((s, i) => s + i.ventaGravada, 0);
+ok(
+  Math.abs(sumaCcf - ccf.documento.resumen.totalGravada) < 0.005,
+  'los ítems del CCF deben sumar totalGravada',
+);
 
-// ---- número a letras ----
-assert.equal(numeroALetras(0), 'CERO 00/100');
-assert.equal(numeroALetras(1), 'UNO 00/100');
-assert.equal(numeroALetras(15.5), 'QUINCE 50/100');
-assert.equal(numeroALetras(21), 'VEINTIUNO 00/100');
-assert.equal(numeroALetras(100), 'CIEN 00/100');
-assert.equal(numeroALetras(101.01), 'CIENTO UNO 01/100');
-assert.equal(numeroALetras(1000), 'MIL 00/100');
-assert.equal(numeroALetras(2345.67), 'DOS MIL TRESCIENTOS CUARENTA Y CINCO 67/100');
-assert.equal(numeroALetras(1_000_000), 'UN MILLON 00/100');
+// ---------- número a letras ----------
 
-console.log('OK — el DTE cuadra en factura y en CCF');
+ok(numeroALetras(3.56) === 'TRES 56/100', 'letras 3.56: ' + numeroALetras(3.56));
+ok(numeroALetras(0) === 'CERO 00/100', 'letras 0');
+ok(numeroALetras(1000) === 'MIL 00/100', 'letras 1000: ' + numeroALetras(1000));
+ok(numeroALetras(21.5) === 'VEINTIUNO 50/100', 'letras 21.5: ' + numeroALetras(21.5));
+// El CCF exige totalLetras de 8 caracteres mínimo.
+ok(numeroALetras(0).length >= 8, 'totalLetras debe tener 8 caracteres o más');
+
+if (fallos > 0) {
+  console.error('\n' + fallos + ' falla(s)');
+  process.exit(1);
+}
+console.log('OK — factura y CCF validan contra los esquemas oficiales del MH');

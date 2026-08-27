@@ -1,17 +1,28 @@
 // Construcción del JSON del Documento Tributario Electrónico (El Salvador).
 //
-// Esquemas del MH implementados:
-//   fe-fc-v1  → tipoDte "01" Factura (consumidor final)
-//   fe-ccf-v3 → tipoDte "03" Comprobante de Crédito Fiscal
+// Esquemas oficiales implementados (copiados en ./schemas/ para poder validar
+// contra ellos en dte.check.ts). Ojo: NO son la misma versión.
+//   fe-f-v2   → tipoDte "01" Factura .............. identificacion.version = 2
+//   fe-ccf-v4 → tipoDte "03" Crédito Fiscal ....... identificacion.version = 4
 //
-// Diferencia clave entre los dos, y el error más común al implementarlos:
-//   · En la FACTURA los precios llevan el IVA incluido. `ventaGravada` y
-//     `totalGravada` son montos CON IVA y `totalIva` sólo es informativo.
-//   · En el CCF los precios van SIN IVA y el IVA se declara como tributo "20"
-//     en `resumen.tributos`, sumándose en `montoTotalOperacion`.
+// Los tres errores que hacen rechazar el documento y no son obvios:
 //
-// Este módulo no toca Deno ni la red a propósito: así el mismo código se puede
-// verificar desde Node (ver dte.check.ts).
+//   1. `additionalProperties: false` en TODOS los bloques. Un campo de más
+//      rechaza igual que uno de menos. Nada de `extension`, `tipoEstablecimiento`,
+//      `codEstableMH` ni `codPuntoVentaMH` dentro de `emisor`: existen en otros
+//      esquemas del MH, no en estos dos.
+//
+//   2. El receptor tiene forma DISTINTA en cada uno. La factura identifica al
+//      cliente con tipoDocumento+numDocumento y admite null (consumidor final);
+//      el CCF lo identifica con `nit` y es obligatorio.
+//
+//   3. En la FACTURA los precios llevan IVA incluido y `totalIva` es
+//      informativo. En el CCF los precios van SIN IVA, el IVA se declara como
+//      tributo "20" en `resumen.tributos`, y `totalIva` NO existe en el resumen
+//      (ahí van `ivaPerci` e `ivaRete`).
+//
+// Este módulo no toca Deno ni la red a propósito: así el mismo código se
+// verifica desde Node contra los esquemas reales (ver dte.check.ts).
 
 export const IVA_RATE = 0.13;
 const r2 = (n: number): number => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -23,29 +34,33 @@ export interface Emisor {
   nombre_comercial: string | null;
   cod_actividad: string;
   desc_actividad: string;
-  tipo_establecimiento: string;
   departamento: string;
   municipio: string;
+  distrito: string;
   complemento: string;
   telefono: string | null;
   correo: string;
-  cod_estable_mh: string | null;
+  /** Asignados por el contribuyente. Van dentro del bloque emisor. */
   cod_estable: string | null;
-  cod_punto_venta_mh: string | null;
   cod_punto_venta: string | null;
 }
 
 export interface Receptor {
-  /** '36' NIT · '13' DUI · '37' otro */
+  /** Sólo factura: '36' NIT · '13' DUI · '37' otro */
   tipoDocumento?: string;
   numDocumento?: string;
+  /** Sólo CCF: el NIT va en su propio campo. */
+  nit?: string;
   nrc?: string | null;
   nombre?: string;
-  correo?: string | null;
-  telefono?: string | null;
-  direccion?: { departamento: string; municipio: string; complemento: string } | null;
+  nombreComercial?: string | null;
   codActividad?: string | null;
   descActividad?: string | null;
+  correo?: string | null;
+  telefono?: string | null;
+  direccion?: {
+    departamento: string; municipio: string; distrito: string; complemento: string;
+  } | null;
 }
 
 export interface ItemVenta {
@@ -99,13 +114,16 @@ function menorAMil(n: number): string {
   return [cien, dec].filter(Boolean).join(' ');
 }
 
-/** 12.95 → "DOCE 95/100" — formato que exige el esquema del MH. */
+/**
+ * 12.95 → "DOCE 95/100". El CCF exige totalLetras de 8 caracteres como mínimo,
+ * y "CERO 00/100" ya son 11, así que cualquier monto cumple.
+ */
 export function numeroALetras(monto: number): string {
   const entero = Math.floor(r2(monto));
   const centavos = Math.round((r2(monto) - entero) * 100);
   const cents = String(centavos).padStart(2, '0') + '/100';
 
-  if (entero === 0) return `CERO ${cents}`;
+  if (entero === 0) return 'CERO ' + cents;
 
   const millones = Math.floor(entero / 1_000_000);
   const miles = Math.floor((entero % 1_000_000) / 1000);
@@ -118,15 +136,16 @@ export function numeroALetras(monto: number): string {
   else if (miles > 1) partes.push(menorAMil(miles) + ' MIL');
   if (resto > 0) partes.push(menorAMil(resto));
 
-  return `${partes.join(' ')} ${cents}`;
+  return partes.join(' ') + ' ' + cents;
 }
 
 // ---------- construcción del documento ----------
 
-function direccionEmisor(e: Emisor) {
-  return { departamento: e.departamento, municipio: e.municipio, complemento: e.complemento };
-}
-
+/**
+ * Bloque emisor. Idéntico en fe-f-v2 y fe-ccf-v4, y en ambos los únicos códigos
+ * de establecimiento admitidos son los del contribuyente. Los códigos del MH
+ * (codEstableMH/codPuntoVentaMH) NO van acá: viven dentro del numeroControl.
+ */
 function bloqueEmisor(e: Emisor) {
   return {
     nit: e.nit.replace(/-/g, ''),
@@ -135,13 +154,15 @@ function bloqueEmisor(e: Emisor) {
     codActividad: e.cod_actividad,
     descActividad: e.desc_actividad,
     nombreComercial: e.nombre_comercial ?? null,
-    tipoEstablecimiento: e.tipo_establecimiento,
-    direccion: direccionEmisor(e),
+    direccion: {
+      departamento: e.departamento,
+      municipio: e.municipio,
+      distrito: e.distrito,
+      complemento: e.complemento,
+    },
     telefono: e.telefono ?? null,
     correo: e.correo,
-    codEstableMH: e.cod_estable_mh ?? null,
     codEstable: e.cod_estable ?? null,
-    codPuntoVentaMH: e.cod_punto_venta_mh ?? null,
     codPuntoVenta: e.cod_punto_venta ?? null,
   };
 }
@@ -171,11 +192,11 @@ export function construirDte(d: DatosDte) {
       numItem: i + 1,
       tipoItem: 1,                 // 1 = bienes
       numeroDocumento: null,
-      cantidad: it.cantidad,
       codigo: it.codigo,
       codTributo: null,
-      uniMedida: 59,               // CAT-014: unidad
       descripcion: it.descripcion,
+      cantidad: it.cantidad,
+      uniMedida: 59,               // CAT-014: unidad
       // El CCF admite hasta 8 decimales en precioUni; se conserva la precisión
       // para que precioUni × cantidad reproduzca ventaGravada.
       precioUni: esFactura ? precioUni : Math.round(precioUni * 1e6) / 1e6,
@@ -186,7 +207,8 @@ export function construirDte(d: DatosDte) {
       tributos: esFactura ? null : ['20'],
       psv: 0,
       noGravado: 0,
-      // Sólo la factura lleva ivaItem; en el CCF el IVA va en resumen.tributos.
+      // Sólo la factura lleva ivaItem; en fe-ccf-v4 el campo ni existe y
+      // additionalProperties:false lo rechazaría.
       ...(esFactura ? { ivaItem: r2(bruto - bruto / (1 + IVA_RATE)) } : {}),
     };
   });
@@ -202,7 +224,7 @@ export function construirDte(d: DatosDte) {
     ultimo.precioUni = Math.round((ultimo.ventaGravada / ultimo.cantidad) * 1e6) / 1e6;
   }
 
-  const resumen = {
+  const comunes = {
     totalNoSuj: 0,
     totalExenta: 0,
     totalGravada,
@@ -212,15 +234,11 @@ export function construirDte(d: DatosDte) {
     descuGravada: 0,
     porcentajeDescuento: 0,
     totalDescu: 0,
-    tributos: esFactura ? null : [{ codigo: '20', descripcion: 'Impuesto al Valor Agregado 13%', valor: totalIva }],
     subTotal: totalGravada,
-    ivaRete1: 0,
-    reteRenta: 0,
     montoTotalOperacion,
     totalNoGravado: 0,
     totalPagar: montoTotalOperacion,
     totalLetras: numeroALetras(montoTotalOperacion),
-    ...(esFactura ? { totalIva } : {}),
     saldoFavor: 0,
     condicionOperacion: 1,       // contado
     pagos: [{
@@ -231,9 +249,27 @@ export function construirDte(d: DatosDte) {
       periodo: null,
     }],
     numPagoElectronico: null,
+    observaciones: null,
   };
 
-  const receptor = d.receptor && (d.receptor.numDocumento || d.receptor.nombre)
+  // Los dos resúmenes divergen justo en el IVA: la factura lo informa en
+  // `totalIva`; el CCF lo declara como tributo y en su lugar pide ivaPerci.
+  const resumen = esFactura
+    ? { ...comunes, tributos: null, ivaRete: 0, totalIva }
+    : {
+        ...comunes,
+        tributos: [
+          { codigo: '20', descripcion: 'Impuesto al Valor Agregado 13%', valor: totalIva },
+        ],
+        ivaPerci: 0,
+        ivaRete: 0,
+      };
+
+  const dir = d.receptor?.direccion ?? null;
+
+  // Factura: identifica al cliente por tipo+número de documento, y va en null
+  // cuando es consumidor final anónimo.
+  const receptorFactura = d.receptor && (d.receptor.numDocumento || d.receptor.nombre)
     ? {
         tipoDocumento: d.receptor.tipoDocumento ?? '36',
         numDocumento: (d.receptor.numDocumento ?? '').replace(/-/g, '') || null,
@@ -241,15 +277,29 @@ export function construirDte(d: DatosDte) {
         nombre: d.receptor.nombre ?? null,
         codActividad: d.receptor.codActividad ?? null,
         descActividad: d.receptor.descActividad ?? null,
-        direccion: d.receptor.direccion ?? null,
+        direccion: dir,
         telefono: d.receptor.telefono ?? null,
         correo: d.receptor.correo ?? null,
       }
     : null;
 
+  // CCF: el receptor es obligatorio y se identifica por NIT; además exige
+  // actividad económica y dirección, porque siempre es un contribuyente.
+  const receptorCcf = {
+    nit: (d.receptor?.nit ?? d.receptor?.numDocumento ?? '').replace(/-/g, ''),
+    nrc: d.receptor?.nrc ? d.receptor.nrc.replace(/-/g, '') : null,
+    nombre: d.receptor?.nombre ?? '',
+    codActividad: d.receptor?.codActividad ?? '',
+    descActividad: d.receptor?.descActividad ?? '',
+    nombreComercial: d.receptor?.nombreComercial ?? null,
+    direccion: dir,
+    telefono: d.receptor?.telefono ?? null,
+    correo: d.receptor?.correo ?? null,
+  };
+
   const documento = {
     identificacion: {
-      version: esFactura ? 1 : 3,
+      version: esFactura ? 2 : 4,
       ambiente: d.ambiente,
       tipoDte: d.tipoDte,
       numeroControl: d.numeroControl,
@@ -264,12 +314,11 @@ export function construirDte(d: DatosDte) {
     },
     documentoRelacionado: null,
     emisor: bloqueEmisor(d.emisor),
-    receptor,
+    receptor: esFactura ? receptorFactura : receptorCcf,
     otrosDocumentos: null,
     ventaTercero: null,
     cuerpoDocumento,
     resumen,
-    extension: null,
     apendice: null,
   };
 

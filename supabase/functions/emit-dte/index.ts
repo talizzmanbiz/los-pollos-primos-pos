@@ -148,6 +148,17 @@ async function emitirOrden(db: SupabaseClient, orderId: string) {
   // Un cliente con NIT recibe CCF; el resto, factura de consumidor final.
   const tipoDte: '01' | '03' = order.customer_nit ? '03' : '01';
 
+  // fe-ccf-v4 exige del receptor NIT, NRC, actividad económica y dirección
+  // completa: siempre es un contribuyente, no un consumidor final. La orden del
+  // POS no captura nada de eso, así que se corta acá con un mensaje claro en
+  // vez de transmitir un documento que el MH va a rechazar por campos vacíos.
+  if (tipoDte === '03' && !order.customer_activity_code) {
+    throw new Error(
+      'Para emitir CCF hace falta la actividad económica y la dirección fiscal del ' +
+      'cliente. Registralos en la orden o cobrá como consumidor final (sin NIT).',
+    );
+  }
+
   const items: ItemVenta[] = (order.order_items ?? []).map((it: {
     quantity: number; unit_price: number; products: { sku: string; name: string } | null;
   }) => ({
