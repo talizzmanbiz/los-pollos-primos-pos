@@ -137,9 +137,9 @@ El firmador es un servicio que da el propio Ministerio y corre junto a n8n en el
 VPS. Necesita el `.crt` que se descarga del portal de DTE:
 
 ```bash
-docker run -d --name firmador -p 8113:8113 \
+docker run -d --name firmador -p 127.0.0.1:8113:8113 \
   -v /opt/dte/certificados:/uploads \
-  svfe/svfe-api-firmador:v2
+  svfe/svfe-api-firmador:v20260316
 ```
 
 Verificá que responde antes de seguir:
