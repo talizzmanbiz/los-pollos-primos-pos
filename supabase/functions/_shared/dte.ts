@@ -83,6 +83,13 @@ export interface DatosDte {
   items: ItemVenta[];
   /** CAT-017: 01 efectivo · 02 débito · 03 crédito · 05 transferencia */
   codigoPago?: string;
+  /**
+   * Emisión en contingencia: el documento se generó sin poder llegar al MH y
+   * se transmite después, ya declarado en un evento de contingencia. El MH
+   * rechaza declarar en contingencia un documento que ya transmitiste, así que
+   * el orden es: generar → declarar el evento → transmitir.
+   */
+  contingencia?: { tipo: number; motivo?: string | null } | null;
 }
 
 // ---------- número a letras (obligatorio en resumen.totalLetras) ----------
@@ -304,10 +311,13 @@ export function construirDte(d: DatosDte) {
       tipoDte: d.tipoDte,
       numeroControl: d.numeroControl,
       codigoGeneracion: d.codigoGeneracion.toUpperCase(),
-      tipoModelo: 1,             // modelo previo (emisión normal)
-      tipoOperacion: 1,          // transmisión normal
-      tipoContingencia: null,
-      motivoContin: null,
+      // Modelo 1 / operación 1 es la emisión normal. El 2/2 le dice al MH que
+      // el documento se generó sin conexión y se transmite después, ya
+      // declarado en un evento de contingencia.
+      tipoModelo: d.contingencia ? 2 : 1,
+      tipoOperacion: d.contingencia ? 2 : 1,
+      tipoContingencia: d.contingencia ? d.contingencia.tipo : null,
+      motivoContin: d.contingencia?.motivo ?? null,
       fecEmi: d.fecEmi,
       horEmi: d.horEmi,
       tipoMoneda: 'USD',

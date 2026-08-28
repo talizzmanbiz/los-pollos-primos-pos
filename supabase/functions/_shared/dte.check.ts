@@ -215,6 +215,24 @@ try {
 } catch { rechazoSinSello = true; }
 ok(rechazoSinSello, 'no se puede invalidar un DTE que el MH nunca selló');
 
+// ---------- Factura emitida EN contingencia (fe-f-v2, modelo 2) ----------
+
+const enContingencia = construirDte({
+  ...BASE,
+  tipoDte: '01',
+  numeroControl: 'DTE-01-M001P001-000000000000002',
+  receptor: null,
+  items: [{ codigo: 'MEDIO', descripcion: 'Medio pollo', cantidad: 1, precioUnitario: 6.0 }],
+  contingencia: { tipo: 3 },
+});
+validar(validarFactura, enContingencia.documento, 'factura en contingencia');
+ok(enContingencia.documento.identificacion.tipoModelo === 2, 'contingencia: tipoModelo debe ser 2');
+ok(enContingencia.documento.identificacion.tipoOperacion === 2, 'contingencia: tipoOperacion debe ser 2');
+ok(enContingencia.documento.identificacion.tipoContingencia === 3, 'contingencia: tipoContingencia debe ir');
+// La emision normal no debe arrastrar nada de contingencia.
+ok(factura.documento.identificacion.tipoModelo === 1, 'emision normal: tipoModelo 1');
+ok(factura.documento.identificacion.tipoContingencia === null, 'emision normal: sin tipoContingencia');
+
 // ---------- Evento de Contingencia (contingencia-schema-v4) ----------
 
 const contingencia = construirContingencia({

@@ -28,3 +28,7 @@ dist-ssr
 
 # respaldos de datos (contienen datos de clientes)
 backups/
+
+# deno resuelve dependencias aca al correr `deno check`
+supabase/functions/node_modules/
+supabase/functions/deno.lock

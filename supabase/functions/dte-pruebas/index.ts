@@ -320,36 +320,101 @@ async function contingenciaPrueba(
     ambiente: string; tipo_establecimiento: string;
     cod_estable_mh: string; cod_punto_venta_mh: string;
   },
-  docs: { tipo_dte: string; codigo_generacion: string }[],
 ) {
   const { fecha, hora } = fechaHoraSv();
+  const TIPO = TIPO_CONTINGENCIA.FALLA_INTERNET;
+
+  // 1. Generar el documento SIN transmitirlo. El MH rechaza declarar en
+  //    contingencia algo que ya recibio: "El codigo generacion ya existe".
+  const { data: numeroControl, error: errNum } = await db
+    .rpc('siguiente_numero_control', { p_tipo: '01' });
+  if (errNum) throw new Error('correlativo: ' + errNum.message);
+
+  const { data: fila, error: errIns } = await db.from('dte_documents').insert({
+    order_id: null,
+    tipo_dte: '01',
+    numero_control: numeroControl,
+    fecha_emision: fecha,
+    hora_emision: hora,
+  }).select().single();
+  if (errIns) throw new Error('insert: ' + errIns.message);
+
+  const { documento, totales } = construirDte({
+    tipoDte: '01',
+    ambiente: fiscal.ambiente,
+    numeroControl: fila.numero_control,
+    codigoGeneracion: fila.codigo_generacion,
+    fecEmi: fila.fecha_emision,
+    horEmi: fila.hora_emision,
+    emisor: fiscal,
+    receptor: null,
+    items: itemsDePrueba(),
+    codigoPago: alAzar(PAGOS),
+    contingencia: { tipo: TIPO },
+  });
+
+  // 2. Declarar la contingencia ANTES de transmitir el documento.
   const evento = construirContingencia({
     ambiente: fiscal.ambiente,
     codigoGeneracion: crypto.randomUUID().toUpperCase(),
     fTransmision: fecha,
     hTransmision: hora,
     emisor: fiscal,
-    responsable: {
-      nombre: fiscal.nombre,
-      tipoDocumento: '36',
-      numDocumento: fiscal.nit,
-    },
-    documentos: docs.map((d) => ({
-      tipoDte: d.tipo_dte, codigoGeneracion: d.codigo_generacion,
-    })),
-    tipoContingencia: TIPO_CONTINGENCIA.FALLA_INTERNET,
+    responsable: { nombre: fiscal.nombre, tipoDocumento: '36', numDocumento: fiscal.nit },
+    documentos: [{ tipoDte: '01', codigoGeneracion: fila.codigo_generacion }],
+    tipoContingencia: TIPO,
     motivoContingencia: null,
     fInicio: fecha, hInicio: '08:00:00',
     fFin: fecha, hFin: '09:00:00',
   });
+  const eventoFirmado = await firmar(evento, fiscal.nit);
+  const rtaEvento = await transmitirContingencia(eventoFirmado, fiscal.ambiente);
 
-  const firmado = await firmar(evento, fiscal.nit);
-  const rta = await transmitirContingencia(firmado, fiscal.ambiente);
+  if (rtaEvento.estado !== 'PROCESADO' || !rtaEvento.selloRecibido) {
+    // El documento queda en contingencia: existe, tiene correlativo, y se
+    // podra reintentar. No se pierde numeracion.
+    await db.from('dte_documents').update({
+      ...totales,
+      json_dte: documento,
+      estado: 'contingencia',
+      ultimo_error: motivoRechazo(rtaEvento),
+      intentos: 1,
+      updated_at: new Date().toISOString(),
+    }).eq('id', fila.id);
+    return {
+      etapa: 'evento',
+      estado: 'rechazado',
+      numero_control: fila.numero_control,
+      error: motivoRechazo(rtaEvento),
+    };
+  }
+
+  // 3. Recien ahora el documento, ya amparado por el evento.
+  const firmado = await firmar(documento, fiscal.nit);
+  const rta = await transmitirDte(firmado, fiscal.ambiente, '01', fila.codigo_generacion);
+
+  const patch: Record<string, unknown> = {
+    ...totales,
+    json_dte: documento,
+    json_respuesta: rta,
+    intentos: 1,
+    updated_at: new Date().toISOString(),
+  };
+  if (rta.estado === 'PROCESADO' && rta.selloRecibido) {
+    patch.estado = 'procesado';
+    patch.sello_recibido = rta.selloRecibido;
+  } else {
+    patch.estado = rta.estado === 'RECHAZADO' ? 'rechazado' : 'contingencia';
+    patch.ultimo_error = motivoRechazo(rta);
+  }
+  await db.from('dte_documents').update(patch).eq('id', fila.id);
+
   return {
-    estado: rta.estado === 'PROCESADO' && rta.selloRecibido ? 'procesado' : 'rechazado',
-    sello: rta.selloRecibido ?? null,
-    documentos: docs.length,
-    error: rta.estado === 'PROCESADO' ? undefined : motivoRechazo(rta),
+    etapa: 'documento',
+    estado: patch.estado as string,
+    numero_control: fila.numero_control,
+    sello_evento: rtaEvento.selloRecibido,
+    error: patch.ultimo_error as string | undefined,
   };
 }
 
@@ -431,18 +496,10 @@ Deno.serve(async (req: Request) => {
 
     if (body.contingencias) {
       const cuantas = Math.min(body.contingencias, TOPE);
-      const { data: sellados } = await db
-        .from('dte_documents').select('tipo_dte, codigo_generacion')
-        .is('order_id', null).eq('estado', 'procesado')
-        .not('sello_recibido', 'is', null)
-        .order('created_at', { ascending: false }).limit(cuantas * 2);
-      if (!sellados || sellados.length === 0) {
-        return bad('No hay documentos sellados para declarar en contingencia');
-      }
       const resultados = [];
       for (let i = 0; i < cuantas; i++) {
         try {
-          resultados.push(await contingenciaPrueba(db, fiscal, [sellados[i % sellados.length]]));
+          resultados.push(await contingenciaPrueba(db, fiscal));
         } catch (e) {
           resultados.push({ estado: 'error', error: String(e) });
         }
