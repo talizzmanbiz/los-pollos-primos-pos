@@ -123,8 +123,33 @@ export async function transmitirDte(
 }
 
 /**
+ * Transmite un evento de contingencia: declara que el negocio siguió vendiendo
+ * sin poder llegar al MH, y qué documentos se emitieron en esa ventana.
+ * Va a su propio endpoint y con su propia versión de esquema (v4).
+ */
+export async function transmitirContingencia(
+  eventoFirmado: string,
+  ambiente: string,
+): Promise<RespuestaMh> {
+  const apiUrl = apiUrlMh();
+  const token = await tokenMh(apiUrl);
+  const ruta = Deno.env.get('MH_CONTINGENCIA_PATH') ?? '/fesv/contingencia';
+  const res = await fetch(apiUrl + ruta, {
+    method: 'POST',
+    headers: cabeceras(token),
+    body: JSON.stringify({
+      ambiente,
+      idEnvio: Date.now() % 2_147_483_647,
+      version: 4,
+      documento: eventoFirmado,
+    }),
+  });
+  return (await res.json().catch(() => ({}))) as RespuestaMh;
+}
+
+/**
  * Transmite un evento de invalidación. Va a otro endpoint que los DTE y su
- * esquema es el v3, independiente de la version del documento invalidado.
+ * esquema es el v3, independiente de la versión del documento invalidado.
  */
 export async function transmitirInvalidacion(
   eventoFirmado: string,

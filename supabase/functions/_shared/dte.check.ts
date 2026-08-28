@@ -12,6 +12,7 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { construirDte, numeroALetras, type Emisor } from './dte.ts';
 import { construirInvalidacion, TIPO_ANULACION } from './invalidacion.ts';
+import { construirContingencia, TIPO_CONTINGENCIA } from './contingencia.ts';
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const schema = (n: string) => JSON.parse(readFileSync(join(aqui, 'schemas', n), 'utf8'));
@@ -24,6 +25,7 @@ addFormats(ajv);
 const validarFactura = ajv.compile(schema('fe-f-v2.json'));
 const validarCcf = ajv.compile(schema('fe-ccf-v4.json'));
 const validarInvalidacion = ajv.compile(schema('invalidacion-schema-v3.json'));
+const validarContingencia = ajv.compile(schema('contingencia-schema-v4.json'));
 
 const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
@@ -213,8 +215,52 @@ try {
 } catch { rechazoSinSello = true; }
 ok(rechazoSinSello, 'no se puede invalidar un DTE que el MH nunca selló');
 
+// ---------- Evento de Contingencia (contingencia-schema-v4) ----------
+
+const contingencia = construirContingencia({
+  ambiente: '00',
+  codigoGeneracion: 'C3D4E5F6-A7B8-4C9D-8E0F-1A2B3C4D5E6F',
+  fTransmision: '2026-08-27',
+  hTransmision: '20:00:00',
+  emisor: {
+    nit: '02032001831034',
+    nombre: 'MORAN MELGAR, GERSON OBED',
+    tipo_establecimiento: '01',
+    cod_estable_mh: 'M001',
+    cod_punto_venta_mh: 'P001',
+    telefono: '72830282',
+    correo: 'admin@los-pollosprimos.com',
+  },
+  responsable: CAJERO,
+  documentos: [{ tipoDte: '01', codigoGeneracion: 'A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D' }],
+  tipoContingencia: TIPO_CONTINGENCIA.FALLA_INTERNET,
+  motivoContingencia: null,
+  fInicio: '2026-08-27', hInicio: '18:00:00',
+  fFin: '2026-08-27', hFin: '19:30:00',
+});
+validar(validarContingencia, contingencia, 'contingencia v4');
+
+// El tipo 5 es "otro": sin descripcion el MH no sabe que paso.
+let rechazoSinMotivo = false;
+try {
+  construirContingencia({
+    ambiente: '00', codigoGeneracion: 'C3D4E5F6-A7B8-4C9D-8E0F-1A2B3C4D5E6F',
+    fTransmision: '2026-08-27', hTransmision: '20:00:00',
+    emisor: {
+      nit: '02032001831034', nombre: 'X', tipo_establecimiento: '01',
+      cod_estable_mh: 'M001', cod_punto_venta_mh: 'P001',
+      telefono: '72830282', correo: 'admin@los-pollosprimos.com',
+    },
+    responsable: CAJERO,
+    documentos: [{ tipoDte: '01', codigoGeneracion: 'A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D' }],
+    tipoContingencia: TIPO_CONTINGENCIA.OTRO,
+    fInicio: '2026-08-27', hInicio: '18:00:00', fFin: '2026-08-27', hFin: '19:30:00',
+  });
+} catch { rechazoSinMotivo = true; }
+ok(rechazoSinMotivo, 'tipoContingencia 5 sin motivo debe fallar');
+
 if (fallos > 0) {
   console.error('\n' + fallos + ' falla(s)');
   process.exit(1);
 }
-console.log('OK — factura, CCF e invalidación validan contra los esquemas oficiales del MH');
+console.log('OK — factura, CCF, invalidación y contingencia validan contra los esquemas del MH');

@@ -20,8 +20,9 @@
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import { construirDte, type Emisor, type ItemVenta } from '../_shared/dte.ts';
 import { construirInvalidacion, TIPO_ANULACION } from '../_shared/invalidacion.ts';
+import { construirContingencia, TIPO_CONTINGENCIA } from '../_shared/contingencia.ts';
 import {
-  firmar, transmitirDte, transmitirInvalidacion, motivoRechazo,
+  firmar, transmitirDte, transmitirInvalidacion, transmitirContingencia, motivoRechazo,
 } from '../_shared/mh.ts';
 
 const CORS = {
@@ -304,6 +305,54 @@ async function invalidarPrueba(
 
 // ---------- handler ----------
 
+/**
+ * Evento de contingencia. Declara un periodo en que el negocio siguio
+ * vendiendo sin poder llegar al MH, y lista los documentos emitidos durante
+ * esa ventana.
+ *
+ * No se persiste: por ahora solo se usa para la certificacion. Cuando el POS
+ * necesite declarar contingencias reales hay que guardarlas, porque son una
+ * declaracion fiscal como cualquier otra.
+ */
+async function contingenciaPrueba(
+  db: SupabaseClient,
+  fiscal: Emisor & {
+    ambiente: string; tipo_establecimiento: string;
+    cod_estable_mh: string; cod_punto_venta_mh: string;
+  },
+  docs: { tipo_dte: string; codigo_generacion: string }[],
+) {
+  const { fecha, hora } = fechaHoraSv();
+  const evento = construirContingencia({
+    ambiente: fiscal.ambiente,
+    codigoGeneracion: crypto.randomUUID().toUpperCase(),
+    fTransmision: fecha,
+    hTransmision: hora,
+    emisor: fiscal,
+    responsable: {
+      nombre: fiscal.nombre,
+      tipoDocumento: '36',
+      numDocumento: fiscal.nit,
+    },
+    documentos: docs.map((d) => ({
+      tipoDte: d.tipo_dte, codigoGeneracion: d.codigo_generacion,
+    })),
+    tipoContingencia: TIPO_CONTINGENCIA.FALLA_INTERNET,
+    motivoContingencia: null,
+    fInicio: fecha, hInicio: '08:00:00',
+    fFin: fecha, hFin: '09:00:00',
+  });
+
+  const firmado = await firmar(evento, fiscal.nit);
+  const rta = await transmitirContingencia(firmado, fiscal.ambiente);
+  return {
+    estado: rta.estado === 'PROCESADO' && rta.selloRecibido ? 'procesado' : 'rechazado',
+    sello: rta.selloRecibido ?? null,
+    documentos: docs.length,
+    error: rta.estado === 'PROCESADO' ? undefined : motivoRechazo(rta),
+  };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
   if (req.method !== 'POST') return bad('Metodo no permitido', 405);
@@ -316,7 +365,7 @@ Deno.serve(async (req: Request) => {
   }
 
   let body: {
-    facturas?: number; ccf?: number; invalidaciones?: number;
+    facturas?: number; ccf?: number; invalidaciones?: number; contingencias?: number;
     receptor?: ReceptorPrueba;
   };
   try {
@@ -378,6 +427,28 @@ Deno.serve(async (req: Request) => {
         procesadas: resultados.filter((r) => r.estado === 'procesado').length,
         resultados,
       }, { headers: CORS });
+    }
+
+    if (body.contingencias) {
+      const cuantas = Math.min(body.contingencias, TOPE);
+      const { data: sellados } = await db
+        .from('dte_documents').select('tipo_dte, codigo_generacion')
+        .is('order_id', null).eq('estado', 'procesado')
+        .not('sello_recibido', 'is', null)
+        .order('created_at', { ascending: false }).limit(cuantas * 2);
+      if (!sellados || sellados.length === 0) {
+        return bad('No hay documentos sellados para declarar en contingencia');
+      }
+      const resultados = [];
+      for (let i = 0; i < cuantas; i++) {
+        try {
+          resultados.push(await contingenciaPrueba(db, fiscal, [sellados[i % sellados.length]]));
+        } catch (e) {
+          resultados.push({ estado: 'error', error: String(e) });
+        }
+      }
+      const ok = resultados.filter((r) => r.estado === 'procesado').length;
+      return Response.json({ pedidas: cuantas, procesadas: ok, resultados }, { headers: CORS });
     }
 
     if (body.ccf) {
