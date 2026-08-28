@@ -126,7 +126,10 @@ async function transmitir(
     body: JSON.stringify({
       ambiente,
       idEnvio: Date.now() % 2_147_483_647,
-      version: tipoDte === '01' ? 1 : 3,
+      // Tiene que coincidir con identificacion.version del documento firmado:
+      // fe-f-v2 → 2, fe-ccf-v4 → 4. Si el sobre dice una version y el JSON otra,
+      // el MH rechaza sin aclarar cual de las dos esta mal.
+      version: tipoDte === '01' ? 2 : 4,
       tipoDte,
       documento: documentoFirmado,
       codigoGeneracion: codigoGeneracion.toUpperCase(),
