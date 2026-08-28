@@ -138,6 +138,99 @@ async function emitirFacturaPrueba(db: SupabaseClient, fiscal: Emisor & { ambien
   };
 }
 
+// ---------- CCF ----------
+
+/**
+ * El CCF exige un receptor contribuyente completo: NIT, NRC, actividad
+ * economica y direccion. Para las pruebas se usan los datos del propio emisor.
+ *
+ * Es deliberado: inventar un NIT daria un receptor que no existe, y usar el de
+ * un proveedor real seria meter la identidad de un tercero en documentos de
+ * prueba sin su permiso. Los datos propios son validos, reales y de quien
+ * transmite.
+ */
+interface ReceptorPrueba {
+  nit?: string; nrc?: string; nombre?: string;
+  codActividad?: string; descActividad?: string;
+}
+
+async function emitirCcfPrueba(
+  db: SupabaseClient,
+  fiscal: Emisor & { ambiente: string },
+  recep: ReceptorPrueba = {},
+) {
+  const { data: numeroControl, error: errNum } = await db
+    .rpc('siguiente_numero_control', { p_tipo: '03' });
+  if (errNum) throw new Error('correlativo: ' + errNum.message);
+
+  const { fecha, hora } = fechaHoraSv();
+
+  const { data: fila, error: errIns } = await db.from('dte_documents').insert({
+    order_id: null,
+    tipo_dte: '03',
+    numero_control: numeroControl,
+    fecha_emision: fecha,
+    hora_emision: hora,
+    receptor_nombre: recep.nombre ?? fiscal.nombre,
+    receptor_nit: recep.nit ?? fiscal.nit,
+  }).select().single();
+  if (errIns) throw new Error('insert: ' + errIns.message);
+
+  const { documento, totales } = construirDte({
+    tipoDte: '03',
+    ambiente: fiscal.ambiente,
+    numeroControl: fila.numero_control,
+    codigoGeneracion: fila.codigo_generacion,
+    fecEmi: fila.fecha_emision,
+    horEmi: fila.hora_emision,
+    emisor: fiscal,
+    receptor: {
+      nit: recep.nit ?? fiscal.nit,
+      nrc: recep.nrc ?? fiscal.nrc,
+      nombre: recep.nombre ?? fiscal.nombre,
+      codActividad: recep.codActividad ?? fiscal.cod_actividad,
+      descActividad: recep.descActividad ?? fiscal.desc_actividad,
+      correo: fiscal.correo,
+      telefono: fiscal.telefono,
+      direccion: {
+        departamento: fiscal.departamento,
+        municipio: fiscal.municipio,
+        distrito: fiscal.distrito,
+        complemento: fiscal.complemento,
+      },
+    },
+    items: itemsDePrueba(),
+    codigoPago: alAzar(PAGOS),
+  });
+
+  const patch: Record<string, unknown> = {
+    ...totales,
+    json_dte: documento,
+    intentos: 1,
+    updated_at: new Date().toISOString(),
+  };
+
+  const firmado = await firmar(documento, fiscal.nit);
+  const rta = await transmitirDte(firmado, fiscal.ambiente, '03', fila.codigo_generacion);
+
+  patch.json_respuesta = rta;
+  if (rta.estado === 'PROCESADO' && rta.selloRecibido) {
+    patch.estado = 'procesado';
+    patch.sello_recibido = rta.selloRecibido;
+  } else {
+    patch.estado = rta.estado === 'RECHAZADO' ? 'rechazado' : 'contingencia';
+    patch.ultimo_error = motivoRechazo(rta);
+  }
+
+  await db.from('dte_documents').update(patch).eq('id', fila.id);
+  return {
+    numero_control: fila.numero_control,
+    estado: patch.estado as string,
+    total: totales.total_pagar,
+    error: patch.ultimo_error as string | undefined,
+  };
+}
+
 // ---------- invalidaciones ----------
 
 async function invalidarPrueba(
@@ -222,7 +315,10 @@ Deno.serve(async (req: Request) => {
     return bad('No autorizado', 401);
   }
 
-  let body: { facturas?: number; invalidaciones?: number };
+  let body: {
+    facturas?: number; ccf?: number; invalidaciones?: number;
+    receptor?: ReceptorPrueba;
+  };
   try {
     body = await req.json();
   } catch {
@@ -284,8 +380,23 @@ Deno.serve(async (req: Request) => {
       }, { headers: CORS });
     }
 
+    if (body.ccf) {
+      const cuantos = Math.min(body.ccf, TOPE);
+      const resultados = [];
+      for (let i = 0; i < cuantos; i++) {
+        try {
+          resultados.push(await emitirCcfPrueba(db, fiscal, body.receptor ?? {}));
+        } catch (e) {
+          resultados.push({ numero_control: '-', estado: 'error', error: String(e) });
+        }
+      }
+      const ok = resultados.filter((r) => r.estado === 'procesado').length;
+      return Response.json({ pedidos: cuantos, procesados: ok, fallidos: cuantos - ok, resultados },
+        { headers: CORS });
+    }
+
     const cuantas = Math.min(body.facturas ?? 0, TOPE);
-    if (cuantas < 1) return bad('Indica cuantas facturas o invalidaciones transmitir');
+    if (cuantas < 1) return bad('Indica cuantas facturas, ccf o invalidaciones transmitir');
 
     const resultados = [];
     for (let i = 0; i < cuantas; i++) {
