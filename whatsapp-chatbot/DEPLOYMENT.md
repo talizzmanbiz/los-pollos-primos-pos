@@ -9,11 +9,45 @@ Hay **dos workflows** en n8n:
 
 **Rollback (1 minuto):** en v2 devolvé la ruta de los dos nodos webhook a `pollos-primos-whatsapp-v2`, y reactivá v1. En Meta no se toca nada.
 
+## ⚠️ Migración de dominio (2026-08-29) — falta terminar
+
+La instancia pasó de `n8n.automateaiservices.com` (ya apagado) a
+`n8n.vanguardaiautomations.com`. El workflow migró y está activo, pero **el bot
+no está atendiendo**: acepta el webhook y muere en el primer nodo.
+
+Lo que se observa desde afuera:
+
+| Prueba | Resultado |
+|---|---|
+| `POST /webhook/pollos-primos-whatsapp` | 200 "Workflow was started" — pero responde antes de ejecutar, no prueba nada |
+| Mensaje guardado en `whatsapp_messages` | **no** — el último es del 2026-08-26, previo a la migración |
+| `GET` con `hub.challenge` (handshake de Meta) | **se cuelga 45s sin responder** |
+
+Ambas rutas se rompen en el paso de **Data Table**, así que lo más probable es
+que la migración se llevara los workflows pero **no las Data Tables ni las
+credenciales** — típico de importar por JSON en una instancia nueva.
+
+Para terminar la migración:
+
+1. **Recrear la Data Table `pollos_primos_config`** con las 10 claves de la
+   tabla de "Configuration / secrets" de más abajo. Sin ella el flujo no tiene
+   ni URL de Supabase ni token de WhatsApp, y muere en `Get Config`.
+2. **Recrear la credencial Anthropic** (`Claude Haiku 4.5` la usa).
+3. **Cambiar la Callback URL en Meta** a la nueva:
+   `https://n8n.vanguardaiautomations.com/webhook/pollos-primos-whatsapp`.
+   Mientras siga apuntando al dominio viejo no llega ni un mensaje, esté n8n
+   arriba o no.
+4. Volver a probar el handshake GET: con el token correcto debe devolver el
+   `hub.challenge`; si se cuelga, la Data Table sigue faltando.
+
+Nota: `pollos_primos_conversations` es de v1 (desactivado). v2 no la usa —
+guarda el historial en Supabase.
+
 ## URLs
 
 | Purpose | URL |
 |---|---|
-| Incoming messages (Meta → n8n) | `https://n8n.automateaiservices.com/webhook/pollos-primos-whatsapp` (POST) — hoy la sirve **v2** |
+| Incoming messages (Meta → n8n) | `https://n8n.vanguardaiautomations.com/webhook/pollos-primos-whatsapp` (POST) — hoy la sirve **v2** |
 | Meta verification handshake | same URL (GET) — verificado en v2: token correcto devuelve el `hub.challenge`, token malo devuelve `forbidden` |
 
 Register **that single URL** as the Callback URL in Meta App Dashboard → WhatsApp → Configuration → Webhooks, subscribe to the `messages` field, and use the verify token below.

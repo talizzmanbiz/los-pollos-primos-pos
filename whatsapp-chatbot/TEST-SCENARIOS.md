@@ -86,7 +86,7 @@ Also covered by the Brain (unit-level behaviors):
 POST simulated Meta payloads to the webhook (each message needs a unique `messages[0].id`):
 
 ```bash
-curl -X POST https://n8n.automateaiservices.com/webhook/pollos-primos-whatsapp \
+curl -X POST https://n8n.vanguardaiautomations.com/webhook/pollos-primos-whatsapp \
   -H "Content-Type: application/json" \
   -d '{"object":"whatsapp_business_account","entry":[{"id":"0","changes":[{"field":"messages","value":{"messaging_product":"whatsapp","contacts":[{"profile":{"name":"Test"},"wa_id":"50370001111"}],"messages":[{"from":"50370001111","id":"wamid.UNIQUE_ID_HERE","timestamp":"0","type":"text","text":{"body":"hola"}}]}}]}]}'
 ```

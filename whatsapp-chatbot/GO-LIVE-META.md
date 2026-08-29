@@ -61,7 +61,7 @@ App Dashboard → **WhatsApp → Configuration → Webhook → Edit**:
 
 | Field | Value |
 |---|---|
-| Callback URL | `https://n8n.automateaiservices.com/webhook/pollos-primos-whatsapp` |
+| Callback URL | `https://n8n.vanguardaiautomations.com/webhook/pollos-primos-whatsapp` |
 | Verify token | `pollos-primos-verify-2026` |
 
 Click **Verify and save** (our endpoint already passes the handshake), then under **Webhook fields** click **Manage** and **Subscribe** to `messages`.
@@ -80,7 +80,7 @@ Click **Verify and save** (our endpoint already passes the handshake), then unde
 | Item | Value |
 |---|---|
 | n8n workflow | `MmlbbbBghiKWttqP` — Los Pollos Primos WhatsApp Chatbot (ACTIVE) |
-| Webhook URL | `https://n8n.automateaiservices.com/webhook/pollos-primos-whatsapp` |
+| Webhook URL | `https://n8n.vanguardaiautomations.com/webhook/pollos-primos-whatsapp` |
 | Verify token | `pollos-primos-verify-2026` |
 | Webhook secret | `ppwa_7f3d9c2e8b514a6f90d1c4e7a2b8f635` (matches Supabase ✅) |
 | Phone Number ID | `1264258403429380` |

@@ -1,7 +1,7 @@
 {
   "name": "Los Pollos Primos WhatsApp Chatbot",
   "meta": {
-    "note": "DISASTER-RECOVERY BACKUP of live workflow MmlbbbBghiKWttqP on https://n8n.automateaiservices.com. Snapshot: 2026-07-31 (post go-live: secret-recipe policy, 'Sabor Tropical' branding, SKU-based order contract, inline-address parsing). The LIVE workflow is the source of truth — after editing it in the n8n UI, re-export via the workflow (…) menu → Download and overwrite this file. Requires two n8n Data Tables: pollos_primos_conversations (phone, state_json, customer_name, updated_at) and pollos_primos_config (key, value). Update the dataTableId values below if importing into a fresh instance.",
+    "note": "DISASTER-RECOVERY BACKUP of live workflow MmlbbbBghiKWttqP on https://n8n.vanguardaiautomations.com. Snapshot: 2026-07-31 (post go-live: secret-recipe policy, 'Sabor Tropical' branding, SKU-based order contract, inline-address parsing). The LIVE workflow is the source of truth — after editing it in the n8n UI, re-export via the workflow (…) menu → Download and overwrite this file. Requires two n8n Data Tables: pollos_primos_conversations (phone, state_json, customer_name, updated_at) and pollos_primos_config (key, value). Update the dataTableId values below if importing into a fresh instance.",
     "verified": "Full order flow executed live 2026-07-31: order PP-C-0030 created ($14.45, delivery Zona 2, Wompi link), status lookup, cancellation, and WhatsApp delivery all confirmed; test data removed afterward."
   },
   "settings": {

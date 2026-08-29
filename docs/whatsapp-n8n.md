@@ -1,6 +1,6 @@
 # WhatsApp Chatbot — integración n8n ↔ Supabase
 
-Instancia n8n: `n8n.automateaiservices.com` (self-hosted, Google Cloud), conectada a
+Instancia n8n: `n8n.vanguardaiautomations.com` (self-hosted, Google Cloud), conectada a
 WhatsApp Business API (integración directa con Meta). Este documento define el
 contrato con Supabase; el workflow n8n se construye en el VPS usando estos endpoints.
 
