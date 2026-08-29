@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   ShoppingCart,
   ChefHat,
@@ -22,6 +22,7 @@ import {
   useWorkingLocationContext,
 } from '../context/WorkingLocationContext';
 import { supabase } from '../lib/supabase';
+import { useWhatsappAlerts } from '../hooks/useWhatsappAlerts';
 import type { UserRole } from '../types/database';
 
 interface NavItem {
@@ -78,6 +79,7 @@ function LocationSwitcher() {
 
 export default function AppLayout() {
   const { profile, location, signOut } = useAuth();
+  const navigate = useNavigate();
   if (!profile) return null;
 
   async function handleChangePassword() {
@@ -92,6 +94,10 @@ export default function AppLayout() {
   }
 
   const isSuper = profile.role === 'superadmin';
+  // Solo admin/superadmin ven las conversaciones, así que solo ellos las vigilan.
+  const puedeVerChats = isSuper || profile.role === 'admin';
+  const { sinLeer, ultimo, descartar } = useWhatsappAlerts(puedeVerChats);
+
   const visible = NAV.filter((item) => {
     if (isSuper) return true;
     if (!item.roles.includes(profile.role)) return false;
@@ -170,6 +176,14 @@ export default function AppLayout() {
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />
                 {label}
+                {to === '/conversaciones' && sinLeer > 0 && (
+                  <span
+                    className="ml-0.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-bold text-white"
+                    aria-label={`${sinLeer} mensajes de WhatsApp sin leer`}
+                  >
+                    {sinLeer > 99 ? '99+' : sinLeer}
+                  </span>
+                )}
               </NavLink>
             ))}
           </nav>
@@ -179,6 +193,29 @@ export default function AppLayout() {
             <LocationSwitcher />
           </div>
         </header>
+
+        {/* Aviso de WhatsApp entrante. Va fuera del header y fijo abajo para que
+            no empuje el layout ni tape el nav mientras alguien cobra. */}
+        {ultimo && (
+          <button
+            onClick={() => {
+              descartar();
+              navigate('/conversaciones');
+            }}
+            className="fixed bottom-4 right-4 z-50 max-w-[min(22rem,calc(100vw-2rem))] rounded-xl bg-charcoal-800 p-3 text-left shadow-2xl ring-1 ring-white/10"
+          >
+            <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-brand-300">
+              <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
+              Mensaje de WhatsApp
+            </span>
+            <span className="mt-1 block truncate text-sm font-semibold text-white">
+              {ultimo.nombre}
+            </span>
+            <span className="mt-0.5 line-clamp-2 block text-[13px] text-white/70">
+              {ultimo.texto}
+            </span>
+          </button>
+        )}
 
         {/* Block, not flex: as a flex column container its line grows to max-content
             when a wide table overflows, stretching the page root to 860px on a 375px

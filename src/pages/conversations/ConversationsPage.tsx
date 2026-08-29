@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, MessageSquare, Search, Send } from 'lucide-react';
 import { useConversations, useCustomerOrders, useThread } from '../../hooks/useConversations';
+import { marcarWhatsappVisto } from '../../hooks/useWhatsappAlerts';
 import { supabase, FUNCTIONS_URL } from '../../lib/supabase';
 import { fmtDateTime, fmtTime, money } from '../../lib/format';
 import type { WhatsappConversation, WhatsappMessage } from '../../types/database';
@@ -234,6 +235,12 @@ export default function ConversationsPage() {
   const { conversations, loading } = useConversations();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+
+  // Estando en esta pantalla los mensajes se ven en vivo, así que el contador
+  // del menú no tiene por qué seguir subiendo.
+  useEffect(() => {
+    marcarWhatsappVisto();
+  }, [conversations.length]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
