@@ -12,16 +12,28 @@ export const VERSION_ESQUEMA: Record<string, number> = {
 };
 
 export interface RespuestaMh {
+  /** Status HTTP crudo. El MH devuelve 200 incluso al rechazar, asi que un
+   *  404 o 500 aca casi siempre significa ruta equivocada. */
+  _http?: number;
   estado?: string;              // PROCESADO | RECHAZADO
   selloRecibido?: string | null;
   descripcionMsg?: string;
   observaciones?: string[];
 }
 
-/** Junta el motivo del rechazo en una línea legible para guardar y mostrar. */
+/**
+ * Junta el motivo del rechazo en una línea legible para guardar y mostrar.
+ *
+ * Si la respuesta no trae ninguno de los campos esperados, se devuelve el JSON
+ * crudo en vez de un "respuesta desconocida" que no ayuda a nadie: cuando el MH
+ * contesta con otra forma —un 404 por ruta equivocada, un error de gateway— lo
+ * único que sirve para diagnosticar es lo que mandó de verdad.
+ */
 export function motivoRechazo(rta: RespuestaMh): string {
-  return [rta.descripcionMsg, ...(rta.observaciones ?? [])]
-    .filter(Boolean).join(' - ') || 'Respuesta desconocida del MH';
+  const conocido = [rta.descripcionMsg, ...(rta.observaciones ?? [])]
+    .filter(Boolean).join(' - ');
+  if (conocido) return conocido;
+  return 'Respuesta no reconocida del MH: ' + JSON.stringify(rta).slice(0, 400);
 }
 
 export function apiUrlMh(): string {
@@ -119,7 +131,8 @@ export async function transmitirDte(
     }),
   });
   // Un 4xx del MH sigue trayendo el motivo del rechazo: se devuelve tal cual.
-  return (await res.json().catch(() => ({}))) as RespuestaMh;
+  const cuerpo = (await res.json().catch(() => ({}))) as RespuestaMh;
+  return { ...cuerpo, _http: res.status };
 }
 
 /**
@@ -144,7 +157,8 @@ export async function transmitirContingencia(
       documento: eventoFirmado,
     }),
   });
-  return (await res.json().catch(() => ({}))) as RespuestaMh;
+  const cuerpo = (await res.json().catch(() => ({}))) as RespuestaMh;
+  return { ...cuerpo, _http: res.status };
 }
 
 /**
@@ -168,5 +182,6 @@ export async function transmitirInvalidacion(
       documento: eventoFirmado,
     }),
   });
-  return (await res.json().catch(() => ({}))) as RespuestaMh;
+  const cuerpo = (await res.json().catch(() => ({}))) as RespuestaMh;
+  return { ...cuerpo, _http: res.status };
 }
