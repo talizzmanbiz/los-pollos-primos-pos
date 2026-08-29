@@ -22,7 +22,8 @@ import { construirDte, type Emisor, type ItemVenta } from '../_shared/dte.ts';
 import { construirInvalidacion, TIPO_ANULACION } from '../_shared/invalidacion.ts';
 import { construirContingencia, TIPO_CONTINGENCIA } from '../_shared/contingencia.ts';
 import {
-  firmar, transmitirDte, transmitirInvalidacion, transmitirContingencia, motivoRechazo,
+  firmar, transmitirDte, transmitirInvalidacion, transmitirContingencia,
+  motivoRechazo, aceptado,
 } from '../_shared/mh.ts';
 
 const CORS = {
@@ -122,7 +123,7 @@ async function emitirFacturaPrueba(db: SupabaseClient, fiscal: Emisor & { ambien
   const rta = await transmitirDte(firmado, fiscal.ambiente, '01', fila.codigo_generacion);
 
   patch.json_respuesta = rta;
-  if (rta.estado === 'PROCESADO' && rta.selloRecibido) {
+  if (aceptado(rta)) {
     patch.estado = 'procesado';
     patch.sello_recibido = rta.selloRecibido;
   } else {
@@ -215,7 +216,7 @@ async function emitirCcfPrueba(
   const rta = await transmitirDte(firmado, fiscal.ambiente, '03', fila.codigo_generacion);
 
   patch.json_respuesta = rta;
-  if (rta.estado === 'PROCESADO' && rta.selloRecibido) {
+  if (aceptado(rta)) {
     patch.estado = 'procesado';
     patch.sello_recibido = rta.selloRecibido;
   } else {
@@ -284,7 +285,7 @@ async function invalidarPrueba(
   const rta = await transmitirInvalidacion(firmado, fiscal.ambiente);
 
   patch.json_respuesta = rta;
-  if (rta.estado === 'PROCESADO' && rta.selloRecibido) {
+  if (aceptado(rta)) {
     patch.estado = 'procesado';
     patch.sello_recibido = rta.selloRecibido;
     await db.from('dte_documents')
@@ -370,7 +371,7 @@ async function contingenciaPrueba(
   const eventoFirmado = await firmar(evento, fiscal.nit);
   const rtaEvento = await transmitirContingencia(eventoFirmado, fiscal.ambiente);
 
-  if (rtaEvento.estado !== 'PROCESADO' || !rtaEvento.selloRecibido) {
+  if (!aceptado(rtaEvento)) {
     // El documento queda en contingencia: existe, tiene correlativo, y se
     // podra reintentar. No se pierde numeracion.
     await db.from('dte_documents').update({
@@ -400,7 +401,7 @@ async function contingenciaPrueba(
     intentos: 1,
     updated_at: new Date().toISOString(),
   };
-  if (rta.estado === 'PROCESADO' && rta.selloRecibido) {
+  if (aceptado(rta)) {
     patch.estado = 'procesado';
     patch.sello_recibido = rta.selloRecibido;
   } else {

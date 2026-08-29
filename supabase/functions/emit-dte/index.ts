@@ -101,6 +101,11 @@ async function tokenMh(apiUrl: string): Promise<string> {
   return token;
 }
 
+// PENDIENTE: esta funcion todavia compara contra PROCESADO a mano. Los
+// EVENTOS del MH vuelven RECIBIDO, no PROCESADO, asi que la invalidacion de
+// mas abajo registraria como rechazado un evento aceptado. Hoy no falla
+// porque las invalidaciones si devuelven PROCESADO, pero al proximo despliegue
+// hay que pasar esta funcion a _shared/mh.ts y usar aceptado().
 interface RespuestaMh {
   estado?: string;              // PROCESADO | RECHAZADO
   selloRecibido?: string | null;

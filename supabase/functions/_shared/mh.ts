@@ -36,6 +36,18 @@ export function motivoRechazo(rta: RespuestaMh): string {
   return 'Respuesta no reconocida del MH: ' + JSON.stringify(rta).slice(0, 400);
 }
 
+/**
+ * Si el MH acepto el documento o evento.
+ *
+ * No usa una sola palabra a proposito: los DTE vuelven PROCESADO y los
+ * EVENTOS vuelven RECIBIDO, ambos con sello. Comparar solo contra PROCESADO
+ * hacia que un evento aceptado —con su sello y todo— se registrara como
+ * rechazado.
+ */
+export function aceptado(rta: RespuestaMh): boolean {
+  return (rta.estado === 'PROCESADO' || rta.estado === 'RECIBIDO') && !!rta.selloRecibido;
+}
+
 export function apiUrlMh(): string {
   return Deno.env.get('MH_API_URL') ?? 'https://apitest.dtes.mh.gob.sv';
 }
