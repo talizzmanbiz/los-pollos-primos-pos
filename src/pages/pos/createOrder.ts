@@ -25,6 +25,13 @@ interface CreateOrderArgs {
   cart: CartLine[];
   customer: CustomerInfo;
   subtotal: number;
+  /**
+   * Efectivo cierra la venta pagada en el acto. Con tarjeta la orden nace
+   * PENDIENTE: la plata todavia no entro y solo el webhook de Wompi puede
+   * decir que si. Marcarla pagada aca seria entregar producto contra un cobro
+   * que puede no aprobarse.
+   */
+  paymentMethod?: 'cash' | 'payment_link';
 }
 
 export type CreateOrderResult =
@@ -44,18 +51,21 @@ function isNetworkError(message: string | undefined): boolean {
  */
 export async function createOrder(args: CreateOrderArgs): Promise<CreateOrderResult> {
   const { locationId, isProductionLocation, cashierId, cart, customer, subtotal } = args;
+  const conTarjeta = args.paymentMethod === 'payment_link';
 
   const orderRow: TablesInsert<'orders'> = {
     location_id: locationId,
     source: 'pos',
     order_type: 'walk_in',
-    status: isProductionLocation ? 'received' : 'completed',
+    // Con tarjeta nunca se marca entregada de entrada, ni en las sucursales
+    // que despachan al instante: no se entrega hasta que Wompi confirme.
+    status: conTarjeta || isProductionLocation ? 'received' : 'completed',
     subtotal,
     delivery_fee: 0,
     total: subtotal,
-    payment_method: 'cash',
-    payment_status: 'paid',
-    paid_at: new Date().toISOString(),
+    payment_method: conTarjeta ? 'payment_link' : 'cash',
+    payment_status: conTarjeta ? 'pending' : 'paid',
+    paid_at: conTarjeta ? null : new Date().toISOString(),
     cashier_id: cashierId,
     customer_name: customer.name.trim() || null,
     customer_phone: customer.phone.trim() || null,

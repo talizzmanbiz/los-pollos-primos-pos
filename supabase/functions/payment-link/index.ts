@@ -29,10 +29,26 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
   if (req.method !== 'POST') return bad('Método no permitido', 405);
 
+  // Dos llamadores legítimos: el bot de WhatsApp con el secreto compartido, y
+  // el POS con la sesión del cajero. verify_jwt está apagado por el primero,
+  // así que el token del segundo se valida acá a mano — sin esto habría que
+  // meter el secreto en el bundle del navegador, donde lo lee cualquiera.
   const secret = Deno.env.get('WHATSAPP_WEBHOOK_SECRET');
-  if (!secret || req.headers.get('x-webhook-secret') !== secret) {
-    return bad('No autorizado', 401);
+  const conSecreto = !!secret && req.headers.get('x-webhook-secret') === secret;
+
+  let conSesion = false;
+  const auth = req.headers.get('authorization') ?? '';
+  if (!conSecreto && auth.startsWith('Bearer ')) {
+    const comoUsuario = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: auth } } },
+    );
+    const { data } = await comoUsuario.auth.getUser();
+    conSesion = !!data.user;
   }
+
+  if (!conSecreto && !conSesion) return bad('No autorizado', 401);
 
   let body: { order_number?: string };
   try {

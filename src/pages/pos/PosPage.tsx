@@ -10,6 +10,7 @@ import { buildReceipt, sendToPrinter, getPrinterUrl, setPrinterUrl, type Receipt
 import { fmtDateTime } from '../../lib/format';
 import { emitirDte } from '../../lib/dte';
 import PaymentModal from './PaymentModal';
+import CardModal from './CardModal';
 
 const TYPE_LABELS: Record<string, string> = {
   combo: 'Combos',
@@ -38,6 +39,10 @@ export default function PosPage() {
   const [printerUrl, setPrinterUrlState] = useState(getPrinterUrl());
   const [hasOpenSession, setHasOpenSession] = useState<boolean | null>(null);
   const [pendingSync, setPendingSync] = useState(0);
+  const [cobrandoTarjeta, setCobrandoTarjeta] = useState(false);
+  const [enlacePago, setEnlacePago] = useState<{
+    orderNumber: string; total: number; url: string;
+  } | null>(null);
 
   // replay offline sales on reconnect (60s safety-net poll included)
   useEffect(() => {
@@ -89,16 +94,79 @@ export default function PosPage() {
     setShowCustomer(false);
   }
 
-  async function confirmPayment(cashReceived: number) {
-    if (!profile || !location || cart.length === 0) return;
-    // guard against a silently-dead session (expired/revoked refresh token):
-    // getSession() re-refreshes if needed and returns null when that fails
+  /** Sesion viva: un refresh token vencido falla callado y la venta se pierde. */
+  async function sesionValida(): Promise<boolean> {
     const { data: sess } = await supabase.auth.getSession();
-    if (!sess.session) {
-      alert('Tu sesión expiró — volvé a iniciar sesión.');
-      window.location.href = '/login';
+    if (sess.session) return true;
+    alert('Tu sesión expiró — volvé a iniciar sesión.');
+    window.location.href = '/login';
+    return false;
+  }
+
+  /**
+   * Cobro con tarjeta: crea la orden PENDIENTE y pide el enlace de Wompi.
+   *
+   * No emite DTE ni imprime recibo. La plata no ha entrado: quien cierra la
+   * venta es el webhook de Wompi, y de ahi sale la emision del documento.
+   */
+  async function cobrarConTarjeta() {
+    if (!profile || !location || cart.length === 0) return;
+    // El enlace se pide a la API de Wompi: sin red no hay nada que ofrecer.
+    if (!navigator.onLine) {
+      alert('Sin internet no se puede generar el enlace de pago. Cobrá en efectivo.');
       return;
     }
+    if (!(await sesionValida())) return;
+
+    setCobrandoTarjeta(true);
+    try {
+      const result = await createOrder({
+        locationId: location.id,
+        isProductionLocation: location.is_production,
+        cashierId: profile.id,
+        cart,
+        customer,
+        subtotal,
+        paymentMethod: 'payment_link',
+      });
+
+      if ('error' in result) {
+        alert(`No se pudo crear el pedido: ${result.error}`);
+        return;
+      }
+      if ('queued' in result) {
+        alert('La conexión se cayó al crear el pedido. Cobrá en efectivo.');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('payment-link', {
+        body: { order_number: result.orderNumber },
+      });
+
+      if (error || !data?.payment_url) {
+        // La orden ya existe y quedó pendiente: se dice cuál es para poder
+        // cobrarla en efectivo en vez de dejar al cajero sin referencia.
+        alert(
+          `Wompi no devolvió el enlace para ${result.orderNumber}. ` +
+          'El pedido quedó pendiente: cobralo en efectivo desde Caja.',
+        );
+        return;
+      }
+
+      setEnlacePago({
+        orderNumber: result.orderNumber,
+        total: subtotal,
+        url: data.payment_url,
+      });
+      clearSale();
+    } finally {
+      setCobrandoTarjeta(false);
+    }
+  }
+
+  async function confirmPayment(cashReceived: number) {
+    if (!profile || !location || cart.length === 0) return;
+    if (!(await sesionValida())) return;
     const result = await createOrder({
       locationId: location.id,
       isProductionLocation: location.is_production,
@@ -322,6 +390,14 @@ export default function PosPage() {
           >
             💰 Cobrar {subtotal > 0 ? money(subtotal) : ''}
           </button>
+          <button
+            disabled={cart.length === 0 || cobrandoTarjeta}
+            onClick={cobrarConTarjeta}
+            className="w-full rounded-xl border border-brand-300 bg-white py-3 lg:py-4 text-base lg:text-lg font-bold text-brand-700 transition-colors hover:bg-brand-50 active:bg-brand-100 disabled:opacity-40 disabled:cursor-not-allowed min-h-12 lg:min-h-14"
+            aria-label={`Cobrar ${money(subtotal)} con tarjeta`}
+          >
+            {cobrandoTarjeta ? '⏳ Generando enlace…' : '💳 Tarjeta'}
+          </button>
           {cart.length > 0 && (
             <button
               onClick={clearSale}
@@ -336,6 +412,15 @@ export default function PosPage() {
 
       {paying && (
         <PaymentModal total={subtotal} onConfirm={confirmPayment} onClose={() => setPaying(false)} />
+      )}
+
+      {enlacePago && (
+        <CardModal
+          orderNumber={enlacePago.orderNumber}
+          total={enlacePago.total}
+          url={enlacePago.url}
+          onClose={() => setEnlacePago(null)}
+        />
       )}
 
       {showPrinterConfig && (

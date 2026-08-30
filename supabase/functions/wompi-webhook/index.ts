@@ -113,6 +113,37 @@ Deno.serve(async (req: Request) => {
   // te escribió en las últimas 24h, y quien compró en la tienda web puede no
   // haberlo hecho nunca.
   const order = updated?.[0];
+
+  // Una venta con tarjeta solo queda documentada acá: la caja cierra la orden
+  // pendiente y se va a atender al siguiente. Sin esto el DTE espera a que
+  // pase el cron, y el cliente se va sin su factura. `updated` vacío significa
+  // que ya estaba pagada, así que un reintento de Wompi no emite dos veces.
+  const dteSecret = Deno.env.get('DTE_WEBHOOK_SECRET');
+  if (order && dteSecret) {
+    try {
+      const res = await fetch(
+        `${Deno.env.get('SUPABASE_URL')}/functions/v1/emit-dte`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-webhook-secret': dteSecret,
+            // emit-dte corre con verify_jwt, asi que el gateway exige un token
+            // válido antes de mirar el secreto compartido.
+            apikey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+            Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          },
+          body: JSON.stringify({ order_id: order.id }),
+        },
+      );
+      if (!res.ok) console.error('emision del DTE falló', orderNumber, await res.text());
+    } catch (err) {
+      // La venta está pagada y el documento queda en cola: nunca romper el
+      // webhook por esto, o Wompi reintenta y el aviso al cliente se duplica.
+      console.error('emit-dte inalcanzable', err);
+    }
+  }
+
   const waToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
   const waPhoneId = Deno.env.get('WHATSAPP_PHONE_ID');
   if (order?.source === 'whatsapp' && order.customer_phone && waToken && waPhoneId) {
