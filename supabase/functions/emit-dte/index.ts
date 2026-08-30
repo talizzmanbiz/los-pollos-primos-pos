@@ -33,8 +33,7 @@ import {
   type TipoAnulacion,
 } from '../_shared/invalidacion.ts';
 import {
-  firmar, tokenMh, apiUrlMh, transmitirDte, transmitirInvalidacion,
-  motivoRechazo, aceptado,
+  firmar, transmitirDte, transmitirInvalidacion, motivoRechazo, aceptado,
 } from '../_shared/mh.ts';
 
 const CORS = {
