@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "check:dte": "node --experimental-strip-types supabase/functions/_shared/dte.check.ts",
     "check:edge": "cd supabase/functions && deno check dte-pruebas/index.ts emit-dte/index.ts import-purchase-dte/index.ts",
-    "check": "tsc -b && npm run check:dte && npm run check:edge"
+    "check": "tsc -b && npm run check:format && npm run check:dte && npm run check:edge",
+    "check:format": "node --experimental-strip-types src/lib/format.check.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",

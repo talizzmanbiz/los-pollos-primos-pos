@@ -23,7 +23,24 @@ export function fmtTime(iso: string): string {
   });
 }
 
+/** "2026-08-30" — una columna `date` de Postgres, sin hora ni zona. */
+const SOLO_FECHA = /^\d{4}-\d{2}-\d{2}$/;
+
 export function fmtDate(iso: string): string {
+  // Una fecha sin hora NO se puede pasar por new Date() + timeZone. JS la
+  // interpreta como medianoche UTC, y al renderizarla en America/El_Salvador
+  // (UTC-6) le resta 6 horas y devuelve el día anterior:
+  //
+  //   "2026-08-30" -> 29/08/2026
+  //   "2026-01-01" -> 31/12/2025   ← se cambia de año
+  //
+  // purchase_date, transaction_date y journal_date son todas `date`, así que
+  // esto afectaba a compras, gastos, ingresos y libro diario a la vez. Cuando
+  // no hay hora no hay nada que convertir: se reordena el texto y ya.
+  if (SOLO_FECHA.test(iso)) {
+    const [anio, mes, dia] = iso.split('-');
+    return `${dia}/${mes}/${anio}`;
+  }
   return new Date(iso).toLocaleDateString('es-SV', {
     timeZone: TZ,
     day: '2-digit',
