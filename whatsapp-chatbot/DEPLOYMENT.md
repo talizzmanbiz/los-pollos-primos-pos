@@ -9,36 +9,35 @@ Hay **dos workflows** en n8n:
 
 **Rollback (1 minuto):** en v2 devolvé la ruta de los dos nodos webhook a `pollos-primos-whatsapp-v2`, y reactivá v1. En Meta no se toca nada.
 
-## ⚠️ Migración de dominio (2026-08-29) — falta terminar
+## Migración de dominio (2026-08-30) — resuelta
 
-La instancia pasó de `n8n.automateaiservices.com` (ya apagado) a
-`n8n.vanguardaiautomations.com`. El workflow migró y está activo, pero **el bot
-no está atendiendo**: acepta el webhook y muere en el primer nodo.
+La instancia pasó de `n8n.automateaiservices.com` (apagado) a
+`n8n.vanguardaiautomations.com`. Las Data Tables y las credenciales migraron
+bien; lo que se rompió fueron otras dos cosas, y vale anotarlas porque el
+síntoma inicial engañaba.
 
-Lo que se observa desde afuera:
+**1. El task runner de n8n no estaba corriendo.**
+Todas las ejecuciones morían con `Task request timed out after 60 seconds` en
+el primer nodo Code. En las versiones nuevas de n8n los nodos Code corren en un
+proceso aparte; sin él, `Extract Message`, `Merge Config`, `Prep Sends`,
+`Verify Token v2` y las cuatro herramientas del agente se cuelgan 60s y fallan.
+Es media aplicación. Se arregla en el servidor, no en el workflow.
 
-| Prueba | Resultado |
-|---|---|
-| `POST /webhook/pollos-primos-whatsapp` | 200 "Workflow was started" — pero responde antes de ejecutar, no prueba nada |
-| Mensaje guardado en `whatsapp_messages` | **no** — el último es del 2026-08-26, previo a la migración |
-| `GET` con `hub.challenge` (handshake de Meta) | **se cuelga 45s sin responder** |
+Engañaba porque el `POST` seguía devolviendo `200 Workflow was started`: ese
+webhook responde ANTES de ejecutar, así que un 200 ahí no prueba nada. La
+prueba real es si el mensaje llega a `whatsapp_messages`.
 
-Ambas rutas se rompen en el paso de **Data Table**, así que lo más probable es
-que la migración se llevara los workflows pero **no las Data Tables ni las
-credenciales** — típico de importar por JSON en una instancia nueva.
+**2. El webhook GET quedó sin registrar (404).**
+`Webhook Verify (GET) v2` comparte ruta con el webhook POST y no declaraba
+`httpMethod`. Al reimportar, n8n registró solo el POST y el GET respondía
+`Cannot GET`. Se corrige declarando **`httpMethod: GET` explícito** en el nodo.
 
-Para terminar la migración:
+> Si algún día el handshake de Meta vuelve a dar 404 pero el POST funciona, es
+> esto: dos nodos webhook en la misma ruta necesitan el método declarado a mano.
 
-1. **Recrear la Data Table `pollos_primos_config`** con las 10 claves de la
-   tabla de "Configuration / secrets" de más abajo. Sin ella el flujo no tiene
-   ni URL de Supabase ni token de WhatsApp, y muere en `Get Config`.
-2. **Recrear la credencial Anthropic** (`Claude Haiku 4.5` la usa).
-3. **Cambiar la Callback URL en Meta** a la nueva:
-   `https://n8n.vanguardaiautomations.com/webhook/pollos-primos-whatsapp`.
-   Mientras siga apuntando al dominio viejo no llega ni un mensaje, esté n8n
-   arriba o no.
-4. Volver a probar el handshake GET: con el token correcto debe devolver el
-   `hub.challenge`; si se cuelga, la Data Table sigue faltando.
+Verificado tras el arreglo: el handshake devuelve el `hub.challenge` en 0.4s,
+un token incorrecto devuelve `forbidden`, y un mensaje de prueba recorre el
+flujo completo hasta la respuesta del bot.
 
 Nota: `pollos_primos_conversations` es de v1 (desactivado). v2 no la usa —
 guarda el historial en Supabase.

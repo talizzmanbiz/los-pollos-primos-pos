@@ -294,11 +294,12 @@
         0,
         800
       ],
-      "notes": "Handshake de verificacion de Meta (hub.challenge). Debe compartir la ruta con el webhook POST.",
+      "notes": "Handshake de verificacion de Meta (hub.challenge). Comparte ruta con el webhook POST, y por eso httpMethod GET va declarado explicito: sin el, n8n registra solo el POST y el GET responde 404.",
       "parameters": {
         "path": "pollos-primos-whatsapp-v2",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {},
+        "httpMethod": "GET"
       }
     },
     {
