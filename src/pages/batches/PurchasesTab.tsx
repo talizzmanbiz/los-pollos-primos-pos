@@ -27,8 +27,13 @@ const EMPTY_FORM = {
   supplier: '',
   nit: '',
   dui: '',
-  claseDoc: '4',
-  tipoDoc: '03',
+  // Sin preselección a propósito. Venían en '4' (DTE) y '03' (CCF), y como
+  // nadie los cambiaba, toda compra quedaba declarada como crédito fiscal
+  // aunque no lo fuera. El Libro de Compras terminaba reclamando créditos
+  // inexistentes; que se elija a mano es la diferencia entre un dato y un
+  // supuesto.
+  claseDoc: '',
+  tipoDoc: '',
   docNumber: '',
   gravadas: '',
   exentas: '',
@@ -97,6 +102,9 @@ export default function PurchasesTab() {
     }));
   }
 
+  // Sólo el CCF (03) y la nota de crédito (05) dan derecho a crédito fiscal.
+  const daCredito = f.tipoDoc === '03' || f.tipoDoc === '05';
+
   const num = (v: string) => parseFloat(v) || 0;
   const totalGravado = num(f.gravadas) + num(f.internacionesGravadas) +
     num(f.importacionesGravadasBienes) + num(f.importacionesGravadasServicios);
@@ -106,6 +114,16 @@ export default function PurchasesTab() {
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!profile || total <= 0) return;
+    if (!f.claseDoc || !f.tipoDoc) {
+      alert('Elegí la clase y el tipo de documento. Si la compra no tuvo CCF, va como Factura (01) o Factura de sujeto excluido (14).');
+      return;
+    }
+    // El crédito fiscal se sustenta con el documento; sin su número el Libro de
+    // Compras reclama un crédito que no se puede respaldar ante Hacienda.
+    if (daCredito && !f.docNumber.trim()) {
+      alert('Un CCF (o nota de crédito) necesita su número de documento para dar crédito fiscal.');
+      return;
+    }
     setSaving(true);
     const { error } = await supabase.from('accounting_transactions_expense').insert({
       transaction_date: f.date,
@@ -120,8 +138,7 @@ export default function PurchasesTab() {
       iva_amount_usd: iva,
       total_amount_usd: total,
       is_deductible: true,
-      // Sólo CCF (03) y notas de crédito (05) dan derecho a crédito fiscal.
-      iva_creditable: iva > 0 && (f.tipoDoc === '03' || f.tipoDoc === '05'),
+      iva_creditable: iva > 0 && daCredito,
       document_type: f.tipoDoc === '03' ? 'ccf' : f.claseDoc === '4' ? 'dte' : 'factura',
       clase_documento: f.claseDoc,
       tipo_documento_mh: f.tipoDoc,
@@ -209,14 +226,28 @@ export default function PurchasesTab() {
           </Field>
 
           <Field label="Clase de documento">
-            <Select cat={CLASE_DOCUMENTO} value={f.claseDoc} onChange={(v) => set('claseDoc', v)} />
+            <Select cat={CLASE_DOCUMENTO} value={f.claseDoc} onChange={(v) => set('claseDoc', v)}
+              vacio="Elegir…" />
           </Field>
           <Field label="Tipo de documento">
-            <Select cat={TIPO_DOCUMENTO} value={f.tipoDoc} onChange={(v) => set('tipoDoc', v)} />
+            <Select cat={TIPO_DOCUMENTO} value={f.tipoDoc} onChange={(v) => set('tipoDoc', v)}
+              vacio="Elegir…" />
+            {!f.tipoDoc && (
+              <p className="mt-1 text-[11px] text-charcoal-500">
+                Sin CCF va como <span className="font-semibold">Factura</span>, o{' '}
+                <span className="font-semibold">Factura de sujeto excluido</span> si el proveedor
+                no es contribuyente.
+              </p>
+            )}
           </Field>
-          <Field label="N° de documento">
+          <Field label={`N° de documento${daCredito ? '' : ' (opcional)'}`}>
             <input value={f.docNumber} onChange={(e) => set('docNumber', e.target.value)}
               placeholder="DTE-03-S020P009-0000…" className="input" />
+            {daCredito && !f.docNumber.trim() && (
+              <p className="mt-1 text-[11px] font-medium text-chili-600">
+                El CCF da crédito fiscal: sin su número, la compra no se puede sustentar.
+              </p>
+            )}
           </Field>
 
           <Field label="Compras internas gravadas">
@@ -359,13 +390,16 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Select({ cat, value, onChange }: {
+function Select({ cat, value, onChange, vacio }: {
   cat: Record<string, string>;
   value: string;
   onChange: (v: string) => void;
+  /** Opción inicial sin valor, para que el tipo de documento se elija a mano. */
+  vacio?: string;
 }) {
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)} className="input">
+      {vacio && <option value="">{vacio}</option>}
       {opciones(cat).map((o) => <option key={o.code} value={o.code}>{o.label}</option>)}
     </select>
   );
