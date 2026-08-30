@@ -357,10 +357,15 @@ Deno.serve(async (req: Request) => {
         .from('dte_documents').select('order_id').not('order_id', 'is', null);
       const yaEmitidas = new Set((conDte ?? []).map((d) => d.order_id));
 
-      const { data: pagadas } = await db
-        .from('orders')
-        .select('id')
-        .eq('payment_status', 'paid')
+      // El corte evita que al pasar a produccion se emitan DTE reales por toda
+      //    la historia del POS: ventas viejas que nunca se facturaron por este
+      //    medio y que no corresponde documentar hoy con fecha de hoy.
+      const { data: fiscalCola } = await db
+        .from('fiscal_settings').select('nombre, nit, emision_desde').maybeSingle();
+
+      let q = db.from('orders').select('id').eq('payment_status', 'paid');
+      if (fiscalCola?.emision_desde) q = q.gte('created_at', fiscalCola.emision_desde);
+      const { data: pagadas } = await q
         .order('created_at', { ascending: false })
         .limit(500);
 
@@ -392,9 +397,6 @@ Deno.serve(async (req: Request) => {
         .order('created_at')
         .limit(limite);
 
-      const { data: fiscalInv } = await db
-        .from('fiscal_settings').select('nombre, nit').maybeSingle();
-
       const invalidaciones = [];
       for (const inv of invPendientes ?? []) {
         try {
@@ -406,9 +408,9 @@ Deno.serve(async (req: Request) => {
             motivo: inv.motivo,
             codigo_generacion_reemplazo: inv.codigo_generacion_reemplazo,
             responsable: {
-              nombre: fiscalInv?.nombre ?? '',
+              nombre: fiscalCola?.nombre ?? '',
               tipoDocumento: '36',
-              numDocumento: fiscalInv?.nit ?? '',
+              numDocumento: fiscalCola?.nit ?? '',
             },
           });
           invalidaciones.push({ id: inv.id, estado: r?.estado });
