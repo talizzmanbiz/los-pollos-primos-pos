@@ -32,6 +32,10 @@ import {
   type Responsable,
   type TipoAnulacion,
 } from '../_shared/invalidacion.ts';
+import {
+  firmar, tokenMh, apiUrlMh, transmitirDte, transmitirInvalidacion,
+  motivoRechazo, aceptado,
+} from '../_shared/mh.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -52,98 +56,7 @@ const CODIGO_PAGO: Record<string, string> = {
   transfer: '05',
 };
 
-// ---------- firmador ----------
 
-async function firmar(dteJson: unknown, nit: string): Promise<string> {
-  const url = Deno.env.get('FIRMADOR_URL');
-  const password = Deno.env.get('FIRMADOR_PASSWORD');
-  if (!url || !password) throw new Error('Firmador sin configurar (FIRMADOR_URL/FIRMADOR_PASSWORD)');
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      nit: nit.replace(/-/g, ''),
-      activo: true,
-      passwordPri: password,
-      dteJson,
-    }),
-  });
-  const data = await res.json().catch(() => null);
-  if (!res.ok || data?.status !== 'OK' || typeof data?.body !== 'string') {
-    throw new Error('Firmador rechazó el documento: ' + JSON.stringify(data?.body ?? data));
-  }
-  return data.body; // JWS compacto
-}
-
-// ---------- autenticación y transmisión al MH ----------
-
-let tokenCache: { value: string; expiresAt: number } | null = null;
-
-async function tokenMh(apiUrl: string): Promise<string> {
-  if (tokenCache && Date.now() < tokenCache.expiresAt) return tokenCache.value;
-
-  const user = Deno.env.get('MH_USER');
-  const pwd = Deno.env.get('MH_PASSWORD');
-  if (!user || !pwd) throw new Error('Credenciales del MH sin configurar (MH_USER/MH_PASSWORD)');
-
-  const res = await fetch(`${apiUrl}/seguridad/auth`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ user, pwd }).toString(),
-  });
-  const data = await res.json().catch(() => null);
-  const token: string | undefined = data?.body?.token;
-  if (!res.ok || !token) throw new Error('El MH no devolvió token: ' + JSON.stringify(data));
-
-  // El token del MH dura 24h; se refresca una hora antes por seguridad.
-  tokenCache = { value: token, expiresAt: Date.now() + 23 * 3600_000 };
-  return token;
-}
-
-// PENDIENTE: esta funcion todavia compara contra PROCESADO a mano. Los
-// EVENTOS del MH vuelven RECIBIDO, no PROCESADO, asi que la invalidacion de
-// mas abajo registraria como rechazado un evento aceptado. Hoy no falla
-// porque las invalidaciones si devuelven PROCESADO, pero al proximo despliegue
-// hay que pasar esta funcion a _shared/mh.ts y usar aceptado().
-interface RespuestaMh {
-  estado?: string;              // PROCESADO | RECHAZADO
-  selloRecibido?: string | null;
-  descripcionMsg?: string;
-  observaciones?: string[];
-}
-
-async function transmitir(
-  apiUrl: string,
-  documentoFirmado: string,
-  ambiente: string,
-  tipoDte: string,
-  codigoGeneracion: string,
-): Promise<RespuestaMh> {
-  const token = await tokenMh(apiUrl);
-  const res = await fetch(`${apiUrl}/fesv/recepciondte`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
-      'User-Agent': 'LosPollosPrimos-POS/1.0',
-    },
-    body: JSON.stringify({
-      ambiente,
-      idEnvio: Date.now() % 2_147_483_647,
-      // Tiene que coincidir con identificacion.version del documento firmado:
-      // fe-f-v2 → 2, fe-ccf-v4 → 4. Si el sobre dice una version y el JSON otra,
-      // el MH rechaza sin aclarar cual de las dos esta mal.
-      version: tipoDte === '01' ? 2 : 4,
-      tipoDte,
-      documento: documentoFirmado,
-      codigoGeneracion: codigoGeneracion.toUpperCase(),
-    }),
-  });
-  const data = await res.json().catch(() => ({}));
-  // Un 4xx del MH sigue trayendo el motivo del rechazo: se guarda tal cual.
-  return data as RespuestaMh;
-}
 
 // ---------- invalidación de un DTE ya sellado ----------
 
@@ -232,30 +145,13 @@ async function invalidarDte(db: SupabaseClient, p: ParamsInvalidacion) {
 
   try {
     const firmado = await firmar(evento, fiscal.nit);
-    const apiUrl = Deno.env.get('MH_API_URL') ?? 'https://apitest.dtes.mh.gob.sv';
-    // Los eventos NO van al mismo endpoint que los DTE. Configurable porque el
-    // path sale del Manual Técnico y conviene poder corregirlo sin desplegar.
-    const ruta = Deno.env.get('MH_ANULAR_PATH') ?? '/fesv/anulardte';
-    const token = await tokenMh(apiUrl);
-
-    const res = await fetch(apiUrl + ruta, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token.startsWith('Bearer ') ? token : 'Bearer ' + token,
-        'User-Agent': 'LosPollosPrimos-POS/1.0',
-      },
-      body: JSON.stringify({
-        ambiente: fiscal.ambiente,
-        idEnvio: Date.now() % 2_147_483_647,
-        version: 3,
-        documento: firmado,
-      }),
-    });
-    const rta = await res.json().catch(() => ({}));
+    const rta = await transmitirInvalidacion(firmado, fiscal.ambiente);
 
     patch.json_respuesta = rta;
-    if (rta.estado === 'PROCESADO' && rta.selloRecibido) {
+    // aceptado() y no una comparación a mano: los EVENTOS del MH vuelven
+    // RECIBIDO y los DTE PROCESADO. Comparar sólo contra PROCESADO registraba
+    // como rechazado un evento que Hacienda había aceptado y sellado.
+    if (aceptado(rta)) {
       patch.estado = 'procesado';
       patch.sello_recibido = rta.selloRecibido;
       patch.ultimo_error = null;
@@ -266,8 +162,7 @@ async function invalidarDte(db: SupabaseClient, p: ParamsInvalidacion) {
         .eq('id', p.dte_id);
     } else {
       patch.estado = rta.estado === 'RECHAZADO' ? 'rechazado' : 'contingencia';
-      patch.ultimo_error = [rta.descripcionMsg, ...(rta.observaciones ?? [])]
-        .filter(Boolean).join(' · ') || 'Respuesta desconocida del MH';
+      patch.ultimo_error = motivoRechazo(rta);
     }
   } catch (e) {
     patch.estado = 'contingencia';
@@ -388,21 +283,19 @@ async function emitirOrden(db: SupabaseClient, orderId: string) {
 
   try {
     const firmado = await firmar(documento, fiscal.nit);
-    const apiUrl = Deno.env.get('MH_API_URL') ?? 'https://apitest.dtes.mh.gob.sv';
-    const rta = await transmitir(
-      apiUrl, firmado, fiscal.ambiente, tipoDte, fila.codigo_generacion,
+    const rta = await transmitirDte(
+      firmado, fiscal.ambiente, tipoDte, fila.codigo_generacion,
     );
 
     patch.json_respuesta = rta;
-    if (rta.estado === 'PROCESADO' && rta.selloRecibido) {
+    if (aceptado(rta)) {
       patch.estado = 'procesado';
       patch.sello_recibido = rta.selloRecibido;
       patch.ultimo_error = null;
     } else {
       // Un RECHAZADO no se reintenta solo: el JSON está mal y hay que corregirlo.
       patch.estado = rta.estado === 'RECHAZADO' ? 'rechazado' : 'contingencia';
-      patch.ultimo_error = [rta.descripcionMsg, ...(rta.observaciones ?? [])]
-        .filter(Boolean).join(' · ') || 'Respuesta desconocida del MH';
+      patch.ultimo_error = motivoRechazo(rta);
     }
   } catch (e) {
     // Firmador caído o red: es transitorio, se reintenta.
@@ -488,7 +381,48 @@ Deno.serve(async (req: Request) => {
           resultados.push({ order_id: id, error: String(e) });
         }
       }
-      return Response.json({ procesados: resultados.length, resultados }, { headers: CORS });
+      // 3) invalidaciones encoladas por cancel_order. Cancelar una venta cuyo
+      //    DTE ya estaba sellado deja una fila 'pendiente' y no transmite en el
+      //    momento: si el MH esta caido, el cajero no tiene por que esperar.
+      //    Sin esta cola, el documento seguiria vigente ante Hacienda.
+      const { data: invPendientes } = await db
+        .from('dte_invalidaciones')
+        .select('id, dte_document_id, tipo_anulacion, motivo, codigo_generacion_reemplazo')
+        .in('estado', ['pendiente', 'contingencia'])
+        .lt('intentos', 10)
+        .order('created_at')
+        .limit(limite);
+
+      const { data: fiscalInv } = await db
+        .from('fiscal_settings').select('nombre, nit').maybeSingle();
+
+      const invalidaciones = [];
+      for (const inv of invPendientes ?? []) {
+        try {
+          // El responsable es el contribuyente: la invalidacion la ejecuta el
+          // sistema en su nombre, no un cajero identificable desde el cron.
+          const r = await invalidarDte(db, {
+            dte_id: inv.dte_document_id,
+            tipo_anulacion: inv.tipo_anulacion,
+            motivo: inv.motivo,
+            codigo_generacion_reemplazo: inv.codigo_generacion_reemplazo,
+            responsable: {
+              nombre: fiscalInv?.nombre ?? '',
+              tipoDocumento: '36',
+              numDocumento: fiscalInv?.nit ?? '',
+            },
+          });
+          invalidaciones.push({ id: inv.id, estado: r?.estado });
+        } catch (e) {
+          invalidaciones.push({ id: inv.id, error: String(e) });
+        }
+      }
+
+      return Response.json({
+        procesados: resultados.length,
+        resultados,
+        invalidaciones,
+      }, { headers: CORS });
     }
 
     // Invalidación de un DTE ya sellado. Va acá y no en su propia función para
