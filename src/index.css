@@ -457,6 +457,36 @@ label {
   .animate-shine {
     animation: pp-shine 2.6s linear infinite;
   }
+
+  /* Pestaña "Conversaciones" cuando hay mensajes de WhatsApp sin leer.
+     Alterna a rojo en vez de solo latir en opacidad: en una tablet de cocina,
+     mirada de reojo y a un metro de distancia, un cambio de color se nota y un
+     fade no. Ciclo de 1.8s — bien por debajo de los 3 destellos por segundo que
+     las pautas de accesibilidad marcan como riesgo. */
+  .nav-sin-leer {
+    animation: pp-aviso-chat 1.8s ease-in-out infinite;
+  }
+
+  /* El contador va en contrafase: si no, al ponerse roja la pestaña el globo
+     rojo desaparece justo en el momento de más atención. */
+  .nav-sin-leer .nav-sin-leer-num {
+    animation: pp-aviso-num 1.8s ease-in-out infinite;
+  }
+}
+
+/* Con "reducir movimiento" activado se queda fijo en rojo: el aviso se sigue
+   viendo, sin parpadeo. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-sin-leer {
+    animation: none;
+    background-color: var(--color-chili-600);
+    color: #fff;
+  }
+  .nav-sin-leer .nav-sin-leer-num {
+    animation: none;
+    background-color: #fff;
+    color: var(--color-chili-700);
+  }
 }
 
 @keyframes pp-float {
@@ -472,6 +502,30 @@ label {
 @keyframes pp-shine {
   from { background-position: 200% 0; }
   to { background-position: -200% 0; }
+}
+
+@keyframes pp-aviso-chat {
+  0%, 100% {
+    background-color: var(--color-brand-50);
+    color: var(--color-brand-700);
+    box-shadow: 0 0 0 0 rgba(185, 28, 28, 0);
+  }
+  50% {
+    background-color: var(--color-chili-600);
+    color: #fff;
+    box-shadow: 0 4px 14px 0 rgba(185, 28, 28, 0.45);
+  }
+}
+
+@keyframes pp-aviso-num {
+  0%, 100% {
+    background-color: var(--color-chili-600);
+    color: #fff;
+  }
+  50% {
+    background-color: #fff;
+    color: var(--color-chili-700);
+  }
 }
 
 /* Subtle grain/vignette helpers used on dark sections */

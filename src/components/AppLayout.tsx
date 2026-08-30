@@ -170,6 +170,12 @@ export default function AppLayout() {
                     isActive
                       ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25'
                       : 'text-charcoal-500 hover:-translate-y-0.5 hover:bg-brand-50 hover:text-brand-700'
+                  }${
+                    // Solo parpadea si NO estás ya en Conversaciones: estando
+                    // adentro los mensajes se ven en vivo y el aviso sobra.
+                    to === '/conversaciones' && sinLeer > 0 && !isActive
+                      ? ' nav-sin-leer'
+                      : ''
                   }`
                 }
                 title={label}
@@ -178,7 +184,7 @@ export default function AppLayout() {
                 {label}
                 {to === '/conversaciones' && sinLeer > 0 && (
                   <span
-                    className="ml-0.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-bold text-white"
+                    className="nav-sin-leer-num ml-0.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-chili-600 px-1.5 text-[11px] font-bold text-white"
                     aria-label={`${sinLeer} mensajes de WhatsApp sin leer`}
                   >
                     {sinLeer > 99 ? '99+' : sinLeer}
