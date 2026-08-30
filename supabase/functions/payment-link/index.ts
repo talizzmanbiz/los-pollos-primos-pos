@@ -18,7 +18,11 @@ import { createPaymentLink } from '../_shared/payments.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type, x-webhook-secret',
+  // apikey y x-client-info los manda supabase-js por su cuenta en
+  // functions.invoke(); sin ellos el navegador bloquea el POST del POS después
+  // de aprobar el preflight.
+  'Access-Control-Allow-Headers':
+    'authorization, content-type, apikey, x-client-info, x-webhook-secret',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 

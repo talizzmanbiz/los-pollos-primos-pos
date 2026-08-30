@@ -38,7 +38,12 @@ import {
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type, x-webhook-secret',
+  // apikey y x-client-info los manda supabase-js por su cuenta en
+  // functions.invoke(). Sin ellos el navegador aprueba el preflight y después
+  // bloquea el POST — sin error visible en el POS: la venta se cerraba bien y
+  // el DTE no se emitía nunca.
+  'Access-Control-Allow-Headers':
+    'authorization, content-type, apikey, x-client-info, x-webhook-secret',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
