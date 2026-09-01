@@ -185,6 +185,22 @@ export default function PurchasesTab() {
 
   return (
     <div className="space-y-4">
+      {/* Se confunde con "Compra de pollo" y no tienen nada que ver: una es
+          inventario, esta es el libro de compras que se le declara al MH. */}
+      <div className="ayuda">
+        <p className="ayuda-titulo">Libro de compras — para Hacienda</p>
+        <p>
+          Acá van <strong>todas</strong> las compras con documento fiscal — gas,
+          empaques, servicios, el pollo también — con el NIT del proveedor y el
+          número de DTE. Es lo que se declara en el anexo del F-07.
+        </p>
+        <p>
+          No confundir con <strong>1 · Compra de pollo</strong>: esa mueve el
+          inventario, esta no. El pollo aparece en las dos y está bien: una lo
+          cuenta como stock, la otra lo declara como gasto.
+        </p>
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         <select
           value={month.value}

@@ -308,6 +308,30 @@ body {
   .tab-off { background: #fff; color: var(--color-charcoal-400); box-shadow: 0 1px 3px rgba(39, 26, 18, 0.08); }
   .tab-off:hover { background: var(--color-brand-50); color: var(--color-brand-700); }
 
+  /* ============ AYUDA EN PANTALLA ============
+     Bloque de instrucciones para pantallas donde el modelo de datos no es
+     obvio mirando los campos (Lotes es el caso claro: comprar y producir
+     mueven cosas distintas). Vive acá y no en cada pestaña para que las
+     cuatro se vean igual. */
+  .ayuda {
+    border: 1px solid var(--color-brand-200);
+    border-left: 3px solid var(--color-brand-500);
+    border-radius: var(--radius-md);
+    background: var(--color-brand-50);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--color-charcoal-800);
+  }
+  .ayuda strong { color: var(--color-brand-800); font-weight: 700; }
+  .ayuda p + p { margin-top: 0.5rem; }
+  .ayuda-titulo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--color-brand-800);
+    margin-bottom: 0.25rem;
+  }
+
   /* ============ INPUTS ============ */
   .input {
     width: 100%;

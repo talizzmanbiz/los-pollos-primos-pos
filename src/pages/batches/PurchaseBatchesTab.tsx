@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 import { money, fmtDate } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
@@ -46,9 +46,16 @@ export default function PurchaseBatchesTab() {
   const nPounds = parseFloat(pounds) || 0;
   const nCost = parseFloat(unitCost) || 0;
   // The supplier quotes per pound or per chicken; the total follows that unit.
-  const total = Math.round((pricedBy === 'libras' ? nPounds : nUnits) * nCost * 100) / 100;
+  const porLibra = pricedBy === 'libras';
+  const cantidadCobrada = porLibra ? nPounds : nUnits;
+  const total = Math.round(cantidadCobrada * nCost * 100) / 100;
   const avgPerUnit = nUnits > 0 ? total / nUnits : 0;
   const avgPerPound = nPounds > 0 ? total / nPounds : 0;
+
+  // Pollo crudo sin procesar, sumando lo que queda de cada lote. Es el numero
+  // que decide si se puede cerrar un lote de produccion, asi que se muestra
+  // acá y no solo en la columna "Restante" de la tabla.
+  const crudoDisponible = batches.reduce((s, b) => s + Number(b.quantity_remaining), 0);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -80,12 +87,32 @@ export default function PurchaseBatchesTab() {
 
   return (
     <div>
-      <button
-        onClick={() => setShowForm((v) => !v)}
-        className="btn btn-primary mb-4"
-      >
-        {showForm ? 'Cancelar' : '+ Registrar compra de pollo'}
-      </button>
+      <div className="ayuda mb-4">
+        <p className="ayuda-titulo">Paso 1 — registrar el pollo que llegó</p>
+        <p>
+          Anotá cada entrega del proveedor apenas llegue. Esto guarda el pollo
+          como <strong>crudo disponible</strong> y registra el gasto en la
+          contabilidad automáticamente.
+        </p>
+        <p>
+          <strong>Todavía no podés vender ese pollo:</strong> entra al inventario
+          hasta que cierres el lote de producción en el paso 2.
+        </p>
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <button
+          onClick={() => setShowForm((v) => !v)}
+          className="btn btn-primary"
+        >
+          {showForm ? 'Cancelar' : '+ Registrar compra de pollo'}
+        </button>
+        <p className="rounded-lg bg-white px-3 py-2 text-sm shadow">
+          Pollo crudo disponible:{' '}
+          <span className="font-bold tabular-nums text-brand-700">{crudoDisponible}</span>
+          <span className="text-charcoal-300"> pollos sin hornear</span>
+        </p>
+      </div>
 
       {showForm && (
         <form onSubmit={submit} className="mb-6 grid grid-cols-2 gap-4 rounded-2xl bg-white p-6 shadow md:grid-cols-3">
@@ -100,6 +127,9 @@ export default function PurchaseBatchesTab() {
               className="input" />
           </div>
 
+          {/* Los dos campos existen por razones distintas y el formulario no lo
+              decia: las unidades son el stock que consume produccion, las
+              libras solo sirven para sacar el costo por libra. */}
           <div className="col-span-2 md:col-span-1">
             <label className="mb-1 block text-sm text-gray-600">Cantidad recibida</label>
             <div className="flex gap-2">
@@ -107,29 +137,36 @@ export default function PurchaseBatchesTab() {
                 <input type="number" step="0.001" min="0.001" value={units}
                   onChange={(e) => setUnits(e.target.value)} required placeholder="0"
                   className="input" />
-                <span className="mt-1 block text-xs text-gray-500">pollos (unidades)</span>
+                <span className="mt-1 block text-xs text-gray-500">
+                  pollos — <span className="text-brand-700">es el stock</span>
+                </span>
               </div>
               <div className="flex-1">
                 <input type="number" step="0.001" min="0.001" value={pounds}
-                  onChange={(e) => setPounds(e.target.value)} required placeholder="0"
+                  onChange={(e) => setPounds(e.target.value)} required={porLibra} placeholder="0"
                   className="input" />
-                <span className="mt-1 block text-xs text-gray-500">libras</span>
+                <span className="mt-1 block text-xs text-gray-500">
+                  libras — {porLibra ? 'para el cobro' : 'opcional'}
+                </span>
               </div>
             </div>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm text-gray-600">Costo unitario ($)</label>
+            <label className="mb-1 block text-sm text-gray-600">¿Cómo te lo cobraron?</label>
             <div className="flex gap-2">
-              <input type="number" step="0.0001" min="0" value={unitCost}
-                onChange={(e) => setUnitCost(e.target.value)} required
-                className="input" />
               <select value={pricedBy} onChange={(e) => setPricedBy(e.target.value as 'unidades' | 'libras')}
                 className="input">
                 <option value="libras">por libra</option>
-                <option value="unidades">por unidad</option>
+                <option value="unidades">por pollo</option>
               </select>
+              <input type="number" step="0.0001" min="0" value={unitCost}
+                onChange={(e) => setUnitCost(e.target.value)} required placeholder="0.00"
+                className="input" />
             </div>
+            <span className="mt-1 block text-xs text-gray-500">
+              precio {porLibra ? 'por libra' : 'por pollo'}
+            </span>
           </div>
 
           <div className="col-span-2">
@@ -138,8 +175,16 @@ export default function PurchaseBatchesTab() {
               className="input" />
           </div>
 
+          {/* La cuenta a la vista: antes salia solo el total y no se veia de
+              donde, asi que un precio metido en la casilla equivocada pasaba
+              desapercibido hasta revisar el gasto. */}
           <div className="col-span-2 flex flex-wrap items-end gap-4 md:col-span-3">
-            <p className="text-lg font-semibold text-gray-700">Total: {money(total)}</p>
+            <div>
+              <p className="text-sm text-gray-500 tabular-nums">
+                {cantidadCobrada || 0} {porLibra ? 'lb' : 'pollos'} × {money(nCost)} =
+              </p>
+              <p className="text-lg font-semibold text-gray-700">Total: {money(total)}</p>
+            </div>
             <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">
               Costo prom. por pollo:{' '}
               <span className="font-bold">{nUnits > 0 ? money(avgPerUnit) : '—'}</span>
@@ -161,7 +206,7 @@ export default function PurchaseBatchesTab() {
               <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Fecha</th>
               <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Proveedor</th>
               <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Recibido</th>
-              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Restante</th>
+              <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Sin hornear</th>
               <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Costo unit.</th>
               <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Costo prom./pollo</th>
               <th className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">Costo total</th>
@@ -171,8 +216,9 @@ export default function PurchaseBatchesTab() {
           <tbody className="divide-y divide-gray-100">
             {batches.map((b) => {
               const perUnit = costPerUnit(b);
+              const agotado = b.quantity_remaining <= 0;
               return (
-                <tr key={b.id} className={b.quantity_remaining <= 0 ? 'text-gray-400' : ''}>
+                <tr key={b.id} className={agotado ? 'text-gray-400' : ''}>
                   <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">{fmtDate(b.purchase_date)}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">{b.supplier_name}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">
@@ -181,11 +227,15 @@ export default function PurchaseBatchesTab() {
                       <span className="text-gray-500"> · {b.quantity_lb} lb</span>
                     )}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-2.5 font-semibold tabular-nums sm:px-4 sm:py-3">{b.quantity_remaining} pollos</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 font-semibold tabular-nums sm:px-4 sm:py-3">
+                    {agotado
+                      ? <span className="text-gray-400">todo horneado</span>
+                      : <>{b.quantity_remaining} pollos</>}
+                  </td>
                   <td className="whitespace-nowrap px-3 py-2.5 sm:px-4 sm:py-3">
                     {money(b.unit_cost)}
                     <span className="text-xs text-gray-500">
-                      {b.unit === 'libras' ? ' / lb' : ' / unid.'}
+                      {b.unit === 'libras' ? ' / lb' : ' / pollo'}
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-3 py-2.5 font-semibold text-brand-700 sm:px-4 sm:py-3">
@@ -197,7 +247,11 @@ export default function PurchaseBatchesTab() {
               );
             })}
             {batches.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-6 text-center text-gray-400">Sin lotes de compra</td></tr>
+              <tr>
+                <td colSpan={8} className="px-4 py-6 text-center text-gray-400">
+                  Todavía no hay compras registradas. Empezá con «Registrar compra de pollo».
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
