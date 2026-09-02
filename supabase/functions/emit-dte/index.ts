@@ -199,14 +199,25 @@ async function emitirOrden(db: SupabaseClient, orderId: string) {
   const tipoDte: '01' | '03' = order.customer_nit ? '03' : '01';
 
   // fe-ccf-v4 exige del receptor NIT, NRC, actividad económica y dirección
-  // completa: siempre es un contribuyente, no un consumidor final. La orden del
-  // POS no captura nada de eso, así que se corta acá con un mensaje claro en
-  // vez de transmitir un documento que el MH va a rechazar por campos vacíos.
-  if (tipoDte === '03' && !order.customer_activity_code) {
-    throw new Error(
-      'Para emitir CCF hace falta la actividad económica y la dirección fiscal del ' +
-      'cliente. Registralos en la orden o cobrá como consumidor final (sin NIT).',
-    );
+  // completa: siempre es un contribuyente, no un consumidor final. Eso no cabe
+  // en una orden — se guarda una vez en el registro de clientes y se lee acá.
+  let cliente: Record<string, string | null> | null = null;
+  if (tipoDte === '03') {
+    const soloDigitos = order.customer_nit.replace(/\D/g, '');
+    const { data } = order.customer_id
+      ? await db.from('customers').select('*').eq('id', order.customer_id).maybeSingle()
+      : await db.from('customers').select('*').eq('nit_key', soloDigitos).maybeSingle();
+    cliente = data;
+
+    // El check de la tabla ya garantiza que un cliente con NIT trae todo, así
+    // que basta con comprobar que exista y que el NIT sea el mismo.
+    if (!cliente || !cliente.cod_actividad) {
+      throw new Error(
+        'Para emitir crédito fiscal el cliente tiene que estar registrado con NRC, ' +
+        'actividad económica y dirección fiscal. Registralo desde la caja o cobrá ' +
+        'como consumidor final (sin NIT).',
+      );
+    }
   }
 
   const items: ItemVenta[] = (order.order_items ?? []).map((it: {
@@ -265,10 +276,30 @@ async function emitirOrden(db: SupabaseClient, orderId: string) {
     fecEmi: fila.fecha_emision,
     horEmi: fila.hora_emision,
     emisor: fiscal as Emisor,
-    receptor: order.customer_nit
+    // El CCF identifica al receptor por NIT y exige su ficha fiscal completa;
+    // la factura lo identifica con tipo+número de documento y admite que no
+    // haya nadie (consumidor final anónimo).
+    receptor: cliente
+      ? {
+          nit: cliente.nit ?? order.customer_nit,
+          nrc: cliente.nrc,
+          nombre: cliente.name ?? order.customer_name ?? '',
+          nombreComercial: cliente.name ?? null,
+          codActividad: cliente.cod_actividad,
+          descActividad: cliente.desc_actividad,
+          correo: cliente.email ?? order.customer_email,
+          telefono: cliente.phone ?? order.customer_phone,
+          direccion: {
+            departamento: cliente.departamento ?? '',
+            municipio: cliente.municipio ?? '',
+            distrito: cliente.distrito ?? '',
+            complemento: cliente.complemento ?? '',
+          },
+        }
+      : order.customer_name || order.customer_phone
       ? {
           tipoDocumento: '36',
-          numDocumento: order.customer_nit,
+          numDocumento: order.customer_nit ?? undefined,
           nombre: order.customer_name ?? undefined,
           correo: order.customer_email,
           telefono: order.customer_phone,

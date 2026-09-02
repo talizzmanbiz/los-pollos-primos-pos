@@ -276,10 +276,15 @@ export function construirDte(d: DatosDte) {
 
   // Factura: identifica al cliente por tipo+número de documento, y va en null
   // cuando es consumidor final anónimo.
-  const receptorFactura = d.receptor && (d.receptor.numDocumento || d.receptor.nombre)
+  // Sin número de documento tampoco se declara el tipo: decir "identificado
+  // por NIT" y dejar el NIT en null es una contradicción, y el MH rechaza por
+  // reglas de negocio cosas que el esquema deja pasar.
+  const numDocReceptor = (d.receptor?.numDocumento ?? '').replace(/-/g, '') || null;
+
+  const receptorFactura = d.receptor && (numDocReceptor || d.receptor.nombre)
     ? {
-        tipoDocumento: d.receptor.tipoDocumento ?? '36',
-        numDocumento: (d.receptor.numDocumento ?? '').replace(/-/g, '') || null,
+        tipoDocumento: numDocReceptor ? d.receptor.tipoDocumento ?? '36' : null,
+        numDocumento: numDocReceptor,
         nrc: d.receptor.nrc ? d.receptor.nrc.replace(/-/g, '') : null,
         nombre: d.receptor.nombre ?? null,
         codActividad: d.receptor.codActividad ?? null,

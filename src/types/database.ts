@@ -6,6 +6,11 @@
 //      Ojo con order_number: si el cliente lo manda, el trigger NO lo asigna y se
 //      rompe el correlativo (ver 0027_correlativo_a_prueba_de_desfase.sql).
 //   2. El bloque de alias de dominio del final.
+//   3. La tabla `customers` y `orders.customer_id` se agregaron a mano (0034).
+//      phone_key/nit_key son columnas generadas: van en Row pero NUNCA en
+//      Insert/Update, o Postgres rechaza la escritura. Si regeneras, revisa que
+//      sigan fuera y que cancel_order/mark_order_refunded incluyan customer_id
+//      en su retorno, que es una fila de orders.
 export type Json =
   | string
   | number
@@ -588,6 +593,59 @@ export type Database = {
           },
         ]
       }
+      customers: {
+        Row: {
+          cod_actividad: string | null
+          complemento: string | null
+          created_at: string
+          departamento: string | null
+          desc_actividad: string | null
+          distrito: string | null
+          email: string | null
+          id: string
+          municipio: string | null
+          name: string | null
+          nit: string | null
+          nit_key: string | null
+          nrc: string | null
+          phone: string | null
+          phone_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          cod_actividad?: string | null
+          complemento?: string | null
+          created_at?: string
+          departamento?: string | null
+          desc_actividad?: string | null
+          distrito?: string | null
+          email?: string | null
+          id?: string
+          municipio?: string | null
+          name?: string | null
+          nit?: string | null
+          nrc?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cod_actividad?: string | null
+          complemento?: string | null
+          created_at?: string
+          departamento?: string | null
+          desc_actividad?: string | null
+          distrito?: string | null
+          email?: string | null
+          id?: string
+          municipio?: string | null
+          name?: string | null
+          nit?: string | null
+          nrc?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       delivery_zones: {
         Row: {
           active: boolean
@@ -1112,6 +1170,7 @@ export type Database = {
           cashier_id: string | null
           created_at: string
           customer_email: string | null
+          customer_id: string | null
           customer_name: string | null
           customer_nit: string | null
           customer_phone: string | null
@@ -1141,6 +1200,7 @@ export type Database = {
           cashier_id?: string | null
           created_at?: string
           customer_email?: string | null
+          customer_id?: string | null
           customer_name?: string | null
           customer_nit?: string | null
           customer_phone?: string | null
@@ -1170,6 +1230,7 @@ export type Database = {
           cashier_id?: string | null
           created_at?: string
           customer_email?: string | null
+          customer_id?: string | null
           customer_name?: string | null
           customer_nit?: string | null
           customer_phone?: string | null
@@ -1826,6 +1887,7 @@ export type Database = {
           cashier_id: string | null
           created_at: string
           customer_email: string | null
+          customer_id: string | null
           customer_name: string | null
           customer_nit: string | null
           customer_phone: string | null
@@ -1935,6 +1997,7 @@ export type Database = {
           cashier_id: string | null
           created_at: string
           customer_email: string | null
+          customer_id: string | null
           customer_name: string | null
           customer_nit: string | null
           customer_phone: string | null

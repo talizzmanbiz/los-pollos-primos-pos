@@ -14,6 +14,12 @@ export interface CustomerInfo {
   email: string;
   /** Con NIT se emite CCF; sin NIT, factura de consumidor final. */
   nit: string;
+  /**
+   * Cliente ya en el registro. Lo pone el panel de caja al reconocerlo o al
+   * guardarlo; sin esto el trigger crearia otra ficha y el credito fiscal se
+   * quedaria sin los datos que exige el MH.
+   */
+  customerId?: string | null;
 }
 
 interface CreateOrderArgs {
@@ -71,6 +77,7 @@ export async function createOrder(args: CreateOrderArgs): Promise<CreateOrderRes
     customer_phone: customer.phone.trim() || null,
     customer_email: customer.email.trim() || null,
     customer_nit: customer.nit.trim() || null,
+    customer_id: customer.customerId ?? null,
   };
   const itemRows = cart.map((l) => ({
     product_id: l.product.id,

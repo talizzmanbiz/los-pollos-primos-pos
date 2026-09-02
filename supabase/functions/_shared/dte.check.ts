@@ -92,6 +92,24 @@ ok(
   'base + IVA debe dar el total cobrado en la factura',
 );
 
+// Consumidor final que da su nombre y teléfono pero ningún documento: es el
+// caso más común del mostrador en cuanto se empieza a capturar al cliente para
+// el registro. Si el esquema exigiera numDocumento junto a tipoDocumento, esto
+// rechazaría TODAS las ventas normales, así que se valida aparte.
+const facturaConNombre = construirDte({
+  ...BASE,
+  tipoDte: '01',
+  numeroControl: 'DTE-01-M001P001-000000000000002',
+  receptor: {
+    nombre: 'Marta Hernández',
+    telefono: '77778888',
+    correo: null,
+  },
+  items: [{ codigo: 'COMBO1', descripcion: 'El Primo — Combo Medio', cantidad: 1, precioUnitario: 6.95 }],
+  codigoPago: '01',
+});
+validar(validarFactura, facturaConNombre.documento, 'factura con nombre y sin documento');
+
 // ---------- CCF (fe-ccf-v4) ----------
 
 const ccf = construirDte({

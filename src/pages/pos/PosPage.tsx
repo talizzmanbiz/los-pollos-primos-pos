@@ -11,6 +11,7 @@ import { fmtDateTime } from '../../lib/format';
 import { emitirDte } from '../../lib/dte';
 import PaymentModal from './PaymentModal';
 import CardModal from './CardModal';
+import CustomerPanel from './CustomerPanel';
 
 const TYPE_LABELS: Record<string, string> = {
   combo: 'Combos',
@@ -24,7 +25,7 @@ export default function PosPage() {
   const { location, loading: locationLoading } = useWorkingLocation();
   const { products, loading, error } = useCatalog();
   const [cart, setCart] = useState<CartLine[]>([]);
-  const [customer, setCustomer] = useState<CustomerInfo>({ name: '', phone: '', email: '', nit: '' });
+  const [customer, setCustomer] = useState<CustomerInfo>({ name: '', phone: '', email: '', nit: '', customerId: null });
   const [showCustomer, setShowCustomer] = useState(false);
   const [paying, setPaying] = useState(false);
   const [lastOrder, setLastOrder] = useState<{
@@ -90,7 +91,7 @@ export default function PosPage() {
 
   function clearSale() {
     setCart([]);
-    setCustomer({ name: '', phone: '', email: '', nit: '' });
+    setCustomer({ name: '', phone: '', email: '', nit: '', customerId: null });
     setShowCustomer(false);
   }
 
@@ -336,43 +337,7 @@ export default function PosPage() {
             {showCustomer ? '✕ Ocultar datos' : '+ Datos cliente (opt.)'}
           </button>
           {showCustomer && (
-            <div className="mt-2 lg:mt-4 space-y-2 lg:space-y-3">
-              <input
-                placeholder="Nombre"
-                value={customer.name}
-                onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-                className="w-full glass-sm px-2 lg:px-3 py-2 lg:py-3 text-xs lg:text-sm text-charcoal-800 placeholder:text-gray-500 border border-brand-200 focus:border-brand-500 transition-colors"
-                aria-label="Nombre del cliente"
-              />
-              <input
-                placeholder="Teléfono"
-                type="tel"
-                inputMode="tel"
-                value={customer.phone}
-                onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
-                className="w-full glass-sm px-2 lg:px-3 py-2 lg:py-3 text-xs lg:text-sm text-charcoal-800 placeholder:text-gray-500 border border-brand-200 focus:border-brand-500 transition-colors"
-                aria-label="Teléfono del cliente"
-              />
-              <input
-                placeholder="Correo"
-                type="email"
-                value={customer.email}
-                onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
-                className="w-full glass-sm px-2 lg:px-3 py-2 lg:py-3 text-xs lg:text-sm text-charcoal-800 placeholder:text-gray-500 border border-brand-200 focus:border-brand-500 transition-colors"
-                aria-label="Correo del cliente"
-              />
-              <input
-                placeholder="NIT (para crédito fiscal)"
-                value={customer.nit}
-                onChange={(e) => setCustomer({ ...customer, nit: e.target.value })}
-                className="w-full glass-sm px-2 lg:px-3 py-2 lg:py-3 text-xs lg:text-sm text-charcoal-800 placeholder:text-gray-500 border border-brand-200 focus:border-brand-500 transition-colors"
-                aria-label="NIT del cliente para crédito fiscal"
-              />
-              <p className="px-1 text-[11px] leading-snug text-charcoal-400">
-                Con NIT se emite <strong>CCF</strong>; sin NIT, factura de consumidor final.
-                Con correo, el DTE se le envía automáticamente.
-              </p>
-            </div>
+            <CustomerPanel value={customer} onChange={setCustomer} />
           )}
         </div>
 
