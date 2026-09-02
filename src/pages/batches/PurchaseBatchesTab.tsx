@@ -26,6 +26,12 @@ export default function PurchaseBatchesTab() {
   const [pricedBy, setPricedBy] = useState<'unidades' | 'libras'>('libras');
   const [unitCost, setUnitCost] = useState('');
   const [notes, setNotes] = useState('');
+  // Datos del documento del proveedor. Van acá y no en la pestaña de Compras
+  // porque es la MISMA compra: capturarla dos veces era el trabajo duplicado.
+  const [supplierNit, setSupplierNit] = useState('');
+  const [docType, setDocType] = useState<'ccf' | 'factura' | 'recibo' | 'ticket' | 'ninguno'>('ccf');
+  const [docNumber, setDocNumber] = useState('');
+  const [conIva, setConIva] = useState(false);
 
   const refetch = useCallback(async () => {
     if (!location) return;
@@ -52,6 +58,13 @@ export default function PurchaseBatchesTab() {
   const avgPerUnit = nUnits > 0 ? total / nUnits : 0;
   const avgPerPound = nPounds > 0 ? total / nPounds : 0;
 
+  // Mismo desglose que hace el trigger al asentar el gasto. Se muestra acá para
+  // que el IVA acreditable se vea antes de guardar y no sea una sorpresa en el
+  // libro de compras. Sólo el CCF da derecho a crédito.
+  const daCredito = docType === 'ccf';
+  const base = !daCredito ? total : conIva ? Math.round((total / 1.13) * 100) / 100 : total;
+  const iva = !daCredito ? 0 : Math.round((conIva ? total - base : total * 0.13) * 100) / 100;
+
   // Pollo crudo sin procesar, sumando lo que queda de cada lote. Es el numero
   // que decide si se puede cerrar un lote de produccion, asi que se muestra
   // acá y no solo en la columna "Restante" de la tabla.
@@ -70,6 +83,10 @@ export default function PurchaseBatchesTab() {
       unit: pricedBy,
       unit_cost: nCost,
       notes: notes.trim() || null,
+      supplier_nit: supplierNit.trim() || null,
+      document_type: docType,
+      document_number: docNumber.trim() || null,
+      precio_con_iva: conIva,
       created_by: profile.id,
     });
     if (error) {
@@ -81,6 +98,8 @@ export default function PurchaseBatchesTab() {
     setPounds('');
     setUnitCost('');
     setNotes('');
+    setSupplierNit('');
+    setDocNumber('');
     setShowForm(false);
     refetch();
   }
@@ -167,6 +186,61 @@ export default function PurchaseBatchesTab() {
             <span className="mt-1 block text-xs text-gray-500">
               precio {porLibra ? 'por libra' : 'por pollo'}
             </span>
+          </div>
+
+          {/* El documento del proveedor. Antes esta compra creaba un gasto a
+              medias —sin NIT, sin numero y con IVA en cero— que habia que
+              recapturar en la pestana de Compras para el F-07. */}
+          <div className="col-span-2 md:col-span-3 rounded-xl border border-brand-200 bg-brand-50/50 p-3">
+            <p className="mb-2 text-sm font-semibold text-brand-800">
+              Documento del proveedor — con esto queda listo el F-07
+            </p>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <div>
+                <label className="mb-1 block text-xs text-gray-600">Tipo</label>
+                <select value={docType} className="input"
+                  onChange={(e) => setDocType(e.target.value as typeof docType)}>
+                  <option value="ccf">Crédito fiscal</option>
+                  <option value="factura">Factura</option>
+                  <option value="ticket">Tiquete</option>
+                  <option value="recibo">Recibo / sujeto excluido</option>
+                  <option value="ninguno">Sin documento</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-gray-600">NIT del proveedor</label>
+                <input value={supplierNit} onChange={(e) => setSupplierNit(e.target.value)}
+                  placeholder="0614-241090-102-2" className="input" />
+              </div>
+              <div className="col-span-2">
+                <label className="mb-1 block text-xs text-gray-600">N° de documento</label>
+                <input value={docNumber} onChange={(e) => setDocNumber(e.target.value)}
+                  placeholder="DTE-03-S020P009-0000…" className="input" />
+              </div>
+            </div>
+
+            <label className="mt-3 flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" checked={conIva} className="h-4 w-4"
+                onChange={(e) => setConIva(e.target.checked)} />
+              El precio que puse ya incluye IVA
+            </label>
+
+            <p className="mt-2 text-sm text-brand-800">
+              {daCredito ? (
+                <>
+                  Base <span className="font-bold tabular-nums">{money(base)}</span>
+                  {' '}· IVA acreditable <span className="font-bold tabular-nums">{money(iva)}</span>
+                  {' '}· Total <span className="font-bold tabular-nums">{money(base + iva)}</span>
+                </>
+              ) : (
+                <>
+                  Gasto deducible de <span className="font-bold tabular-nums">{money(total)}</span>,
+                  {' '}sin IVA acreditable: {docType === 'ninguno'
+                    ? 'no hay documento que respalde el crédito.'
+                    : 'este documento no da derecho a crédito fiscal.'}
+                </>
+              )}
+            </p>
           </div>
 
           <div className="col-span-2">

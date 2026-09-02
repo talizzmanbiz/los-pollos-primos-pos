@@ -195,9 +195,10 @@ export default function PurchasesTab() {
           número de DTE. Es lo que se declara en el anexo del F-07.
         </p>
         <p>
-          No confundir con <strong>1 · Compra de pollo</strong>: esa mueve el
-          inventario, esta no. El pollo aparece en las dos y está bien: una lo
-          cuenta como stock, la otra lo declara como gasto.
+          <strong>Las compras de pollo aparecen acá solas</strong>, ya completas
+          y con su IVA acreditable — no hay que volver a capturarlas. Registralas
+          en <strong>1 · Compra de pollo</strong>, que además mueve el inventario.
+          Este libro es para todo lo demás.
         </p>
       </div>
 

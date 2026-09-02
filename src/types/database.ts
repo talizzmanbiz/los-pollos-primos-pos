@@ -1524,7 +1524,12 @@ export type Database = {
       purchase_batches: {
         Row: {
           created_at: string
+          codigo_generacion: string | null
           created_by: string | null
+          document_number: string | null
+          document_type: Database["public"]["Enums"]["accounting_doc_type"]
+          precio_con_iva: boolean
+          supplier_nit: string | null
           id: string
           location_id: string
           notes: string | null
@@ -1540,7 +1545,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          codigo_generacion?: string | null
           created_by?: string | null
+          document_number?: string | null
+          document_type?: Database["public"]["Enums"]["accounting_doc_type"]
+          precio_con_iva?: boolean
+          supplier_nit?: string | null
           id?: string
           location_id: string
           notes?: string | null
@@ -1556,7 +1566,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          codigo_generacion?: string | null
           created_by?: string | null
+          document_number?: string | null
+          document_type?: Database["public"]["Enums"]["accounting_doc_type"]
+          precio_con_iva?: boolean
+          supplier_nit?: string | null
           id?: string
           location_id?: string
           notes?: string | null
