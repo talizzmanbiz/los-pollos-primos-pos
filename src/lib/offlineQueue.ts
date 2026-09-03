@@ -5,6 +5,7 @@
 // reference. The public storefront does NOT use this — POS only.
 import { openDB, type IDBPDatabase } from 'idb';
 import { supabase } from './supabase';
+import { emitirDte } from './dte';
 import type { TablesInsert } from '../types/database';
 
 interface PendingOrder {
@@ -82,6 +83,17 @@ export async function syncPendingOrders(): Promise<number> {
     }
     await d.delete('pendingOrders', pending.localId);
     synced += 1;
+
+    // La venta que se cerró sin internet también necesita su DTE, y este es el
+    // único momento en que el POS sabe que existe: `confirmPayment` no lo
+    // emitió porque en ese momento la orden ni siquiera tenía id.
+    //
+    // Sin esto, una venta offline quedaba documentada en la caja y NO ante
+    // Hacienda, en silencio. Se descubrió con 8 ventas de un mismo día así.
+    //
+    // No se espera ni se corta el bucle si falla: la venta ya está guardada,
+    // y `emit-dte` deja el documento en cola para reintentarlo.
+    void emitirDte(order.id);
   }
   return synced;
 }
